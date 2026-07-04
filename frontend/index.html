@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CCC Básico</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- LOGIN -->
+  <main id="loginView" class="login-page">
+    <section class="login-card">
+      <h1>CCC Básico</h1>
+      <p>Control simple de inventario y ventas diarias</p>
+
+      <form id="loginForm">
+        <label for="correo">Correo</label>
+        <input
+          id="correo"
+          type="email"
+          value="admin@ccc.cl"
+          placeholder="Correo"
+          title="Correo"
+          required
+        />
+
+        <label for="password">Contraseña</label>
+        <input
+          id="password"
+          type="password"
+          value="123456"
+          placeholder="Contraseña"
+          title="Contraseña"
+          required
+        />
+
+        <button type="submit">Entrar</button>
+      </form>
+    </section>
+  </main>
+
+  <!-- APP PRINCIPAL -->
+  <div id="appView" class="app" style="display: none;">
+    <aside class="sidebar">
+      <h1>CCC</h1>
+      <p><span id="rolUsuario">Administrador</span> · <span id="nombreUsuario">admin</span></p>
+
+      <nav>
+        <button id="btnResumen" class="active">Resumen</button>
+        <button id="btnBodega">Bodega</button>
+        <button id="btnCocina">Cocina</button>
+        <button id="btnProductos">Productos / Recetas</button>
+        <button id="btnVentas">Ventas del día</button>
+        <button id="btnSalir" class="salir">Salir</button>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="top-card">
+        <div>
+          <h1>CCC Básico</h1>
+          <p>Login + bodega + cocina + ventas + descuento automático</p>
+        </div>
+
+        <button id="btnActualizar">Actualizar</button>
+      </header>
+
+      <!-- RESUMEN -->
+      <section id="vistaResumen" class="card">
+        <h2>Resumen</h2>
+
+        <div class="resumen-grid">
+          <article class="resumen-card">
+            <h3>Productos en bodega</h3>
+            <strong id="totalBodega">0</strong>
+          </article>
+
+          <article class="resumen-card">
+            <h3>Productos en cocina</h3>
+            <strong id="totalCocina">0</strong>
+          </article>
+
+          <article class="resumen-card">
+            <h3>Productos / recetas</h3>
+            <strong id="totalProductos">0</strong>
+          </article>
+
+          <article class="resumen-card">
+            <h3>Ventas del día</h3>
+            <strong id="totalVentas">$0</strong>
+          </article>
+        </div>
+      </section>
+
+      <!-- BODEGA: SOLO INVENTARIO DE ENTRADA -->
+      <section id="vistaBodega" class="card" style="display: none;">
+        <h2>Inventario de bodega</h2>
+
+        <div class="form-row">
+          <input
+            id="bodegaProducto"
+            type="text"
+            placeholder="Producto: Carne"
+            title="Producto de bodega"
+          />
+
+          <input
+            id="bodegaUnidad"
+            type="text"
+            placeholder="Unidad: kg"
+            title="Unidad de bodega"
+          />
+
+          <input
+            id="bodegaCantidad"
+            type="number"
+            placeholder="Cantidad"
+            title="Cantidad de bodega"
+          />
+
+          <input
+            id="bodegaCosto"
+            type="number"
+            placeholder="Costo total"
+            title="Costo total de bodega"
+          />
+
+          <button id="btnAgregarBodega">Agregar a bodega</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>PRODUCTO</th>
+                <th>UNIDAD</th>
+                <th>CANTIDAD</th>
+                <th>COSTO TOTAL</th>
+                <th>ACCIÓN</th>
+              </tr>
+            </thead>
+            <tbody id="tablaBodega"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- COCINA: ACÁ VA LA LÓGICA DE PORCIONAR DESDE BODEGA -->
+      <section id="vistaCocina" class="card" style="display: none;">
+        <h2>Inventario de cocina</h2>
+
+        <div class="form-row cocina-form">
+          <select id="selectBodegaCocina" title="Producto de bodega a usar">
+            <option value="">Seleccionar producto de bodega</option>
+          </select>
+
+          <input
+            id="cocinaProducto"
+            type="text"
+            placeholder="Producto cocina"
+            title="Producto de cocina"
+          />
+
+          <input
+            id="cocinaUnidad"
+            type="text"
+            placeholder="Unidad"
+            title="Unidad de cocina"
+          />
+<!--  ESTO NO ES NECESARIO 
+          <input
+            id="cocinaCantidadBodega"
+            type="number"
+            placeholder="Cantidad usada de bodega"
+            title="Cantidad que se descuenta de bodega"
+          />
+
+          <input
+            id="cocinaCantidad"
+            type="number"
+            placeholder="Cantidad cocina"
+            title="Cantidad que entra a cocina"
+          />
+ACA ARREGLAR EL PRECIO DEBE CALCULARSE DE FORMA AUTOMATICA
+          <input
+            id="cocinaCosto"
+            type="number"
+            placeholder="Costo total automático"
+            title="Costo calculado según lo descontado de bodega"
+            readonly
+          />
+-->
+          <button id="btnAgregarCocina">Agregar a cocina</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>PRODUCTO</th>
+                <th>UNIDAD</th>
+                <th>CANTIDAD</th>
+                <th>COSTO TOTAL</th>
+                <th>ACCIÓN</th>
+              </tr>
+            </thead>
+            <tbody id="tablaCocina"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- PRODUCTOS / RECETAS -->
+      <section id="vistaProductos" class="card" style="display: none;">
+        <h2>Productos / Recetas</h2>
+
+        <div class="form-row">
+          <input
+            id="nombreProductoVenta"
+            type="text"
+            placeholder="Producto venta"
+            title="Nombre producto venta"
+          />
+
+          <input
+            id="precioProductoVenta"
+            type="number"
+            placeholder="Precio venta"
+            title="Precio producto venta"
+          />
+
+          <button id="btnCrearProductoVenta">Crear producto</button>
+        </div>
+
+        <h3>Agregar receta</h3>
+
+        <div class="form-row">
+          <select id="selectProductoVenta" title="Seleccionar producto de venta">
+            <option value="">Seleccionar producto</option>
+          </select>
+
+          <select id="selectProductoCocina" title="Seleccionar producto de cocina para receta">
+            <option value="">Seleccionar insumo de cocina</option>
+          </select>
+
+          <input
+            id="cantidadReceta"
+            type="number"
+            placeholder="Cantidad usada"
+            title="Cantidad usada en receta"
+          />
+
+          <button id="btnAgregarReceta">Agregar receta</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>PRODUCTO</th>
+                <th>PRECIO</th>
+                <th>RECETA</th>
+                <th>ACCIÓN</th>
+              </tr>
+            </thead>
+            <tbody id="tablaProductos"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- VENTAS -->
+      <section id="vistaVentas" class="card" style="display: none;">
+        <h2>Ventas del día</h2>
+
+        <div class="form-row">
+          <select id="selectVentaProducto" title="Seleccionar producto para venta">
+            <option value="">Seleccionar producto</option>
+          </select>
+
+          <input
+            id="cantidadVenta"
+            type="number"
+            placeholder="Cantidad"
+            title="Cantidad vendida"
+          />
+
+          <select id="medioPagoVenta" title="Seleccionar medio de pago">
+            <option value="efectivo">Efectivo</option>
+            <option value="debito">Débito</option>
+            <option value="credito">Crédito</option>
+            <option value="transferencia">Transferencia</option>
+          </select>
+
+          <button id="btnRegistrarVenta">Registrar venta</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>PRODUCTO</th>
+                <th>CANTIDAD</th>
+                <th>MEDIO DE PAGO</th>
+                <th>TOTAL</th>
+                <th>FECHA</th>
+              </tr>
+            </thead>
+            <tbody id="tablaVentas"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
