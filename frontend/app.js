@@ -1,4 +1,5 @@
-const STORAGE_KEY = "ccc_basico_data";
+const STORAGE_KEY = "ccc_db";
+const API_BODEGA = "/api/bodega";
 
 let data = cargarDatos();
 
@@ -21,7 +22,7 @@ function cargarDatos() {
       const datos = JSON.parse(guardado);
 
       return {
-        bodega: datos.bodega || [],
+        bodega: [],
         cocina: datos.cocina || [],
         productos: datos.productos || [],
         recetas: datos.recetas || [],
@@ -33,10 +34,7 @@ function cargarDatos() {
   }
 
   return {
-    bodega: [
-      { id: 1, producto: "Carne", unidad: "kg", cantidad: 100, costo_total: 60000 },
-      { id: 2, producto: "Pan", unidad: "unidad", cantidad: 40, costo_total: 12000 }
-    ],
+    bodega: [],
     cocina: [],
     productos: [],
     recetas: [],
@@ -45,7 +43,15 @@ function cargarDatos() {
 }
 
 function guardarDatos() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  const datosLocales = {
+    bodega: [],
+    cocina: data.cocina,
+    productos: data.productos,
+    recetas: data.recetas,
+    ventas: data.ventas
+  };
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(datosLocales));
 }
 
 function siguienteId(lista) {
@@ -66,7 +72,56 @@ function moneda(valor) {
     style: "currency",
     currency: "CLP",
     maximumFractionDigits: 0
-  }).format(valor);
+  }).format(numero(valor));
+}
+
+function normalizarBodega(item) {
+  return {
+    id: item.id,
+    producto:
+      item.producto ??
+      item.nombre ??
+      item.nombre_producto ??
+      item.nombre_materia_prima ??
+      item.materia_prima ??
+      item.descripcion ??
+      item.PRODUCTO ??
+      item.NOMBRE ??
+      item.NOMBRE_PRODUCTO ??
+      "",
+    unidad: item.unidad ?? item.UNIDAD ?? "",
+    cantidad: numero(
+      item.cantidad ??
+      item.cantidad_total ??
+      item.stock ??
+      item.CANTIDAD ??
+      item.CANTIDAD_TOTAL
+    ),
+    costo_total: numero(
+      item.costo_total ??
+      item.costo ??
+      item.total ??
+      item.COSTO_TOTAL ??
+      item.COSTO
+    )
+  };
+}
+
+async function cargarBodegaDesdeBD() {
+  try {
+    const res = await fetch(API_BODEGA);
+
+    if (!res.ok) {
+      throw new Error("No se pudo cargar bodega desde la base de datos");
+    }
+
+    const registros = await res.json();
+
+    data.bodega = registros.map(normalizarBodega);
+  } catch (error) {
+    console.error("Error cargando bodega:", error);
+    alert("No se pudo cargar bodega desde la base de datos");
+  }
 }
 
 /* LOGIN */
@@ -76,7 +131,7 @@ function iniciarLogin() {
 
   if (!loginForm) return;
 
-  loginForm.addEventListener("submit", e => {
+  loginForm.addEventListener("submit", async e => {
     e.preventDefault();
 
     const correo = $("correo").value.trim();
@@ -88,6 +143,8 @@ function iniciarLogin() {
 
       $("rolUsuario").textContent = "Administrador";
       $("nombreUsuario").textContent = "admin";
+
+      await cargarBodegaDesdeBD();
 
       mostrarVista("vistaResumen");
       activarBoton("btnResumen");
@@ -113,7 +170,11 @@ function iniciarNavegacion() {
     const boton = $(item.id);
 
     if (boton) {
-      boton.addEventListener("click", () => {
+      boton.addEventListener("click", async () => {
+        if (item.vista === "vistaBodega" || item.vista === "vistaCocina") {
+          await cargarBodegaDesdeBD();
+        }
+
         mostrarVista(item.vista);
         activarBoton(item.id);
         renderizarTodo();
@@ -170,7 +231,10 @@ function activarBoton(idBoton) {
 /* BOTONES */
 
 function iniciarBotones() {
-  $("btnActualizar")?.addEventListener("click", renderizarTodo);
+  $("btnActualizar")?.addEventListener("click", async () => {
+    await cargarBodegaDesdeBD();
+    renderizarTodo();
+  });
 
   $("btnAgregarBodega")?.addEventListener("click", agregarBodega);
   $("btnAgregarCocina")?.addEventListener("click", agregarCocina);
@@ -186,7 +250,7 @@ function iniciarBotones() {
 
 /* BODEGA */
 
-function agregarBodega() {
+async function agregarBodega() {
   const producto = $("bodegaProducto").value.trim();
   const unidad = $("bodegaUnidad").value.trim();
   const cantidad = numero($("bodegaCantidad").value);
@@ -197,18 +261,34 @@ function agregarBodega() {
     return;
   }
 
-  data.bodega.push({
-    id: siguienteId(data.bodega),
-    producto,
-    unidad,
-    cantidad,
-    costo_total: costo
-  });
+  try {
+    const res = await fetch(API_BODEGA, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        producto,
+        nombre: producto,
+        unidad,
+        cantidad,
+        cantidad_total: cantidad,
+        costo_total: costo
+      })
+    });
 
-  limpiarFormularioBodega();
+    if (!res.ok) {
+      throw new Error("No se pudo agregar producto a bodega");
+    }
 
-  guardarDatos();
-  renderizarTodo();
+    limpiarFormularioBodega();
+
+    await cargarBodegaDesdeBD();
+    renderizarTodo();
+  } catch (error) {
+    console.error("Error agregando bodega:", error);
+    alert("No se pudo agregar el producto a la base de datos");
+  }
 }
 
 function limpiarFormularioBodega() {
@@ -230,7 +310,7 @@ function accionesBodega(e) {
   }
 }
 
-function editarBodega(id) {
+async function editarBodega(id) {
   const item = data.bodega.find(p => p.id === id);
   if (!item) return;
 
@@ -251,22 +331,52 @@ function editarBodega(id) {
     return;
   }
 
-  item.producto = producto.trim();
-  item.unidad = unidad.trim();
-  item.cantidad = numero(cantidad);
-  item.costo_total = numero(costo);
+  try {
+    const res = await fetch(`${API_BODEGA}/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        producto: producto.trim(),
+        nombre: producto.trim(),
+        unidad: unidad.trim(),
+        cantidad: numero(cantidad),
+        cantidad_total: numero(cantidad),
+        costo_total: numero(costo)
+      })
+    });
 
-  guardarDatos();
-  renderizarTodo();
+    if (!res.ok) {
+      throw new Error("No se pudo editar producto de bodega");
+    }
+
+    await cargarBodegaDesdeBD();
+    renderizarTodo();
+  } catch (error) {
+    console.error("Error editando bodega:", error);
+    alert("No se pudo editar el producto en la base de datos");
+  }
 }
 
-function eliminarBodega(id) {
+async function eliminarBodega(id) {
   if (!confirm("¿Eliminar producto de bodega?")) return;
 
-  data.bodega = data.bodega.filter(p => p.id !== id);
+  try {
+    const res = await fetch(`${API_BODEGA}/${id}`, {
+      method: "DELETE"
+    });
 
-  guardarDatos();
-  renderizarTodo();
+    if (!res.ok) {
+      throw new Error("No se pudo eliminar producto de bodega");
+    }
+
+    await cargarBodegaDesdeBD();
+    renderizarTodo();
+  } catch (error) {
+    console.error("Error eliminando bodega:", error);
+    alert("No se pudo eliminar el producto de la base de datos");
+  }
 }
 
 /* COCINA */
@@ -275,22 +385,17 @@ function agregarCocina() {
   const bodegaId = Number($("selectBodegaCocina").value);
   const productoCocina = $("cocinaProducto").value.trim();
 
-  /*
-    Este campo usa gramos por porción.
-    Puedes escribir:
-    200
-    200g
-    200 gr
-  */
   const gramosTexto = $("cocinaUnidad").value.trim();
   const gramosPorPorcion = Number(gramosTexto.replace(/[^0-9.]/g, ""));
 
-  const productoBodega = data.bodega.find(p => p.id === bodegaId);
+  const productoBodegaOriginal = data.bodega.find(p => p.id === bodegaId);
 
-  if (!productoBodega) {
+  if (!productoBodegaOriginal) {
     alert("Selecciona un producto de bodega");
     return;
   }
+
+  const productoBodega = normalizarBodega(productoBodegaOriginal);
 
   if (!productoCocina || gramosPorPorcion <= 0) {
     alert("Ingresa producto de cocina y gramos por porción");
@@ -326,22 +431,6 @@ function agregarCocina() {
     return;
   }
 
-  /*
-    CÁLCULO CORRECTO:
-
-    Si compras:
-    10 kg de filete a $80.000
-
-    Entonces:
-    10 kg = 10.000 gramos
-
-    Si cada porción es de 200 g:
-    10.000 / 200 = 50 porciones
-
-    Valor por porción:
-    80.000 / 50 = $1.600
-  */
-
   const cantidadPorciones = Math.floor(gramosTotalesBodega / gramosPorPorcion);
 
   if (cantidadPorciones <= 0) {
@@ -373,12 +462,9 @@ function agregarCocina() {
     });
   }
 
-  /*
-    Se descuenta completo de bodega porque ese producto
-    pasó completo a cocina para ser porcionado.
-  */
-  productoBodega.cantidad = 0;
-  productoBodega.costo_total = 0;
+  productoBodegaOriginal.cantidad = 0;
+  productoBodegaOriginal.cantidad_total = 0;
+  productoBodegaOriginal.costo_total = 0;
 
   limpiarFormularioCocina();
 
@@ -630,7 +716,9 @@ function renderBodega() {
 
   tbody.innerHTML = "";
 
-  data.bodega.forEach(item => {
+  data.bodega.forEach(registro => {
+    const item = normalizarBodega(registro);
+
     tbody.innerHTML += `
       <tr>
         <td>${item.id}</td>
@@ -733,6 +821,7 @@ function renderSelects() {
     selectBodegaCocina.innerHTML = `<option value="">Seleccionar producto de bodega</option>`;
 
     data.bodega
+      .map(normalizarBodega)
       .filter(item => item.cantidad > 0 && item.costo_total > 0)
       .forEach(item => {
         selectBodegaCocina.innerHTML += `

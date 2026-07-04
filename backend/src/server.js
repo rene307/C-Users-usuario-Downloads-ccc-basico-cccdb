@@ -18,11 +18,9 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Frontend estático
-app.use(express.static(path.join(__dirname, '../../frontend')));
-
 app.get('/api/health', async (req, res) => {
   const db = await pool.query('SELECT current_database() AS database, current_schema() AS schema');
+
   res.json({
     message: 'CCC Básico funcionando',
     database: db.rows[0].database,
@@ -34,6 +32,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api', inventarioRoutes);
 app.use('/api', productosRoutes);
 app.use('/api', ventasRoutes);
+
+// Frontend estático DESPUÉS de las rutas API
+app.use(express.static(path.join(__dirname, '../../frontend')));
 
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../../frontend/index.html'));
@@ -48,6 +49,7 @@ async function crearAdminSiNoExiste() {
 
   if (result.rows.length === 0) {
     const hash = await bcrypt.hash(adminPassword, 10);
+
     await pool.query(
       `INSERT INTO usuarios (nombre, correo, password_hash, rol)
        VALUES ($1, $2, $3, 'admin')`,
@@ -61,7 +63,10 @@ async function crearAdminSiNoExiste() {
 async function iniciarServidor() {
   try {
     const dbInfo = await pool.query('SELECT current_database() AS database, current_schema() AS schema');
-    console.log(`Conexión a PostgreSQL correcta: BD=${dbInfo.rows[0].database}, schema=${dbInfo.rows[0].schema}`);
+
+    console.log(
+      `Conexión a PostgreSQL correcta: BD=${dbInfo.rows[0].database}, schema=${dbInfo.rows[0].schema}`
+    );
 
     await initDatabase();
     await crearAdminSiNoExiste();

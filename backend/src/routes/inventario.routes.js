@@ -4,10 +4,10 @@ const controller = require('../controllers/inventario.controller');
 
 const router = express.Router();
 
-router.get('/bodega', auth, controller.listarBodega);
-router.post('/bodega', auth, controller.crearBodega);
-router.put('/bodega/:id', auth, controller.actualizarBodega);
-router.delete('/bodega/:id', auth, controller.eliminarBodega);
+router.get('/bodega', controller.listarBodega);
+router.post('/bodega', controller.crearBodega);
+router.put('/bodega/:id', controller.actualizarBodega);
+router.delete('/bodega/:id', controller.eliminarBodega);
 
 router.get('/cocina', auth, controller.listarCocina);
 router.post('/cocina', auth, controller.crearCocina);
