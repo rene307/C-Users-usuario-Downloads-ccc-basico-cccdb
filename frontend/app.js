@@ -1,6 +1,5 @@
 const STORAGE_KEY = "ccc_db";
-const API_BODEGA = "/api/bodega";
-
+const API_BODEGA = "http://localhost:3000/api/bodega";
 let data = cargarDatos();
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -116,8 +115,9 @@ async function cargarBodegaDesdeBD() {
     }
 
     const registros = await res.json();
-
     data.bodega = registros.map(normalizarBodega);
+
+    renderBodega();
   } catch (error) {
     console.error("Error cargando bodega:", error);
     alert("No se pudo cargar bodega desde la base de datos");
