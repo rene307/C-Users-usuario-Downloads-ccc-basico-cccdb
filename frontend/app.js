@@ -1,61 +1,41 @@
-const STORAGE_KEY = "ccc_db";
-const API_BODEGA = "http://localhost:3000/api/bodega";
-let data = cargarDatos();
+const API_BASE = "http://localhost:3000/api";
 
-document.addEventListener("DOMContentLoaded", () => {
+let token = sessionStorage.getItem("ccc_token") || "";
+
+let usuario = JSON.parse(
+  sessionStorage.getItem("ccc_usuario") || "null"
+);
+
+let data = {
+  bodega: [],
+  cocina: [],
+  productos: [],
+  recetas: [],
+  ventas: [],
+  totalVentas: 0
+};
+
+document.addEventListener("DOMContentLoaded", async () => {
   iniciarLogin();
   iniciarNavegacion();
   iniciarBotones();
-  renderizarTodo();
+
+  if (token && usuario) {
+    mostrarAplicacion();
+
+    try {
+      await cargarTodoDesdeBD();
+    } catch (error) {
+      console.error(error);
+      cerrarSesion();
+    }
+  } else {
+    mostrarLogin();
+  }
 });
 
 function $(id) {
   return document.getElementById(id);
-}
-
-function cargarDatos() {
-  const guardado = localStorage.getItem(STORAGE_KEY);
-
-  if (guardado) {
-    try {
-      const datos = JSON.parse(guardado);
-
-      return {
-        bodega: [],
-        cocina: datos.cocina || [],
-        productos: datos.productos || [],
-        recetas: datos.recetas || [],
-        ventas: datos.ventas || []
-      };
-    } catch (error) {
-      console.error("Error al cargar datos:", error);
-    }
-  }
-
-  return {
-    bodega: [],
-    cocina: [],
-    productos: [],
-    recetas: [],
-    ventas: []
-  };
-}
-
-function guardarDatos() {
-  const datosLocales = {
-    bodega: [],
-    cocina: data.cocina,
-    productos: data.productos,
-    recetas: data.recetas,
-    ventas: data.ventas
-  };
-
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(datosLocales));
-}
-
-function siguienteId(lista) {
-  if (lista.length === 0) return 1;
-  return Math.max(...lista.map(item => item.id)) + 1;
 }
 
 function numero(valor) {
@@ -63,7 +43,11 @@ function numero(valor) {
 }
 
 function redondear(valor) {
-  return Math.round((Number(valor) + Number.EPSILON) * 100) / 100;
+  return (
+    Math.round(
+      (Number(valor) + Number.EPSILON) * 100
+    ) / 100
+  );
 }
 
 function moneda(valor) {
@@ -74,122 +58,344 @@ function moneda(valor) {
   }).format(numero(valor));
 }
 
+function formatearFecha(valor) {
+  if (!valor) return "";
+
+  return new Date(valor).toLocaleString("es-CL");
+}
+
+function nombreMedioPago(valor) {
+  const nombres = {
+    efectivo: "Efectivo",
+    debito: "Débito",
+    credito: "Crédito",
+    transferencia: "Transferencia"
+  };
+
+  return nombres[valor] || valor || "";
+}
+
+/* =====================================================
+   PETICIONES API
+===================================================== */
+
+async function api(
+  ruta,
+  opciones = {},
+  requiereToken = true
+) {
+  const headers = {
+    ...(opciones.headers || {})
+  };
+
+  if (opciones.body) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  if (requiereToken && token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const respuesta = await fetch(
+    `${API_BASE}${ruta}`,
+    {
+      ...opciones,
+      headers
+    }
+  );
+
+  const texto = await respuesta.text();
+
+  let resultado = {};
+
+  if (texto) {
+    try {
+      resultado = JSON.parse(texto);
+    } catch {
+      resultado = {
+        message: texto
+      };
+    }
+  }
+
+  if (!respuesta.ok) {
+    throw new Error(
+      resultado.message ||
+      `Error HTTP ${respuesta.status}`
+    );
+  }
+
+  return resultado;
+}
+
+/* =====================================================
+   NORMALIZACIÓN
+===================================================== */
+
 function normalizarBodega(item) {
   return {
-    id: item.id,
-    producto:
-      item.producto ??
-      item.nombre ??
-      item.nombre_producto ??
-      item.nombre_materia_prima ??
-      item.materia_prima ??
-      item.descripcion ??
-      item.PRODUCTO ??
-      item.NOMBRE ??
-      item.NOMBRE_PRODUCTO ??
-      "",
-    unidad: item.unidad ?? item.UNIDAD ?? "",
-    cantidad: numero(
-      item.cantidad ??
-      item.cantidad_total ??
-      item.stock ??
-      item.CANTIDAD ??
-      item.CANTIDAD_TOTAL
+    id: Number(item.id),
+    producto: item.nombre_producto || "",
+    unidad: item.unidad || "",
+    cantidad: numero(item.cantidad),
+    costo_total: numero(item.costo_total)
+  };
+}
+
+function normalizarCocina(item) {
+  return {
+    id: Number(item.id),
+    producto: item.nombre_producto || "",
+    unidad: item.unidad || "",
+    cantidad: numero(item.cantidad),
+    costo_unitario: numero(item.costo_unitario),
+    costo_total: numero(item.costo_total),
+    stock_minimo: numero(item.stock_minimo)
+  };
+}
+
+function normalizarProducto(item) {
+  return {
+    id: Number(item.id),
+    nombre: item.nombre || "",
+    precio: numero(item.precio),
+    activo: item.activo !== false
+  };
+}
+
+function normalizarReceta(item) {
+  return {
+    id: Number(item.id),
+
+    producto_venta_id: Number(
+      item.producto_venta_id
     ),
-    costo_total: numero(
-      item.costo_total ??
-      item.costo ??
-      item.total ??
-      item.COSTO_TOTAL ??
-      item.COSTO
+
+    producto_venta:
+      item.producto_venta || "",
+
+    inventario_cocina_id: Number(
+      item.inventario_cocina_id
+    ),
+
+    ingrediente:
+      item.ingrediente || "",
+
+    unidad:
+      item.unidad || "",
+
+    cantidad_necesaria: numero(
+      item.cantidad_necesaria
     )
   };
 }
 
-async function cargarBodegaDesdeBD() {
-  try {
-    const res = await fetch(API_BODEGA);
+/* =====================================================
+   CARGA DESDE POSTGRESQL
+===================================================== */
 
-    if (!res.ok) {
-      throw new Error("No se pudo cargar bodega desde la base de datos");
-    }
+async function cargarTodoDesdeBD() {
+  const [
+    bodega,
+    cocina,
+    productos,
+    recetas,
+    ventasHoy
+  ] = await Promise.all([
+    api("/bodega"),
+    api("/cocina"),
+    api("/productos"),
+    api("/recetas"),
+    api("/ventas/hoy")
+  ]);
 
-    const registros = await res.json();
-    data.bodega = registros.map(normalizarBodega);
+  data.bodega =
+    bodega.map(normalizarBodega);
 
-    renderBodega();
-  } catch (error) {
-    console.error("Error cargando bodega:", error);
-    alert("No se pudo cargar bodega desde la base de datos");
-  }
+  data.cocina =
+    cocina.map(normalizarCocina);
+
+  data.productos =
+    productos.map(normalizarProducto);
+
+  data.recetas =
+    recetas.map(normalizarReceta);
+
+  data.totalVentas =
+    numero(ventasHoy.total_dia);
+
+  const ventasPorId = new Map();
+
+  ventasHoy.ventas.forEach(venta => {
+    ventasPorId.set(
+      Number(venta.id),
+      venta
+    );
+  });
+
+  data.ventas = ventasHoy.detalles.map(detalle => {
+    const venta = ventasPorId.get(
+      Number(detalle.venta_id)
+    );
+
+    return {
+      id: Number(detalle.id),
+      producto: detalle.producto,
+      cantidad: numero(detalle.cantidad),
+      medio_pago: venta?.medio_pago || "",
+      total: numero(detalle.subtotal),
+      fecha: venta?.fecha || ""
+    };
+  });
+
+  renderizarTodo();
 }
 
-/* LOGIN */
+/* =====================================================
+   LOGIN
+===================================================== */
 
 function iniciarLogin() {
-  const loginForm = $("loginForm");
+  const formulario = $("loginForm");
 
-  if (!loginForm) return;
+  if (!formulario) return;
 
-  loginForm.addEventListener("submit", async e => {
-    e.preventDefault();
+  formulario.addEventListener(
+    "submit",
+    async evento => {
+      evento.preventDefault();
 
-    const correo = $("correo").value.trim();
-    const password = $("password").value.trim();
+      const correo =
+        $("correo").value.trim();
 
-    if (correo === "admin@ccc.cl" && password === "123456") {
-      $("loginView").style.display = "none";
-      $("appView").style.display = "flex";
+      const password =
+        $("password").value;
 
-      $("rolUsuario").textContent = "Administrador";
-      $("nombreUsuario").textContent = "admin";
+      try {
+        const resultado = await api(
+          "/auth/login",
+          {
+            method: "POST",
 
-      await cargarBodegaDesdeBD();
+            body: JSON.stringify({
+              correo,
+              password
+            })
+          },
+          false
+        );
 
-      mostrarVista("vistaResumen");
-      activarBoton("btnResumen");
-      renderizarTodo();
-    } else {
-      alert("Correo o contraseña incorrectos");
+        token = resultado.token;
+        usuario = resultado.user;
+
+        sessionStorage.setItem(
+          "ccc_token",
+          token
+        );
+
+        sessionStorage.setItem(
+          "ccc_usuario",
+          JSON.stringify(usuario)
+        );
+
+        mostrarAplicacion();
+
+        await cargarTodoDesdeBD();
+
+        mostrarVista("vistaResumen");
+        activarBoton("btnResumen");
+      } catch (error) {
+        console.error(error);
+        alert(error.message);
+      }
     }
-  });
+  );
 }
 
-/* NAVEGACIÓN */
+function mostrarAplicacion() {
+  $("loginView").style.display = "none";
+  $("appView").style.display = "flex";
+
+  $("rolUsuario").textContent =
+    usuario?.rol || "";
+
+  $("nombreUsuario").textContent =
+    usuario?.nombre || "";
+}
+
+function mostrarLogin() {
+  $("appView").style.display = "none";
+  $("loginView").style.display = "flex";
+}
+
+function cerrarSesion() {
+  token = "";
+  usuario = null;
+
+  sessionStorage.removeItem("ccc_token");
+  sessionStorage.removeItem("ccc_usuario");
+
+  data = {
+    bodega: [],
+    cocina: [],
+    productos: [],
+    recetas: [],
+    ventas: [],
+    totalVentas: 0
+  };
+
+  mostrarLogin();
+}
+
+/* =====================================================
+   NAVEGACIÓN
+===================================================== */
 
 function iniciarNavegacion() {
   const botones = [
-    { id: "btnResumen", vista: "vistaResumen" },
-    { id: "btnBodega", vista: "vistaBodega" },
-    { id: "btnCocina", vista: "vistaCocina" },
-    { id: "btnProductos", vista: "vistaProductos" },
-    { id: "btnVentas", vista: "vistaVentas" }
+    {
+      id: "btnResumen",
+      vista: "vistaResumen"
+    },
+    {
+      id: "btnBodega",
+      vista: "vistaBodega"
+    },
+    {
+      id: "btnCocina",
+      vista: "vistaCocina"
+    },
+    {
+      id: "btnProductos",
+      vista: "vistaProductos"
+    },
+    {
+      id: "btnVentas",
+      vista: "vistaVentas"
+    }
   ];
 
   botones.forEach(item => {
-    const boton = $(item.id);
+    $(item.id)?.addEventListener(
+      "click",
+      async () => {
+        try {
+          await cargarTodoDesdeBD();
 
-    if (boton) {
-      boton.addEventListener("click", async () => {
-        if (item.vista === "vistaBodega" || item.vista === "vistaCocina") {
-          await cargarBodegaDesdeBD();
+          mostrarVista(item.vista);
+          activarBoton(item.id);
+        } catch (error) {
+          console.error(error);
+          alert(error.message);
         }
-
-        mostrarVista(item.vista);
-        activarBoton(item.id);
-        renderizarTodo();
-      });
-    }
+      }
+    );
   });
 
-  const btnSalir = $("btnSalir");
-
-  if (btnSalir) {
-    btnSalir.addEventListener("click", () => {
-      $("appView").style.display = "none";
-      $("loginView").style.display = "flex";
-    });
-  }
+  $("btnSalir")?.addEventListener(
+    "click",
+    cerrarSesion
+  );
 }
 
 function mostrarVista(idVista) {
@@ -205,7 +411,10 @@ function mostrarVista(idVista) {
     const vista = $(id);
 
     if (vista) {
-      vista.style.display = id === idVista ? "block" : "none";
+      vista.style.display =
+        id === idVista
+          ? "block"
+          : "none";
     }
   });
 }
@@ -220,477 +429,693 @@ function activarBoton(idBoton) {
   ];
 
   botones.forEach(id => {
-    const boton = $(id);
-
-    if (boton) {
-      boton.classList.toggle("active", id === idBoton);
-    }
+    $(id)?.classList.toggle(
+      "active",
+      id === idBoton
+    );
   });
 }
 
-/* BOTONES */
+/* =====================================================
+   BOTONES
+===================================================== */
 
 function iniciarBotones() {
-  $("btnActualizar")?.addEventListener("click", async () => {
-    await cargarBodegaDesdeBD();
-    renderizarTodo();
-  });
+  $("btnActualizar")?.addEventListener(
+    "click",
+    async () => {
+      try {
+        await cargarTodoDesdeBD();
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+  );
 
-  $("btnAgregarBodega")?.addEventListener("click", agregarBodega);
-  $("btnAgregarCocina")?.addEventListener("click", agregarCocina);
+  $("btnAgregarBodega")?.addEventListener(
+    "click",
+    agregarBodega
+  );
 
-  $("btnCrearProductoVenta")?.addEventListener("click", crearProductoVenta);
-  $("btnAgregarReceta")?.addEventListener("click", agregarReceta);
-  $("btnRegistrarVenta")?.addEventListener("click", registrarVenta);
+  $("btnAgregarCocina")?.addEventListener(
+    "click",
+    agregarCocina
+  );
 
-  $("tablaBodega")?.addEventListener("click", accionesBodega);
-  $("tablaCocina")?.addEventListener("click", accionesCocina);
-  $("tablaProductos")?.addEventListener("click", accionesProductos);
+  $("btnCrearProductoVenta")?.addEventListener(
+    "click",
+    crearProductoVenta
+  );
+
+  $("btnAgregarReceta")?.addEventListener(
+    "click",
+    agregarReceta
+  );
+
+  $("btnRegistrarVenta")?.addEventListener(
+    "click",
+    registrarVenta
+  );
+
+  $("tablaBodega")?.addEventListener(
+    "click",
+    accionesBodega
+  );
+
+  $("tablaCocina")?.addEventListener(
+    "click",
+    accionesCocina
+  );
+
+  $("tablaProductos")?.addEventListener(
+    "click",
+    accionesProductos
+  );
 }
 
-/* BODEGA */
+/* =====================================================
+   BODEGA
+===================================================== */
 
 async function agregarBodega() {
-  const producto = $("bodegaProducto").value.trim();
-  const unidad = $("bodegaUnidad").value.trim();
-  const cantidad = numero($("bodegaCantidad").value);
-  const costo = numero($("bodegaCosto").value);
+  const producto =
+    $("bodegaProducto").value.trim();
 
-  if (!producto || !unidad || cantidad <= 0 || costo <= 0) {
+  const unidad =
+    $("bodegaUnidad").value.trim();
+
+  const cantidad =
+    numero($("bodegaCantidad").value);
+
+  const costo =
+    numero($("bodegaCosto").value);
+
+  if (
+    !producto ||
+    !unidad ||
+    cantidad <= 0 ||
+    costo <= 0
+  ) {
     alert("Completa los datos de bodega");
     return;
   }
 
   try {
-    const res = await fetch(API_BODEGA, {
+    await api("/bodega", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+
       body: JSON.stringify({
-        producto,
-        nombre: producto,
+        nombre_producto: producto,
         unidad,
         cantidad,
-        cantidad_total: cantidad,
         costo_total: costo
       })
     });
 
-    if (!res.ok) {
-      throw new Error("No se pudo agregar producto a bodega");
-    }
+    $("bodegaProducto").value = "";
+    $("bodegaUnidad").value = "";
+    $("bodegaCantidad").value = "";
+    $("bodegaCosto").value = "";
 
-    limpiarFormularioBodega();
-
-    await cargarBodegaDesdeBD();
-    renderizarTodo();
+    await cargarTodoDesdeBD();
   } catch (error) {
-    console.error("Error agregando bodega:", error);
-    alert("No se pudo agregar el producto a la base de datos");
+    console.error(error);
+    alert(error.message);
   }
 }
 
-function limpiarFormularioBodega() {
-  $("bodegaProducto").value = "";
-  $("bodegaUnidad").value = "";
-  $("bodegaCantidad").value = "";
-  $("bodegaCosto").value = "";
-}
+function accionesBodega(evento) {
+  const boton = evento.target.closest(
+    "button[data-action]"
+  );
 
-function accionesBodega(e) {
-  const id = Number(e.target.dataset.id);
+  if (!boton) return;
 
-  if (e.target.dataset.action === "editar") {
+  const id = Number(boton.dataset.id);
+
+  if (boton.dataset.action === "editar") {
     editarBodega(id);
   }
 
-  if (e.target.dataset.action === "eliminar") {
+  if (boton.dataset.action === "eliminar") {
     eliminarBodega(id);
   }
 }
 
 async function editarBodega(id) {
-  const item = data.bodega.find(p => p.id === id);
+  const item = data.bodega.find(
+    producto => producto.id === id
+  );
+
   if (!item) return;
 
-  const producto = prompt("Producto", item.producto);
+  const producto = prompt(
+    "Producto",
+    item.producto
+  );
+
   if (producto === null) return;
 
-  const unidad = prompt("Unidad", item.unidad);
+  const unidad = prompt(
+    "Unidad",
+    item.unidad
+  );
+
   if (unidad === null) return;
 
-  const cantidad = prompt("Cantidad", item.cantidad);
+  const cantidad = prompt(
+    "Cantidad",
+    item.cantidad
+  );
+
   if (cantidad === null) return;
 
-  const costo = prompt("Costo total", item.costo_total);
+  const costo = prompt(
+    "Costo total",
+    item.costo_total
+  );
+
   if (costo === null) return;
 
-  if (!producto.trim() || !unidad.trim() || numero(cantidad) < 0 || numero(costo) < 0) {
-    alert("Datos inválidos");
-    return;
-  }
-
   try {
-    const res = await fetch(`${API_BODEGA}/${id}`, {
+    await api(`/bodega/${id}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json"
-      },
+
       body: JSON.stringify({
-        producto: producto.trim(),
-        nombre: producto.trim(),
-        unidad: unidad.trim(),
-        cantidad: numero(cantidad),
-        cantidad_total: numero(cantidad),
-        costo_total: numero(costo)
+        nombre_producto:
+          producto.trim(),
+
+        unidad:
+          unidad.trim(),
+
+        cantidad:
+          numero(cantidad),
+
+        costo_total:
+          numero(costo)
       })
     });
 
-    if (!res.ok) {
-      throw new Error("No se pudo editar producto de bodega");
-    }
-
-    await cargarBodegaDesdeBD();
-    renderizarTodo();
+    await cargarTodoDesdeBD();
   } catch (error) {
-    console.error("Error editando bodega:", error);
-    alert("No se pudo editar el producto en la base de datos");
+    console.error(error);
+    alert(error.message);
   }
 }
 
 async function eliminarBodega(id) {
-  if (!confirm("¿Eliminar producto de bodega?")) return;
+  if (
+    !confirm("¿Eliminar producto de bodega?")
+  ) {
+    return;
+  }
 
   try {
-    const res = await fetch(`${API_BODEGA}/${id}`, {
+    await api(`/bodega/${id}`, {
       method: "DELETE"
     });
 
-    if (!res.ok) {
-      throw new Error("No se pudo eliminar producto de bodega");
-    }
-
-    await cargarBodegaDesdeBD();
-    renderizarTodo();
+    await cargarTodoDesdeBD();
   } catch (error) {
-    console.error("Error eliminando bodega:", error);
-    alert("No se pudo eliminar el producto de la base de datos");
+    console.error(error);
+    alert(error.message);
   }
 }
 
-/* COCINA */
+/* =====================================================
+   COCINA
+===================================================== */
 
-function agregarCocina() {
-  const bodegaId = Number($("selectBodegaCocina").value);
-  const productoCocina = $("cocinaProducto").value.trim();
+/*
+  CORRECCIÓN:
+  Cocina toma el nombre directamente desde Bodega.
+  El usuario solo selecciona el producto y escribe
+  la cantidad de gramos de cada porción.
+*/
 
-  const gramosTexto = $("cocinaUnidad").value.trim();
-  const gramosPorPorcion = Number(gramosTexto.replace(/[^0-9.]/g, ""));
+async function agregarCocina() {
+  const bodegaId = Number(
+    $("selectBodegaCocina").value
+  );
 
-  const productoBodegaOriginal = data.bodega.find(p => p.id === bodegaId);
+  const textoGramos =
+    $("cocinaUnidad").value.trim();
 
-  if (!productoBodegaOriginal) {
+  const gramosPorPorcion = Number(
+    textoGramos
+      .replace(/[^0-9.,]/g, "")
+      .replace(",", ".")
+  );
+
+  const bodega = data.bodega.find(
+    item => item.id === bodegaId
+  );
+
+  if (!bodega) {
     alert("Selecciona un producto de bodega");
     return;
   }
 
-  const productoBodega = normalizarBodega(productoBodegaOriginal);
-
-  if (!productoCocina || gramosPorPorcion <= 0) {
-    alert("Ingresa producto de cocina y gramos por porción");
+  if (gramosPorPorcion <= 0) {
+    alert("Ingresa los gramos por porción");
     return;
   }
 
-  if (productoBodega.cantidad <= 0 || productoBodega.costo_total <= 0) {
-    alert("Este producto de bodega no tiene stock disponible");
-    return;
-  }
+  const unidad =
+    bodega.unidad.toLowerCase().trim();
 
-  const unidadBodega = productoBodega.unidad.toLowerCase().trim();
-
-  let gramosTotalesBodega = 0;
+  let gramosDisponibles = 0;
 
   if (
-    unidadBodega === "kg" ||
-    unidadBodega === "kilo" ||
-    unidadBodega === "kilos" ||
-    unidadBodega === "kilogramo" ||
-    unidadBodega === "kilogramos"
+    unidad === "kg" ||
+    unidad === "kilo" ||
+    unidad === "kilos" ||
+    unidad === "kilogramo" ||
+    unidad === "kilogramos"
   ) {
-    gramosTotalesBodega = productoBodega.cantidad * 1000;
+    gramosDisponibles =
+      bodega.cantidad * 1000;
   } else if (
-    unidadBodega === "g" ||
-    unidadBodega === "gr" ||
-    unidadBodega === "gramo" ||
-    unidadBodega === "gramos"
+    unidad === "g" ||
+    unidad === "gr" ||
+    unidad === "gramo" ||
+    unidad === "gramos"
   ) {
-    gramosTotalesBodega = productoBodega.cantidad;
+    gramosDisponibles =
+      bodega.cantidad;
   } else {
-    alert("Para porcionar, la unidad de bodega debe ser kg o g");
+    alert(
+      "La unidad de bodega debe ser kg o g"
+    );
     return;
   }
 
-  const cantidadPorciones = Math.floor(gramosTotalesBodega / gramosPorPorcion);
+  const cantidadPorciones = Math.floor(
+    gramosDisponibles /
+    gramosPorPorcion
+  );
 
   if (cantidadPorciones <= 0) {
-    alert("No alcanza para crear una porción");
+    alert("No alcanza para una porción");
     return;
   }
 
-  const costoTotalCocina = redondear(productoBodega.costo_total);
-  const costoUnitarioCocina = redondear(costoTotalCocina / cantidadPorciones);
-  const unidadCocina = `${gramosPorPorcion} g`;
+  const gramosUtilizados =
+    cantidadPorciones *
+    gramosPorPorcion;
 
-  const existente = data.cocina.find(item =>
-    item.producto.toLowerCase() === productoCocina.toLowerCase() &&
-    item.unidad.toLowerCase() === unidadCocina.toLowerCase()
+  const usaKilogramos =
+    unidad === "kg" ||
+    unidad === "kilo" ||
+    unidad === "kilos" ||
+    unidad === "kilogramo" ||
+    unidad === "kilogramos";
+
+  const cantidadBodegaUtilizada =
+    usaKilogramos
+      ? gramosUtilizados / 1000
+      : gramosUtilizados;
+
+  /*
+    El nombre no lo escribe el usuario.
+    Se toma directamente del producto de Bodega.
+  */
+  const nombreCocina =
+    bodega.producto;
+
+  const unidadCocina =
+    `${gramosPorPorcion} g`;
+
+  const existente = data.cocina.find(
+    item =>
+      item.producto.toLowerCase() ===
+        nombreCocina.toLowerCase() &&
+      item.unidad.toLowerCase() ===
+        unidadCocina.toLowerCase()
   );
 
-  if (existente) {
-    existente.cantidad = redondear(existente.cantidad + cantidadPorciones);
-    existente.costo_total = redondear(existente.costo_total + costoTotalCocina);
-    existente.costo_unitario = redondear(existente.costo_total / existente.cantidad);
-  } else {
-    data.cocina.push({
-      id: siguienteId(data.cocina),
-      producto: productoCocina,
-      unidad: unidadCocina,
-      cantidad: cantidadPorciones,
-      costo_unitario: costoUnitarioCocina,
-      costo_total: costoTotalCocina
+  try {
+    await api("/traspasar", {
+      method: "POST",
+
+      body: JSON.stringify({
+        bodega_id:
+          bodega.id,
+
+        cocina_id:
+          existente?.id || null,
+
+        nombre_cocina:
+          nombreCocina,
+
+        unidad_cocina:
+          unidadCocina,
+
+        cantidad_bodega:
+          cantidadBodegaUtilizada,
+
+        cantidad_cocina:
+          cantidadPorciones
+      })
     });
+
+    $("selectBodegaCocina").value = "";
+    $("cocinaUnidad").value = "";
+
+    await cargarTodoDesdeBD();
+
+    alert(
+      `${nombreCocina}: se guardaron ` +
+      `${cantidadPorciones} porciones de ` +
+      `${unidadCocina}`
+    );
+  } catch (error) {
+    console.error(error);
+    alert(error.message);
   }
+}
 
-  productoBodegaOriginal.cantidad = 0;
-  productoBodegaOriginal.cantidad_total = 0;
-  productoBodegaOriginal.costo_total = 0;
-
-  limpiarFormularioCocina();
-
-  guardarDatos();
-  renderizarTodo();
-
-  alert(
-    `Se crearon ${cantidadPorciones} porciones de ${gramosPorPorcion} g. Valor por porción: ${moneda(costoUnitarioCocina)}`
+function accionesCocina(evento) {
+  const boton = evento.target.closest(
+    "button[data-action]"
   );
-}
 
-function limpiarFormularioCocina() {
-  $("selectBodegaCocina").value = "";
-  $("cocinaProducto").value = "";
-  $("cocinaUnidad").value = "";
-}
+  if (!boton) return;
 
-function accionesCocina(e) {
-  const id = Number(e.target.dataset.id);
+  const id = Number(boton.dataset.id);
 
-  if (e.target.dataset.action === "editar") {
+  if (boton.dataset.action === "editar") {
     editarCocina(id);
   }
 
-  if (e.target.dataset.action === "eliminar") {
+  if (boton.dataset.action === "eliminar") {
     eliminarCocina(id);
   }
 }
 
-function editarCocina(id) {
-  const item = data.cocina.find(p => p.id === id);
+async function editarCocina(id) {
+  const item = data.cocina.find(
+    producto => producto.id === id
+  );
+
   if (!item) return;
 
-  const producto = prompt("Producto", item.producto);
+  const producto = prompt(
+    "Producto",
+    item.producto
+  );
+
   if (producto === null) return;
 
-  const unidad = prompt("Unidad", item.unidad);
+  const unidad = prompt(
+    "Unidad",
+    item.unidad
+  );
+
   if (unidad === null) return;
 
-  const cantidad = prompt("Cantidad", item.cantidad);
+  const cantidad = prompt(
+    "Cantidad",
+    item.cantidad
+  );
+
   if (cantidad === null) return;
 
-  const costo = prompt("Costo total", item.costo_total);
+  const costo = prompt(
+    "Costo total",
+    item.costo_total
+  );
+
   if (costo === null) return;
 
-  if (!producto.trim() || !unidad.trim() || numero(cantidad) < 0 || numero(costo) < 0) {
-    alert("Datos inválidos");
+  try {
+    await api(`/cocina/${id}`, {
+      method: "PUT",
+
+      body: JSON.stringify({
+        nombre_producto:
+          producto.trim(),
+
+        unidad:
+          unidad.trim(),
+
+        cantidad:
+          numero(cantidad),
+
+        costo_total:
+          numero(costo),
+
+        stock_minimo:
+          item.stock_minimo
+      })
+    });
+
+    await cargarTodoDesdeBD();
+  } catch (error) {
+    console.error(error);
+    alert(error.message);
+  }
+}
+
+async function eliminarCocina(id) {
+  if (
+    !confirm("¿Eliminar producto de cocina?")
+  ) {
     return;
   }
 
-  item.producto = producto.trim();
-  item.unidad = unidad.trim();
-  item.cantidad = numero(cantidad);
-  item.costo_total = numero(costo);
-  item.costo_unitario = item.cantidad > 0 ? redondear(item.costo_total / item.cantidad) : 0;
+  try {
+    await api(`/cocina/${id}`, {
+      method: "DELETE"
+    });
 
-  guardarDatos();
-  renderizarTodo();
+    await cargarTodoDesdeBD();
+  } catch (error) {
+    console.error(error);
+    alert(error.message);
+  }
 }
 
-function eliminarCocina(id) {
-  if (!confirm("¿Eliminar producto de cocina?")) return;
+/* =====================================================
+   PRODUCTOS Y RECETAS
+===================================================== */
 
-  data.cocina = data.cocina.filter(p => p.id !== id);
-  data.recetas = data.recetas.filter(r => r.cocina_id !== id);
+async function crearProductoVenta() {
+  const nombre =
+    $("nombreProductoVenta").value.trim();
 
-  guardarDatos();
-  renderizarTodo();
-}
-
-/* PRODUCTOS Y RECETAS */
-
-function crearProductoVenta() {
-  const nombre = $("nombreProductoVenta").value.trim();
-  const precio = numero($("precioProductoVenta").value);
+  const precio =
+    numero($("precioProductoVenta").value);
 
   if (!nombre || precio <= 0) {
     alert("Completa producto y precio");
     return;
   }
 
-  data.productos.push({
-    id: siguienteId(data.productos),
-    nombre,
-    precio
-  });
+  try {
+    await api("/productos", {
+      method: "POST",
 
-  $("nombreProductoVenta").value = "";
-  $("precioProductoVenta").value = "";
+      body: JSON.stringify({
+        nombre,
+        precio,
+        activo: true
+      })
+    });
 
-  guardarDatos();
-  renderizarTodo();
+    $("nombreProductoVenta").value = "";
+    $("precioProductoVenta").value = "";
+
+    await cargarTodoDesdeBD();
+  } catch (error) {
+    console.error(error);
+    alert(error.message);
+  }
 }
 
-function agregarReceta() {
-  const productoId = Number($("selectProductoVenta").value);
-  const cocinaId = Number($("selectProductoCocina").value);
-  const cantidad = numero($("cantidadReceta").value);
+async function agregarReceta() {
+  const productoId = Number(
+    $("selectProductoVenta").value
+  );
 
-  if (!productoId || !cocinaId || cantidad <= 0) {
+  const cocinaId = Number(
+    $("selectProductoCocina").value
+  );
+
+  const cantidad = numero(
+    $("cantidadReceta").value
+  );
+
+  if (
+    !productoId ||
+    !cocinaId ||
+    cantidad <= 0
+  ) {
     alert("Completa la receta");
     return;
   }
 
-  data.recetas.push({
-    id: siguienteId(data.recetas),
-    producto_id: productoId,
-    cocina_id: cocinaId,
-    cantidad
-  });
+  try {
+    await api("/recetas", {
+      method: "POST",
 
-  $("cantidadReceta").value = "";
+      body: JSON.stringify({
+        producto_venta_id:
+          productoId,
 
-  guardarDatos();
-  renderizarTodo();
+        inventario_cocina_id:
+          cocinaId,
+
+        cantidad_necesaria:
+          cantidad
+      })
+    });
+
+    $("cantidadReceta").value = "";
+
+    await cargarTodoDesdeBD();
+
+    alert("Receta guardada correctamente");
+  } catch (error) {
+    console.error(error);
+    alert(error.message);
+  }
 }
 
-function accionesProductos(e) {
-  const id = Number(e.target.dataset.id);
+function accionesProductos(evento) {
+  const boton = evento.target.closest(
+    "button[data-action]"
+  );
 
-  if (e.target.dataset.action === "editar") {
+  if (!boton) return;
+
+  const id = Number(boton.dataset.id);
+
+  if (boton.dataset.action === "editar") {
     editarProducto(id);
   }
 
-  if (e.target.dataset.action === "eliminar") {
+  if (boton.dataset.action === "eliminar") {
     eliminarProducto(id);
   }
 }
 
-function editarProducto(id) {
-  const item = data.productos.find(p => p.id === id);
+async function editarProducto(id) {
+  const item = data.productos.find(
+    producto => producto.id === id
+  );
+
   if (!item) return;
 
-  const nombre = prompt("Producto", item.nombre);
+  const nombre = prompt(
+    "Producto",
+    item.nombre
+  );
+
   if (nombre === null) return;
 
-  const precio = prompt("Precio", item.precio);
+  const precio = prompt(
+    "Precio",
+    item.precio
+  );
+
   if (precio === null) return;
 
-  if (!nombre.trim() || numero(precio) <= 0) {
-    alert("Datos inválidos");
+  try {
+    await api(`/productos/${id}`, {
+      method: "PUT",
+
+      body: JSON.stringify({
+        nombre:
+          nombre.trim(),
+
+        precio:
+          numero(precio),
+
+        activo:
+          item.activo
+      })
+    });
+
+    await cargarTodoDesdeBD();
+  } catch (error) {
+    console.error(error);
+    alert(error.message);
+  }
+}
+
+async function eliminarProducto(id) {
+  if (!confirm("¿Eliminar producto?")) {
     return;
   }
 
-  item.nombre = nombre.trim();
-  item.precio = numero(precio);
+  try {
+    await api(`/productos/${id}`, {
+      method: "DELETE"
+    });
 
-  guardarDatos();
-  renderizarTodo();
+    await cargarTodoDesdeBD();
+  } catch (error) {
+    console.error(error);
+    alert(error.message);
+  }
 }
 
-function eliminarProducto(id) {
-  if (!confirm("¿Eliminar producto?")) return;
+/* =====================================================
+   VENTAS
+===================================================== */
 
-  data.productos = data.productos.filter(p => p.id !== id);
-  data.recetas = data.recetas.filter(r => r.producto_id !== id);
+async function registrarVenta() {
+  const productoId = Number(
+    $("selectVentaProducto").value
+  );
 
-  guardarDatos();
-  renderizarTodo();
-}
+  const cantidad = numero(
+    $("cantidadVenta").value
+  );
 
-/* VENTAS */
+  const medioPago =
+    $("medioPagoVenta").value;
 
-function registrarVenta() {
-  const productoId = Number($("selectVentaProducto").value);
-  const cantidad = numero($("cantidadVenta").value);
-  const medioPago = $("medioPagoVenta").value;
-
-  const producto = data.productos.find(p => p.id === productoId);
-
-  if (!producto || cantidad <= 0) {
-    alert("Selecciona producto y cantidad");
+  if (!productoId || cantidad <= 0) {
+    alert(
+      "Selecciona producto y cantidad"
+    );
     return;
   }
 
-  const receta = data.recetas.filter(r => r.producto_id === productoId);
+  try {
+    await api("/ventas", {
+      method: "POST",
 
-  if (receta.length === 0) {
-    alert("Este producto no tiene receta");
-    return;
+      body: JSON.stringify({
+        medio_pago: medioPago,
+
+        items: [
+          {
+            producto_venta_id:
+              productoId,
+
+            cantidad
+          }
+        ]
+      })
+    });
+
+    $("cantidadVenta").value = "";
+
+    await cargarTodoDesdeBD();
+
+    alert("Venta registrada correctamente");
+  } catch (error) {
+    console.error(error);
+    alert(error.message);
   }
-
-  for (const item of receta) {
-    const insumo = data.cocina.find(p => p.id === item.cocina_id);
-    const requerido = item.cantidad * cantidad;
-
-    if (!insumo || insumo.cantidad < requerido) {
-      alert("No hay suficiente inventario de cocina");
-      return;
-    }
-  }
-
-  receta.forEach(item => {
-    const insumo = data.cocina.find(p => p.id === item.cocina_id);
-    const requerido = item.cantidad * cantidad;
-    const costoUnitario = insumo.cantidad > 0 ? insumo.costo_total / insumo.cantidad : 0;
-    const costoDescuento = redondear(costoUnitario * requerido);
-
-    insumo.cantidad = redondear(insumo.cantidad - requerido);
-    insumo.costo_total = redondear(insumo.costo_total - costoDescuento);
-    insumo.costo_unitario = insumo.cantidad > 0 ? redondear(insumo.costo_total / insumo.cantidad) : 0;
-
-    if (insumo.cantidad <= 0) {
-      insumo.cantidad = 0;
-      insumo.costo_total = 0;
-      insumo.costo_unitario = 0;
-    }
-  });
-
-  data.ventas.push({
-    id: siguienteId(data.ventas),
-    producto_id: producto.id,
-    producto: producto.nombre,
-    cantidad,
-    medio_pago: medioPago,
-    total: producto.precio * cantidad,
-    fecha: new Date().toLocaleString("es-CL")
-  });
-
-  $("cantidadVenta").value = "";
-
-  guardarDatos();
-  renderizarTodo();
 }
 
-/* RENDER */
+/* =====================================================
+   RENDER
+===================================================== */
 
 function renderizarTodo() {
   renderResumen();
@@ -702,23 +1127,27 @@ function renderizarTodo() {
 }
 
 function renderResumen() {
-  $("totalBodega").textContent = data.bodega.length;
-  $("totalCocina").textContent = data.cocina.length;
-  $("totalProductos").textContent = data.productos.length;
+  $("totalBodega").textContent =
+    data.bodega.length;
 
-  const totalVentas = data.ventas.reduce((sum, venta) => sum + venta.total, 0);
-  $("totalVentas").textContent = moneda(totalVentas);
+  $("totalCocina").textContent =
+    data.cocina.length;
+
+  $("totalProductos").textContent =
+    data.productos.length;
+
+  $("totalVentas").textContent =
+    moneda(data.totalVentas);
 }
 
 function renderBodega() {
   const tbody = $("tablaBodega");
+
   if (!tbody) return;
 
   tbody.innerHTML = "";
 
-  data.bodega.forEach(registro => {
-    const item = normalizarBodega(registro);
-
+  data.bodega.forEach(item => {
     tbody.innerHTML += `
       <tr>
         <td>${item.id}</td>
@@ -726,9 +1155,22 @@ function renderBodega() {
         <td>${item.unidad}</td>
         <td>${item.cantidad}</td>
         <td>${moneda(item.costo_total)}</td>
+
         <td>
-          <button data-action="editar" data-id="${item.id}">Editar</button>
-          <button class="eliminar" data-action="eliminar" data-id="${item.id}">Eliminar</button>
+          <button
+            type="button"
+            data-action="editar"
+            data-id="${item.id}">
+            Editar
+          </button>
+
+          <button
+            type="button"
+            class="eliminar"
+            data-action="eliminar"
+            data-id="${item.id}">
+            Eliminar
+          </button>
         </td>
       </tr>
     `;
@@ -737,6 +1179,7 @@ function renderBodega() {
 
 function renderCocina() {
   const tbody = $("tablaCocina");
+
   if (!tbody) return;
 
   tbody.innerHTML = "";
@@ -749,9 +1192,22 @@ function renderCocina() {
         <td>${item.unidad}</td>
         <td>${item.cantidad}</td>
         <td>${moneda(item.costo_total)}</td>
+
         <td>
-          <button data-action="editar" data-id="${item.id}">Editar</button>
-          <button class="eliminar" data-action="eliminar" data-id="${item.id}">Eliminar</button>
+          <button
+            type="button"
+            data-action="editar"
+            data-id="${item.id}">
+            Editar
+          </button>
+
+          <button
+            type="button"
+            class="eliminar"
+            data-action="eliminar"
+            data-id="${item.id}">
+            Eliminar
+          </button>
         </td>
       </tr>
     `;
@@ -760,18 +1216,24 @@ function renderCocina() {
 
 function renderProductos() {
   const tbody = $("tablaProductos");
+
   if (!tbody) return;
 
   tbody.innerHTML = "";
 
   data.productos.forEach(producto => {
     const receta = data.recetas
-      .filter(r => r.producto_id === producto.id)
-      .map(r => {
-        const insumo = data.cocina.find(c => c.id === r.cocina_id);
-        return insumo ? `${insumo.producto}: ${r.cantidad} ${insumo.unidad}` : "";
-      })
-      .filter(Boolean)
+      .filter(
+        item =>
+          item.producto_venta_id ===
+          producto.id
+      )
+      .map(
+        item =>
+          `${item.ingrediente}: ` +
+          `${item.cantidad_necesaria} ` +
+          `${item.unidad}`
+      )
       .join("<br>");
 
     tbody.innerHTML += `
@@ -780,9 +1242,22 @@ function renderProductos() {
         <td>${producto.nombre}</td>
         <td>${moneda(producto.precio)}</td>
         <td>${receta || "Sin receta"}</td>
+
         <td>
-          <button data-action="editar" data-id="${producto.id}">Editar</button>
-          <button class="eliminar" data-action="eliminar" data-id="${producto.id}">Eliminar</button>
+          <button
+            type="button"
+            data-action="editar"
+            data-id="${producto.id}">
+            Editar
+          </button>
+
+          <button
+            type="button"
+            class="eliminar"
+            data-action="eliminar"
+            data-id="${producto.id}">
+            Eliminar
+          </button>
         </td>
       </tr>
     `;
@@ -791,6 +1266,7 @@ function renderProductos() {
 
 function renderVentas() {
   const tbody = $("tablaVentas");
+
   if (!tbody) return;
 
   tbody.innerHTML = "";
@@ -801,80 +1277,131 @@ function renderVentas() {
         <td>${venta.id}</td>
         <td>${venta.producto}</td>
         <td>${venta.cantidad}</td>
-        <td>${venta.medio_pago}</td>
+
+        <td>
+          ${nombreMedioPago(
+            venta.medio_pago
+          )}
+        </td>
+
         <td>${moneda(venta.total)}</td>
-        <td>${venta.fecha}</td>
+
+        <td>
+          ${formatearFecha(venta.fecha)}
+        </td>
       </tr>
     `;
   });
 }
 
 function renderSelects() {
-  const selectBodegaCocina = $("selectBodegaCocina");
-  const selectProductoVenta = $("selectProductoVenta");
-  const selectProductoCocina = $("selectProductoCocina");
-  const selectVentaProducto = $("selectVentaProducto");
+  const selectBodega =
+    $("selectBodegaCocina");
 
-  if (selectBodegaCocina) {
-    const valorActual = selectBodegaCocina.value;
+  const selectProductoVenta =
+    $("selectProductoVenta");
 
-    selectBodegaCocina.innerHTML = `<option value="">Seleccionar producto de bodega</option>`;
+  const selectProductoCocina =
+    $("selectProductoCocina");
+
+  const selectVentaProducto =
+    $("selectVentaProducto");
+
+  if (selectBodega) {
+    const valor = selectBodega.value;
+
+    selectBodega.innerHTML = `
+      <option value="">
+        Seleccionar producto de bodega
+      </option>
+    `;
 
     data.bodega
-      .map(normalizarBodega)
-      .filter(item => item.cantidad > 0 && item.costo_total > 0)
+      .filter(
+        item =>
+          item.cantidad > 0 &&
+          item.costo_total > 0
+      )
       .forEach(item => {
-        selectBodegaCocina.innerHTML += `
+        selectBodega.innerHTML += `
           <option value="${item.id}">
-            ${item.producto} - ${item.cantidad} ${item.unidad}
+            ${item.producto} -
+            ${item.cantidad}
+            ${item.unidad}
           </option>
         `;
       });
 
-    selectBodegaCocina.value = valorActual;
+    selectBodega.value = valor;
   }
 
   if (selectProductoVenta) {
-    const valorActual = selectProductoVenta.value;
+    const valor =
+      selectProductoVenta.value;
 
-    selectProductoVenta.innerHTML = `<option value="">Seleccionar producto</option>`;
+    selectProductoVenta.innerHTML = `
+      <option value="">
+        Seleccionar producto
+      </option>
+    `;
 
-    data.productos.forEach(item => {
-      selectProductoVenta.innerHTML += `
-        <option value="${item.id}">${item.nombre}</option>
-      `;
-    });
+    data.productos
+      .filter(item => item.activo)
+      .forEach(item => {
+        selectProductoVenta.innerHTML += `
+          <option value="${item.id}">
+            ${item.nombre}
+          </option>
+        `;
+      });
 
-    selectProductoVenta.value = valorActual;
+    selectProductoVenta.value = valor;
   }
 
   if (selectProductoCocina) {
-    const valorActual = selectProductoCocina.value;
+    const valor =
+      selectProductoCocina.value;
 
-    selectProductoCocina.innerHTML = `<option value="">Seleccionar insumo de cocina</option>`;
+    selectProductoCocina.innerHTML = `
+      <option value="">
+        Seleccionar insumo de cocina
+      </option>
+    `;
 
     data.cocina.forEach(item => {
       selectProductoCocina.innerHTML += `
         <option value="${item.id}">
-          ${item.producto} - ${item.cantidad} ${item.unidad}
+          ${item.producto} -
+          ${item.cantidad}
+          ${item.unidad}
         </option>
       `;
     });
 
-    selectProductoCocina.value = valorActual;
+    selectProductoCocina.value = valor;
   }
 
   if (selectVentaProducto) {
-    const valorActual = selectVentaProducto.value;
+    const valor =
+      selectVentaProducto.value;
 
-    selectVentaProducto.innerHTML = `<option value="">Seleccionar producto</option>`;
+    selectVentaProducto.innerHTML = `
+      <option value="">
+        Seleccionar producto
+      </option>
+    `;
 
-    data.productos.forEach(item => {
-      selectVentaProducto.innerHTML += `
-        <option value="${item.id}">${item.nombre} - ${moneda(item.precio)}</option>
-      `;
-    });
+    data.productos
+      .filter(item => item.activo)
+      .forEach(item => {
+        selectVentaProducto.innerHTML += `
+          <option value="${item.id}">
+            ${item.nombre} -
+            ${moneda(item.precio)}
+          </option>
+        `;
+      });
 
-    selectVentaProducto.value = valorActual;
+    selectVentaProducto.value = valor;
   }
 }

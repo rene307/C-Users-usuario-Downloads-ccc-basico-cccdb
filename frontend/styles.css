@@ -1,305 +1,770 @@
+/* =========================================================
+   CONFIGURACIÓN GENERAL
+   ========================================================= */
+
+/*
+  El selector * afecta a TODOS los elementos de la página.
+  box-sizing: border-box hace que el padding y el borde
+  se incluyan dentro del ancho y alto del elemento.
+*/
 * {
   box-sizing: border-box;
 }
 
+/*
+  Estilos generales del cuerpo completo de la página.
+*/
 body {
+  /* Elimina el margen automático que agrega el navegador. */
   margin: 0;
+
+  /* Define la fuente principal de la aplicación. */
   font-family: Arial, Helvetica, sans-serif;
+
+  /* Color gris claro del fondo general. */
   background: #f4f5f7;
+
+  /* Color principal del texto. */
   color: #020617;
 }
 
+/*
+  Hace que botones, inputs y selects usen
+  la misma fuente definida en body.
+*/
 button,
 input,
 select {
   font-family: inherit;
 }
 
+/*
+  Cambia el cursor a una mano cuando se pasa
+  por encima de cualquier botón.
+*/
 button {
   cursor: pointer;
 }
 
-/* LOGIN */
 
+/* =========================================================
+   PÁGINA DE LOGIN
+   ========================================================= */
+
+/*
+  Contenedor principal de toda la pantalla de login.
+*/
 .login-page {
+  /* Ocupa como mínimo toda la altura de la pantalla. */
   min-height: 100vh;
+
+  /* Activa Flexbox para ordenar el contenido. */
   display: flex;
+
+  /* Centra verticalmente la tarjeta de login. */
   align-items: center;
+
+  /* Centra horizontalmente la tarjeta de login. */
   justify-content: center;
+
+  /* Fondo oscuro de la página de inicio de sesión. */
   background: #111827;
+
+  /* Espacio interior para evitar que la tarjeta toque los bordes. */
   padding: 20px;
 }
 
+/*
+  Tarjeta blanca donde se encuentra el formulario de login.
+*/
 .login-card {
+  /* La tarjeta puede ocupar todo el ancho disponible. */
   width: 100%;
+
+  /* Pero nunca será más ancha que 420 píxeles. */
   max-width: 420px;
+
+  /* Fondo blanco. */
   background: #ffffff;
+
+  /* Espacio interior entre el contenido y los bordes. */
   padding: 32px;
+
+  /* Redondea las esquinas. */
   border-radius: 18px;
+
+  /* Agrega una sombra alrededor de la tarjeta. */
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
 }
 
+/*
+  Título principal dentro del login.
+*/
 .login-card h1 {
+  /*
+    Elimina los márgenes superior, izquierdo y derecho.
+    Deja 8px debajo del título.
+  */
   margin: 0 0 8px;
+
+  /* Tamaño del título. */
   font-size: 32px;
 }
 
+/*
+  Texto descriptivo debajo del título del login.
+*/
 .login-card p {
+  /* Deja 24px debajo del párrafo. */
   margin: 0 0 24px;
+
+  /* Color gris del texto secundario. */
   color: #475569;
 }
 
+/*
+  Etiquetas de los campos, por ejemplo:
+  Correo electrónico y Contraseña.
+*/
 .login-card label {
+  /* Hace que cada label ocupe su propia línea. */
   display: block;
+
+  /*
+    14px arriba, 0 a los lados y 6px abajo.
+  */
   margin: 14px 0 6px;
+
+  /* Texto en negrita. */
   font-weight: 700;
 }
 
+/*
+  Campos de entrada del formulario de login.
+*/
 .login-card input {
+  /* Ocupa todo el ancho de la tarjeta. */
   width: 100%;
+
+  /* Altura del campo. */
   height: 44px;
+
+  /* Espacio interior horizontal. */
   padding: 0 12px;
+
+  /* Borde gris claro. */
   border: 1px solid #cbd5e1;
+
+  /* Esquinas redondeadas. */
   border-radius: 10px;
+
+  /* Tamaño del texto escrito en el campo. */
   font-size: 15px;
 }
 
+/*
+  Botón principal para iniciar sesión.
+*/
 .login-card button {
+  /* Ocupa todo el ancho de la tarjeta. */
   width: 100%;
+
+  /* Altura del botón. */
   height: 46px;
+
+  /* Deja espacio entre los campos y el botón. */
   margin-top: 22px;
+
+  /* Elimina el borde predeterminado. */
   border: none;
+
+  /* Redondea las esquinas. */
   border-radius: 10px;
+
+  /* Fondo oscuro. */
   background: #111827;
+
+  /* Texto blanco. */
   color: #ffffff;
+
+  /* Texto en negrita. */
   font-weight: 700;
+
+  /* Tamaño del texto del botón. */
   font-size: 15px;
 }
 
-/* LAYOUT */
 
+/* =========================================================
+   DISTRIBUCIÓN GENERAL DE LA APLICACIÓN
+   ========================================================= */
+
+/*
+  Contenedor principal que incluye:
+  - Barra lateral
+  - Contenido de la aplicación
+*/
 .app {
+  /* Coloca la barra lateral y el contenido uno al lado del otro. */
   display: flex;
+
+  /* Hace que la aplicación ocupe toda la pantalla vertical. */
   min-height: 100vh;
 }
 
+/*
+  Barra lateral izquierda de navegación.
+*/
 .sidebar {
+  /* Ancho fijo del menú lateral. */
   width: 260px;
+
+  /* Ocupa como mínimo toda la altura de la pantalla. */
   min-height: 100vh;
+
+  /* Fondo oscuro. */
   background: #111827;
+
+  /* Texto blanco. */
   color: #ffffff;
+
+  /* Espacio interior. */
   padding: 24px;
+
+  /*
+    Mantiene la barra fija aunque el usuario
+    se desplace hacia abajo.
+  */
   position: fixed;
+
+  /* La ubica pegada al borde izquierdo. */
   left: 0;
+
+  /* La ubica pegada a la parte superior. */
   top: 0;
 }
 
+/*
+  Títulos principales dentro de la barra lateral.
+*/
 .sidebar h1,
 .sidebar h2 {
+  /* Elimina márgenes y deja 16px debajo. */
   margin: 0 0 16px;
+
+  /* Tamaño de los títulos. */
   font-size: 30px;
 }
 
+/*
+  Texto o descripción dentro de la barra lateral.
+*/
 .sidebar p {
+  /* Deja 22px debajo del párrafo. */
   margin: 0 0 22px;
+
+  /* Tamaño de texto más pequeño. */
   font-size: 14px;
 }
 
+/*
+  Contenedor de los botones de navegación.
+*/
 .sidebar nav {
+  /* Activa Flexbox. */
   display: flex;
+
+  /* Ordena los elementos uno debajo del otro. */
   flex-direction: column;
+
+  /* Espacio entre cada botón del menú. */
   gap: 10px;
 }
 
+/*
+  Estilos compartidos por botones y enlaces
+  dentro de la barra lateral.
+*/
 .sidebar button,
 .sidebar a {
+  /* Ocupan todo el ancho disponible. */
   width: 100%;
+
+  /* Altura mínima de cada opción. */
   min-height: 42px;
+
+  /* Elimina el borde predeterminado. */
   border: none;
+
+  /* Redondea las esquinas. */
   border-radius: 9px;
+
+  /* Espacio interior horizontal. */
   padding: 0 12px;
+
+  /* Fondo gris oscuro. */
   background: #1f2937;
+
+  /* Texto blanco. */
   color: #ffffff;
+
+  /* Alinea el texto hacia la izquierda. */
   text-align: left;
+
+  /* Texto en negrita. */
   font-weight: 700;
+
+  /* Tamaño del texto. */
   font-size: 15px;
+
+  /* Elimina el subrayado de los enlaces. */
   text-decoration: none;
 }
 
+/*
+  Estilo de la opción actualmente seleccionada
+  en el menú lateral.
+*/
 .sidebar button.active,
 .sidebar a.active {
+  /* Fondo claro para destacar la opción activa. */
   background: #f1f5f9;
+
+  /* Texto oscuro. */
   color: #020617;
 }
 
+/*
+  Botones para cerrar sesión.
+  Se aplicará a cualquiera de estas clases o ID:
+  .salir
+  .logout
+  #btnSalir
+*/
 .sidebar .salir,
 .sidebar .logout,
 #btnSalir {
+  /* Separa el botón de salir de las demás opciones. */
   margin-top: 24px;
+
+  /* Fondo rojo oscuro. */
   background: #940a0a;
+
+  /* Texto blanco. */
   color: #ffffff;
+
+  /* Alineación hacia la izquierda. */
   text-align: left;
 }
 
+/*
+  Área principal donde aparece el contenido.
+  Se permiten tres nombres de clase diferentes:
+  .main, .content o .contenido.
+*/
 .main,
 .content,
 .contenido {
+  /*
+    Ocupa todo el ancho de la pantalla menos
+    los 260px de la barra lateral.
+  */
   width: calc(100% - 260px);
+
+  /*
+    Desplaza el contenido 260px hacia la derecha
+    para que no quede debajo del sidebar.
+  */
   margin-left: 260px;
+
+  /* Espacio interior del contenido. */
   padding: 28px;
 }
 
-/* CARDS */
 
+/* =========================================================
+   TARJETAS DE ENCABEZADO
+   ========================================================= */
+
+/*
+  Tarjetas superiores utilizadas para mostrar
+  título, descripción y posiblemente un botón.
+*/
 .top-card,
 .header-card,
 .card-header {
+  /* Fondo blanco. */
   background: #ffffff;
+
+  /* Esquinas redondeadas. */
   border-radius: 18px;
+
+  /* Espacio interior. */
   padding: 22px;
+
+  /* Separación con el contenido siguiente. */
   margin-bottom: 20px;
+
+  /* Activa Flexbox. */
   display: flex;
+
+  /*
+    Coloca un elemento a la izquierda
+    y otro a la derecha.
+  */
   justify-content: space-between;
+
+  /* Centra verticalmente los elementos. */
   align-items: center;
+
+  /* Espacio mínimo entre los elementos. */
   gap: 18px;
 }
 
+/*
+  Títulos de las tarjetas superiores.
+*/
 .top-card h1,
 .header-card h1,
 .card-header h1 {
+  /* Elimina márgenes y deja 6px debajo. */
   margin: 0 0 6px;
+
+  /* Tamaño del título principal. */
   font-size: 32px;
 }
 
+/*
+  Textos descriptivos de las tarjetas superiores.
+*/
 .top-card p,
 .header-card p,
 .card-header p {
+  /* Elimina los márgenes predeterminados. */
   margin: 0;
+
+  /* Color gris para texto secundario. */
   color: #475569;
 }
 
+
+/* =========================================================
+   TARJETAS DE CONTENIDO
+   ========================================================= */
+
+/*
+  Tarjetas generales utilizadas en cada sección.
+*/
 .card,
 .section-card,
 .panel {
+  /* Fondo blanco. */
   background: #ffffff;
+
+  /* Esquinas redondeadas. */
   border-radius: 18px;
+
+  /* Espacio interior. */
   padding: 24px;
+
+  /* Separación con la siguiente tarjeta. */
   margin-bottom: 20px;
 }
 
+/*
+  Títulos de segundo nivel dentro de las tarjetas.
+*/
 .card h2,
 .section-card h2,
 .panel h2 {
+  /* Elimina márgenes y deja 18px debajo. */
   margin: 0 0 18px;
+
+  /* Tamaño del título. */
   font-size: 25px;
 }
 
+/*
+  Títulos de tercer nivel dentro de las tarjetas.
+*/
 .card h3,
 .section-card h3,
 .panel h3 {
+  /* 22px arriba y 14px abajo. */
   margin: 22px 0 14px;
+
+  /* Tamaño del subtítulo. */
   font-size: 20px;
 }
 
-/* BOTONES */
 
+/* =========================================================
+   BOTONES GENERALES
+   ========================================================= */
+
+/*
+  Estilos para elementos con clase .btn
+  y para todos los botones de la aplicación.
+*/
 .btn,
 button {
+  /* Altura mínima de los botones. */
   min-height: 42px;
+
+  /* Elimina el borde predeterminado. */
   border: none;
+
+  /* Redondea las esquinas. */
   border-radius: 10px;
+
+  /* Espacio interior horizontal. */
   padding: 0 18px;
+
+  /* Fondo oscuro principal. */
   background: #111827;
+
+  /* Texto blanco. */
   color: #ffffff;
+
+  /* Texto en negrita. */
   font-weight: 700;
+
+  /* Tamaño del texto. */
   font-size: 15px;
 }
 
-/* BOTÓN ELIMINAR EN ROJO */
 
+/* =========================================================
+   BOTÓN ELIMINAR EN ROJO
+   ========================================================= */
+
+/*
+  Aplica fondo rojo a botones que tengan:
+  - clase eliminar
+  - atributo data-action="eliminar"
+
+  !important obliga a que este color tenga prioridad
+  sobre otras reglas CSS.
+*/
 .eliminar,
 button.eliminar,
 button[data-action="eliminar"] {
+  /* Fondo rojo. */
   background: #c31a0b !important;
+
+  /* Texto blanco. */
   color: #ffffff !important;
 }
 
+/*
+  Mantiene el mismo color rojo cuando
+  el usuario pasa el mouse sobre el botón.
+*/
 .eliminar:hover,
 button.eliminar:hover,
 button[data-action="eliminar"]:hover {
+  /* Mantiene el fondo rojo. */
   background: #c31a0b !important;
+
+  /* Mantiene el texto blanco. */
   color: #ffffff !important;
 }
 
-/* BOTÓN EDITAR OSCURO */
 
+/* =========================================================
+   BOTÓN EDITAR
+   ========================================================= */
+
+/*
+  Aplica estilo oscuro a cualquier botón que tenga:
+  data-action="editar"
+*/
 button[data-action="editar"] {
+  /* Fondo oscuro. */
   background: #111827;
+
+  /* Texto blanco. */
   color: #ffffff;
 }
 
+/*
+  Estilos alternativos para botones peligrosos.
+*/
 .btn-danger,
 button.danger {
+  /* Fondo rojo. */
   background: #c31a0b;
 }
 
+/*
+  Botón claro para acciones secundarias.
+*/
 .btn-light {
+  /* Fondo gris muy claro. */
   background: #f1f5f9;
+
+  /* Texto oscuro. */
   color: #111827;
 }
 
-/* FORMULARIOS */
 
+/* =========================================================
+   CAMPOS DE FORMULARIO
+   ========================================================= */
+
+/*
+  Estilos generales para inputs y selects.
+*/
 input,
 select {
+  /* Altura de los campos. */
   height: 43px;
+
+  /* Borde gris claro. */
   border: 1px solid #cbd5e1;
+
+  /* Esquinas redondeadas. */
   border-radius: 10px;
+
+  /* Espacio interior horizontal. */
   padding: 0 12px;
+
+  /* Tamaño del texto. */
   font-size: 15px;
+
+  /* Fondo blanco. */
   background: #ffffff;
+
+  /* Color del texto escrito. */
   color: #020617;
+
+  /*
+    Permite que los campos se reduzcan dentro
+    de una cuadrícula sin desbordarse.
+  */
   min-width: 0;
 }
 
+/*
+  Estilo del texto de ayuda que aparece
+  dentro de un input antes de escribir.
+*/
 input::placeholder {
+  /* Color gris del placeholder. */
   color: #64748b;
 }
 
+
+/* =========================================================
+   FILAS Y CUADRÍCULAS DE FORMULARIOS
+   ========================================================= */
+
+/*
+  Contenedores generales para formularios.
+
+  Se crean cinco columnas del mismo ancho.
+*/
 .form-row,
 .form-grid,
 .inputs-row {
+  /* Activa CSS Grid. */
   display: grid;
+
+  /*
+    Crea 5 columnas iguales.
+
+    minmax(0, 1fr) permite que cada columna
+    pueda reducirse sin provocar desbordamientos.
+  */
   grid-template-columns: repeat(5, minmax(0, 1fr));
+
+  /* Espacio entre campos. */
   gap: 10px;
+
+  /* Ocupa todo el ancho disponible. */
   width: 100%;
+
+  /* Separación debajo del formulario. */
   margin-bottom: 18px;
 }
 
-/* COCINA: primer campo más ancho y botón más ancho */
 
+/* =========================================================
+   FORMULARIO DE COCINA
+   ========================================================= */
+
+/*
+  Distribución especial para el formulario de Cocina.
+
+  Tiene cuatro columnas:
+  1. Producto: más ancha.
+  2. Cantidad.
+  3. Unidad.
+  4. Botón: también más ancho.
+*/
 .cocina-form {
   grid-template-columns: 1.5fr 1fr 1fr 1.25fr;
 }
 
+/*
+  Primer select del formulario de cocina.
+  Normalmente corresponde al producto.
+*/
 .cocina-form select:first-child {
+  /* Evita que el selector de productos quede muy pequeño. */
   min-width: 240px;
 }
 
+/*
+  Botón del formulario de cocina.
+*/
 .cocina-form button {
+  /* Ancho mínimo para mostrar correctamente el texto. */
   min-width: 170px;
+
+  /*
+    Impide que el texto del botón se divida
+    en dos líneas.
+  */
   white-space: nowrap;
 }
 
+
+/* =========================================================
+   FILAS DE TRASPASO
+   ========================================================= */
+
+/*
+  Formulario utilizado para traspasar productos
+  desde Bodega hacia Cocina.
+*/
 .transfer-row,
 .traspaso-row {
+  /* Activa CSS Grid. */
   display: grid;
+
+  /* Crea cinco columnas del mismo ancho. */
   grid-template-columns: repeat(5, minmax(0, 1fr));
+
+  /* Espacio entre campos. */
   gap: 10px;
+
+  /* Ocupa todo el ancho disponible. */
   width: 100%;
+
+  /* Espacio debajo de la fila. */
   margin-bottom: 10px;
 }
 
+
+/* =========================================================
+   ANCHO DE CAMPOS Y BOTONES DE FORMULARIOS
+   ========================================================= */
+
+/*
+  Hace que todos los inputs, selects y botones
+  ocupen completamente su columna de la cuadrícula.
+*/
 .form-row input,
 .form-row select,
 .form-row button,
@@ -318,89 +783,214 @@ input::placeholder {
   width: 100%;
 }
 
-/* TABLAS */
 
+/* =========================================================
+   TABLAS
+   ========================================================= */
+
+/*
+  Contenedor externo de la tabla.
+*/
 .table-wrap {
+  /* Ocupa todo el ancho disponible. */
   width: 100%;
+
+  /*
+    Agrega desplazamiento horizontal cuando
+    la tabla es más ancha que la pantalla.
+  */
   overflow-x: auto;
 }
 
+/*
+  Estilo general de todas las tablas.
+*/
 table {
+  /* La tabla ocupa todo el ancho disponible. */
   width: 100%;
+
+  /*
+    Permite manejar por separado los bordes
+    de cada celda.
+  */
   border-collapse: separate;
+
+  /* Elimina espacios entre las celdas. */
   border-spacing: 0;
+
+  /* Fondo blanco. */
   background: #ffffff;
+
+  /* Borde exterior de la tabla. */
   border: 1px solid #e2e8f0;
+
+  /* Esquinas redondeadas. */
   border-radius: 14px;
+
+  /*
+    Oculta cualquier contenido que sobresalga
+    de las esquinas redondeadas.
+  */
   overflow: hidden;
+
+  /* Espacio sobre la tabla. */
   margin-top: 24px;
 }
 
+/*
+  Cabecera de la tabla.
+*/
 thead {
+  /* Fondo gris muy claro. */
   background: #f8fafc;
 }
 
+/*
+  Estilos compartidos entre:
+  th = encabezados
+  td = celdas normales
+*/
 th,
 td {
+  /* Espacio interior de las celdas. */
   padding: 12px;
+
+  /* Alinea el contenido hacia la izquierda. */
   text-align: left;
+
+  /* Línea divisoria debajo de cada fila. */
   border-bottom: 1px solid #e2e8f0;
+
+  /* Tamaño del texto de la tabla. */
   font-size: 14px;
+
+  /* Centra verticalmente el contenido de la celda. */
   vertical-align: middle;
 }
 
+/*
+  Encabezados de las columnas.
+*/
 th {
+  /* Texto en negrita. */
   font-weight: 700;
+
+  /* Color gris oscuro. */
   color: #334155;
 }
 
+/*
+  Elimina la línea inferior de la última fila.
+*/
 tr:last-child td {
   border-bottom: none;
 }
 
+/*
+  Última columna de cada fila.
+  Normalmente contiene los botones Editar y Eliminar.
+*/
 td:last-child {
+  /* Ancho fijo para la columna de acciones. */
   width: 190px;
 }
 
+/*
+  Botones ubicados en la última columna.
+*/
 td:last-child button {
+  /* Ocupan todo el ancho de la celda. */
   width: 100%;
+
+  /* Altura del botón. */
   height: 40px;
+
+  /* Separación vertical entre botones. */
   margin: 4px 0;
+
+  /* Esquinas redondeadas. */
   border-radius: 9px;
 }
 
-/* RESUMEN */
 
+/* =========================================================
+   TARJETAS DE RESUMEN Y ESTADÍSTICAS
+   ========================================================= */
+
+/*
+  Contenedor de tarjetas de resumen.
+
+  Muestra cuatro tarjetas por fila
+  en pantallas grandes.
+*/
 .resumen-grid,
 .stats-grid {
+  /* Activa CSS Grid. */
   display: grid;
+
+  /* Crea cuatro columnas iguales. */
   grid-template-columns: repeat(4, minmax(0, 1fr));
+
+  /* Espacio entre tarjetas. */
   gap: 16px;
 }
 
+/*
+  Cada tarjeta individual del resumen.
+*/
 .resumen-card,
 .stat-card {
+  /* Fondo blanco. */
   background: #ffffff;
+
+  /* Esquinas redondeadas. */
   border-radius: 16px;
+
+  /* Espacio interior. */
   padding: 20px;
+
+  /* Borde gris claro. */
   border: 1px solid #e2e8f0;
 }
 
+/*
+  Títulos de las tarjetas de resumen.
+*/
 .resumen-card h3,
 .stat-card h3 {
+  /* Elimina márgenes y deja 10px debajo. */
   margin: 0 0 10px;
+
+  /* Color gris para el nombre del indicador. */
   color: #475569;
+
+  /* Tamaño del título. */
   font-size: 16px;
 }
 
+/*
+  Número o valor principal de cada tarjeta.
+*/
 .resumen-card strong,
 .stat-card strong {
+  /* Hace más grande el número del resumen. */
   font-size: 28px;
 }
 
-/* RESPONSIVE */
 
+/* =========================================================
+   RESPONSIVE: PANTALLAS MEDIANAS
+   ========================================================= */
+
+/*
+  Estas reglas se aplican cuando la pantalla
+  mide 1100px o menos.
+*/
 @media (max-width: 1100px) {
+  /*
+    Los formularios pasan de cinco columnas
+    a tres columnas.
+  */
   .form-row,
   .form-grid,
   .inputs-row,
@@ -410,44 +1000,93 @@ td:last-child button {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  /*
+    Las tarjetas de resumen pasan
+    de cuatro columnas a dos.
+  */
   .resumen-grid,
   .stats-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
+
+/* =========================================================
+   RESPONSIVE: CELULARES Y TABLETS PEQUEÑAS
+   ========================================================= */
+
+/*
+  Estas reglas se aplican cuando la pantalla
+  mide 800px o menos.
+*/
 @media (max-width: 800px) {
+  /*
+    La aplicación deja de mostrar sidebar y contenido
+    uno al lado del otro.
+  */
   .app {
     display: block;
   }
 
+  /*
+    La barra lateral deja de estar fija
+    y ocupa todo el ancho de la pantalla.
+  */
   .sidebar {
+    /* Deja de estar fija en la pantalla. */
     position: relative;
+
+    /* Ocupa todo el ancho. */
     width: 100%;
+
+    /* Ya no necesita ocupar toda la altura. */
     min-height: 0;
   }
 
+  /*
+    El contenido principal ocupa toda la pantalla.
+  */
   .main,
   .content,
   .contenido {
+    /* Ocupa el ancho completo. */
     width: 100%;
+
+    /* Elimina el desplazamiento del sidebar. */
     margin-left: 0;
+
+    /* Reduce el espacio interior. */
     padding: 16px;
   }
 
+  /*
+    Las tarjetas superiores dejan de usar Flexbox.
+    Sus elementos se muestran uno debajo del otro.
+  */
   .top-card,
   .header-card,
   .card-header {
     display: block;
   }
 
+  /*
+    Los botones de las tarjetas superiores
+    ocupan todo el ancho en celulares.
+  */
   .top-card button,
   .header-card button,
   .card-header button {
+    /* Ocupa todo el ancho. */
     width: 100%;
+
+    /* Espacio sobre el botón. */
     margin-top: 16px;
   }
 
+  /*
+    Todos los formularios pasan a una sola columna.
+    Cada campo aparece debajo del anterior.
+  */
   .form-row,
   .form-grid,
   .inputs-row,
@@ -457,6 +1096,10 @@ td:last-child button {
     grid-template-columns: 1fr;
   }
 
+  /*
+    Las tarjetas de resumen también pasan
+    a una sola columna.
+  */
   .resumen-grid,
   .stats-grid {
     grid-template-columns: 1fr;
