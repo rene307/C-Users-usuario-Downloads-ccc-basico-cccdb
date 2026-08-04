@@ -352,8 +352,12 @@
 
         </div>
 
-        <h3>Agregar receta</h3>
+        <h3>Crear receta</h3>
 
+        <!--
+          Producto de venta al que pertenece la receta.
+          Los ingredientes se cargan solamente desde Cocina.
+        -->
         <div class="form-row">
 
           <select
@@ -365,30 +369,35 @@
             </option>
           </select>
 
-          <select
-            id="selectProductoCocina"
-            title="Seleccionar producto de cocina para receta"
+          <button
+            type="button"
+            id="btnAgregarIngrediente"
           >
-            <option value="">
-              Seleccionar insumo de cocina
-            </option>
-          </select>
+            Agregar ingrediente
+          </button>
 
           <input
-            id="cantidadReceta"
-            type="number"
-            placeholder="Cantidad usada"
-            title="Cantidad usada en receta"
+            id="costoTotalReceta"
+            type="text"
+            value="$0"
+            title="Costo total del plato"
+            readonly
           />
 
           <button
             type="button"
             id="btnAgregarReceta"
           >
-            Agregar receta
+            Guardar receta
           </button>
 
         </div>
+
+        <!--
+          JavaScript muestra inicialmente una sola fila.
+          El botón Agregar ingrediente crea las siguientes.
+        -->
+        <div id="ingredientesReceta"></div>
 
         <div class="table-wrap">
           <table>
@@ -398,6 +407,7 @@
                 <th>PRODUCTO</th>
                 <th>PRECIO</th>
                 <th>RECETA</th>
+                <th>COSTO PLATO</th>
                 <th>ACCIÓN</th>
               </tr>
             </thead>
@@ -484,7 +494,6 @@
     </main>
   </div>
 
-  <!-- Fuerza la carga del app.js actualizado -->
   <script src="app.js?v=70"></script>
 </body>
 </html>

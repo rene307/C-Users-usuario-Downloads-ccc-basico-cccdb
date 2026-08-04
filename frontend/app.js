@@ -1,6 +1,7 @@
 const API_BASE = "http://localhost:3000/api";
 
-let token = sessionStorage.getItem("ccc_token") || "";
+let token =
+  sessionStorage.getItem("ccc_token") || "";
 
 let usuario = JSON.parse(
   sessionStorage.getItem("ccc_usuario") || "null"
@@ -15,24 +16,27 @@ let data = {
   totalVentas: 0
 };
 
-document.addEventListener("DOMContentLoaded", async () => {
-  iniciarLogin();
-  iniciarNavegacion();
-  iniciarBotones();
+document.addEventListener(
+  "DOMContentLoaded",
+  async () => {
+    iniciarLogin();
+    iniciarNavegacion();
+    iniciarBotones();
 
-  if (token && usuario) {
-    mostrarAplicacion();
+    if (token && usuario) {
+      mostrarAplicacion();
 
-    try {
-      await cargarTodoDesdeBD();
-    } catch (error) {
-      console.error(error);
-      cerrarSesion();
+      try {
+        await cargarTodoDesdeBD();
+      } catch (error) {
+        console.error(error);
+        cerrarSesion();
+      }
+    } else {
+      mostrarLogin();
     }
-  } else {
-    mostrarLogin();
   }
-});
+);
 
 function $(id) {
   return document.getElementById(id);
@@ -61,7 +65,9 @@ function moneda(valor) {
 function formatearFecha(valor) {
   if (!valor) return "";
 
-  return new Date(valor).toLocaleString("es-CL");
+  return new Date(valor).toLocaleString(
+    "es-CL"
+  );
 }
 
 function nombreMedioPago(valor) {
@@ -89,11 +95,13 @@ async function api(
   };
 
   if (opciones.body) {
-    headers["Content-Type"] = "application/json";
+    headers["Content-Type"] =
+      "application/json";
   }
 
   if (requiereToken && token) {
-    headers.Authorization = `Bearer ${token}`;
+    headers.Authorization =
+      `Bearer ${token}`;
   }
 
   const respuesta = await fetch(
@@ -135,48 +143,64 @@ async function api(
 function normalizarBodega(item) {
   return {
     id: Number(item.id),
-    producto: item.nombre_producto || "",
-    unidad: item.unidad || "",
-    cantidad: numero(item.cantidad),
-    costo_total: numero(item.costo_total)
+    producto:
+      item.nombre_producto || "",
+    unidad:
+      item.unidad || "",
+    cantidad:
+      numero(item.cantidad),
+    costo_total:
+      numero(item.costo_total)
   };
 }
 
 function normalizarCocina(item) {
   return {
     id: Number(item.id),
-    producto: item.nombre_producto || "",
-    unidad: item.unidad || "",
-    cantidad: numero(item.cantidad),
-    costo_unitario: numero(item.costo_unitario),
-    costo_total: numero(item.costo_total),
-    stock_minimo: numero(item.stock_minimo)
+    producto:
+      item.nombre_producto || "",
+    unidad:
+      item.unidad || "",
+    cantidad:
+      numero(item.cantidad),
+    costo_unitario:
+      numero(item.costo_unitario),
+    costo_total:
+      numero(item.costo_total),
+    stock_minimo:
+      numero(item.stock_minimo)
   };
 }
 
 function normalizarProducto(item) {
   return {
     id: Number(item.id),
-    nombre: item.nombre || "",
-    precio: numero(item.precio),
-    activo: item.activo !== false
+    nombre:
+      item.nombre || "",
+    precio:
+      numero(item.precio),
+    activo:
+      item.activo !== false
   };
 }
 
 function normalizarReceta(item) {
   return {
-    id: Number(item.id),
+    id:
+      Number(item.id),
 
-    producto_venta_id: Number(
-      item.producto_venta_id
-    ),
+    producto_venta_id:
+      Number(
+        item.producto_venta_id
+      ),
 
     producto_venta:
       item.producto_venta || "",
 
-    inventario_cocina_id: Number(
-      item.inventario_cocina_id
-    ),
+    inventario_cocina_id:
+      Number(
+        item.inventario_cocina_id
+      ),
 
     ingrediente:
       item.ingrediente || "",
@@ -184,9 +208,10 @@ function normalizarReceta(item) {
     unidad:
       item.unidad || "",
 
-    cantidad_necesaria: numero(
-      item.cantidad_necesaria
-    )
+    cantidad_necesaria:
+      numero(
+        item.cantidad_necesaria
+      )
   };
 }
 
@@ -233,20 +258,32 @@ async function cargarTodoDesdeBD() {
     );
   });
 
-  data.ventas = ventasHoy.detalles.map(detalle => {
-    const venta = ventasPorId.get(
-      Number(detalle.venta_id)
-    );
+  data.ventas =
+    ventasHoy.detalles.map(detalle => {
+      const venta = ventasPorId.get(
+        Number(detalle.venta_id)
+      );
 
-    return {
-      id: Number(detalle.id),
-      producto: detalle.producto,
-      cantidad: numero(detalle.cantidad),
-      medio_pago: venta?.medio_pago || "",
-      total: numero(detalle.subtotal),
-      fecha: venta?.fecha || ""
-    };
-  });
+      return {
+        id:
+          Number(detalle.id),
+
+        producto:
+          detalle.producto,
+
+        cantidad:
+          numero(detalle.cantidad),
+
+        medio_pago:
+          venta?.medio_pago || "",
+
+        total:
+          numero(detalle.subtotal),
+
+        fecha:
+          venta?.fecha || ""
+      };
+    });
 
   renderizarTodo();
 }
@@ -256,7 +293,8 @@ async function cargarTodoDesdeBD() {
 ===================================================== */
 
 function iniciarLogin() {
-  const formulario = $("loginForm");
+  const formulario =
+    $("loginForm");
 
   if (!formulario) return;
 
@@ -285,8 +323,11 @@ function iniciarLogin() {
           false
         );
 
-        token = resultado.token;
-        usuario = resultado.user;
+        token =
+          resultado.token;
+
+        usuario =
+          resultado.user;
 
         sessionStorage.setItem(
           "ccc_token",
@@ -302,8 +343,13 @@ function iniciarLogin() {
 
         await cargarTodoDesdeBD();
 
-        mostrarVista("vistaResumen");
-        activarBoton("btnResumen");
+        mostrarVista(
+          "vistaResumen"
+        );
+
+        activarBoton(
+          "btnResumen"
+        );
       } catch (error) {
         console.error(error);
         alert(error.message);
@@ -313,8 +359,11 @@ function iniciarLogin() {
 }
 
 function mostrarAplicacion() {
-  $("loginView").style.display = "none";
-  $("appView").style.display = "flex";
+  $("loginView").style.display =
+    "none";
+
+  $("appView").style.display =
+    "flex";
 
   $("rolUsuario").textContent =
     usuario?.rol || "";
@@ -324,16 +373,24 @@ function mostrarAplicacion() {
 }
 
 function mostrarLogin() {
-  $("appView").style.display = "none";
-  $("loginView").style.display = "flex";
+  $("appView").style.display =
+    "none";
+
+  $("loginView").style.display =
+    "flex";
 }
 
 function cerrarSesion() {
   token = "";
   usuario = null;
 
-  sessionStorage.removeItem("ccc_token");
-  sessionStorage.removeItem("ccc_usuario");
+  sessionStorage.removeItem(
+    "ccc_token"
+  );
+
+  sessionStorage.removeItem(
+    "ccc_usuario"
+  );
 
   data = {
     bodega: [],
@@ -382,8 +439,13 @@ function iniciarNavegacion() {
         try {
           await cargarTodoDesdeBD();
 
-          mostrarVista(item.vista);
-          activarBoton(item.id);
+          mostrarVista(
+            item.vista
+          );
+
+          activarBoton(
+            item.id
+          );
         } catch (error) {
           console.error(error);
           alert(error.message);
@@ -462,20 +524,60 @@ function iniciarBotones() {
     agregarCocina
   );
 
-  $("btnCrearProductoVenta")?.addEventListener(
-    "click",
-    crearProductoVenta
-  );
+  $("btnCrearProductoVenta")
+    ?.addEventListener(
+      "click",
+      crearProductoVenta
+    );
 
-  $("btnAgregarReceta")?.addEventListener(
-    "click",
-    agregarReceta
-  );
+  /*
+    Agrega la segunda, tercera y
+    siguientes filas de ingredientes.
+  */
+  $("btnAgregarIngrediente")
+    ?.addEventListener(
+      "click",
+      agregarFilaIngrediente
+    );
 
-  $("btnRegistrarVenta")?.addEventListener(
-    "click",
-    registrarVenta
-  );
+  $("btnAgregarReceta")
+    ?.addEventListener(
+      "click",
+      agregarReceta
+    );
+
+  /*
+    Recalcula el costo al cambiar
+    un ingrediente o su cantidad.
+  */
+  $("ingredientesReceta")
+    ?.addEventListener(
+      "input",
+      actualizarCostoConstructorReceta
+    );
+
+  $("ingredientesReceta")
+    ?.addEventListener(
+      "change",
+      actualizarCostoConstructorReceta
+    );
+
+  $("ingredientesReceta")
+    ?.addEventListener(
+      "click",
+      accionesIngredientesReceta
+    );
+
+  /*
+    Inicialmente aparece una sola fila.
+  */
+  asegurarPrimeraFilaReceta();
+
+  $("btnRegistrarVenta")
+    ?.addEventListener(
+      "click",
+      registrarVenta
+    );
 
   $("tablaBodega")?.addEventListener(
     "click",
@@ -487,10 +589,11 @@ function iniciarBotones() {
     accionesCocina
   );
 
-  $("tablaProductos")?.addEventListener(
-    "click",
-    accionesProductos
-  );
+  $("tablaProductos")
+    ?.addEventListener(
+      "click",
+      accionesProductos
+    );
 }
 
 /* =====================================================
@@ -499,16 +602,24 @@ function iniciarBotones() {
 
 async function agregarBodega() {
   const producto =
-    $("bodegaProducto").value.trim();
+    $("bodegaProducto")
+      .value
+      .trim();
 
   const unidad =
-    $("bodegaUnidad").value.trim();
+    $("bodegaUnidad")
+      .value
+      .trim();
 
   const cantidad =
-    numero($("bodegaCantidad").value);
+    numero(
+      $("bodegaCantidad").value
+    );
 
   const costo =
-    numero($("bodegaCosto").value);
+    numero(
+      $("bodegaCosto").value
+    );
 
   if (
     !producto ||
@@ -516,7 +627,10 @@ async function agregarBodega() {
     cantidad <= 0 ||
     costo <= 0
   ) {
-    alert("Completa los datos de bodega");
+    alert(
+      "Completa los datos de bodega"
+    );
+
     return;
   }
 
@@ -525,10 +639,14 @@ async function agregarBodega() {
       method: "POST",
 
       body: JSON.stringify({
-        nombre_producto: producto,
+        nombre_producto:
+          producto,
+
         unidad,
         cantidad,
-        costo_total: costo
+
+        costo_total:
+          costo
       })
     });
 
@@ -545,27 +663,37 @@ async function agregarBodega() {
 }
 
 function accionesBodega(evento) {
-  const boton = evento.target.closest(
-    "button[data-action]"
-  );
+  const boton =
+    evento.target.closest(
+      "button[data-action]"
+    );
 
   if (!boton) return;
 
-  const id = Number(boton.dataset.id);
+  const id =
+    Number(boton.dataset.id);
 
-  if (boton.dataset.action === "editar") {
+  if (
+    boton.dataset.action ===
+    "editar"
+  ) {
     editarBodega(id);
   }
 
-  if (boton.dataset.action === "eliminar") {
+  if (
+    boton.dataset.action ===
+    "eliminar"
+  ) {
     eliminarBodega(id);
   }
 }
 
 async function editarBodega(id) {
-  const item = data.bodega.find(
-    producto => producto.id === id
-  );
+  const item =
+    data.bodega.find(
+      producto =>
+        producto.id === id
+    );
 
   if (!item) return;
 
@@ -625,7 +753,9 @@ async function editarBodega(id) {
 
 async function eliminarBodega(id) {
   if (
-    !confirm("¿Eliminar producto de bodega?")
+    !confirm(
+      "¿Eliminar producto de bodega?"
+    )
   ) {
     return;
   }
@@ -646,43 +776,51 @@ async function eliminarBodega(id) {
    COCINA
 ===================================================== */
 
-/*
-  CORRECCIÓN:
-  Cocina toma el nombre directamente desde Bodega.
-  El usuario solo selecciona el producto y escribe
-  la cantidad de gramos de cada porción.
-*/
-
 async function agregarCocina() {
   const bodegaId = Number(
     $("selectBodegaCocina").value
   );
 
   const textoGramos =
-    $("cocinaUnidad").value.trim();
+    $("cocinaUnidad")
+      .value
+      .trim();
 
   const gramosPorPorcion = Number(
     textoGramos
-      .replace(/[^0-9.,]/g, "")
+      .replace(
+        /[^0-9.,]/g,
+        ""
+      )
       .replace(",", ".")
   );
 
-  const bodega = data.bodega.find(
-    item => item.id === bodegaId
-  );
+  const bodega =
+    data.bodega.find(
+      item =>
+        item.id === bodegaId
+    );
 
   if (!bodega) {
-    alert("Selecciona un producto de bodega");
+    alert(
+      "Selecciona un producto de bodega"
+    );
+
     return;
   }
 
   if (gramosPorPorcion <= 0) {
-    alert("Ingresa los gramos por porción");
+    alert(
+      "Ingresa los gramos por porción"
+    );
+
     return;
   }
 
   const unidad =
-    bodega.unidad.toLowerCase().trim();
+    bodega.unidad
+      .toLowerCase()
+      .trim();
 
   let gramosDisponibles = 0;
 
@@ -707,16 +845,21 @@ async function agregarCocina() {
     alert(
       "La unidad de bodega debe ser kg o g"
     );
+
     return;
   }
 
-  const cantidadPorciones = Math.floor(
-    gramosDisponibles /
-    gramosPorPorcion
-  );
+  const cantidadPorciones =
+    Math.floor(
+      gramosDisponibles /
+      gramosPorPorcion
+    );
 
   if (cantidadPorciones <= 0) {
-    alert("No alcanza para una porción");
+    alert(
+      "No alcanza para una porción"
+    );
+
     return;
   }
 
@@ -736,23 +879,24 @@ async function agregarCocina() {
       ? gramosUtilizados / 1000
       : gramosUtilizados;
 
-  /*
-    El nombre no lo escribe el usuario.
-    Se toma directamente del producto de Bodega.
-  */
   const nombreCocina =
     bodega.producto;
 
   const unidadCocina =
     `${gramosPorPorcion} g`;
 
-  const existente = data.cocina.find(
-    item =>
-      item.producto.toLowerCase() ===
-        nombreCocina.toLowerCase() &&
-      item.unidad.toLowerCase() ===
-        unidadCocina.toLowerCase()
-  );
+  const existente =
+    data.cocina.find(
+      item =>
+        item.producto
+          .toLowerCase() ===
+          nombreCocina
+            .toLowerCase() &&
+        item.unidad
+          .toLowerCase() ===
+          unidadCocina
+            .toLowerCase()
+    );
 
   try {
     await api("/traspasar", {
@@ -779,8 +923,11 @@ async function agregarCocina() {
       })
     });
 
-    $("selectBodegaCocina").value = "";
-    $("cocinaUnidad").value = "";
+    $("selectBodegaCocina").value =
+      "";
+
+    $("cocinaUnidad").value =
+      "";
 
     await cargarTodoDesdeBD();
 
@@ -796,27 +943,37 @@ async function agregarCocina() {
 }
 
 function accionesCocina(evento) {
-  const boton = evento.target.closest(
-    "button[data-action]"
-  );
+  const boton =
+    evento.target.closest(
+      "button[data-action]"
+    );
 
   if (!boton) return;
 
-  const id = Number(boton.dataset.id);
+  const id =
+    Number(boton.dataset.id);
 
-  if (boton.dataset.action === "editar") {
+  if (
+    boton.dataset.action ===
+    "editar"
+  ) {
     editarCocina(id);
   }
 
-  if (boton.dataset.action === "eliminar") {
+  if (
+    boton.dataset.action ===
+    "eliminar"
+  ) {
     eliminarCocina(id);
   }
 }
 
 async function editarCocina(id) {
-  const item = data.cocina.find(
-    producto => producto.id === id
-  );
+  const item =
+    data.cocina.find(
+      producto =>
+        producto.id === id
+    );
 
   if (!item) return;
 
@@ -879,7 +1036,9 @@ async function editarCocina(id) {
 
 async function eliminarCocina(id) {
   if (
-    !confirm("¿Eliminar producto de cocina?")
+    !confirm(
+      "¿Eliminar producto de cocina?"
+    )
   ) {
     return;
   }
@@ -902,13 +1061,20 @@ async function eliminarCocina(id) {
 
 async function crearProductoVenta() {
   const nombre =
-    $("nombreProductoVenta").value.trim();
+    $("nombreProductoVenta")
+      .value
+      .trim();
 
   const precio =
-    numero($("precioProductoVenta").value);
+    numero(
+      $("precioProductoVenta").value
+    );
 
   if (!nombre || precio <= 0) {
-    alert("Completa producto y precio");
+    alert(
+      "Completa producto y precio"
+    );
+
     return;
   }
 
@@ -923,8 +1089,11 @@ async function crearProductoVenta() {
       })
     });
 
-    $("nombreProductoVenta").value = "";
-    $("precioProductoVenta").value = "";
+    $("nombreProductoVenta").value =
+      "";
+
+    $("precioProductoVenta").value =
+      "";
 
     await cargarTodoDesdeBD();
   } catch (error) {
@@ -933,77 +1102,474 @@ async function crearProductoVenta() {
   }
 }
 
+/*
+  Obtiene el costo de una unidad o
+  porción guardada en Cocina.
+*/
+function obtenerCostoUnitarioCocina(
+  item
+) {
+  if (!item) return 0;
+
+  if (
+    numero(item.costo_unitario) > 0
+  ) {
+    return numero(
+      item.costo_unitario
+    );
+  }
+
+  if (
+    numero(item.cantidad) <= 0
+  ) {
+    return 0;
+  }
+
+  return redondear(
+    numero(item.costo_total) /
+    numero(item.cantidad)
+  );
+}
+
+/*
+  Genera las opciones utilizando
+  exclusivamente Cocina.
+*/
+function crearOpcionesIngredientesCocina(
+  valorSeleccionado = ""
+) {
+  let opciones = `
+    <option value="">
+      Seleccionar insumo de cocina
+    </option>
+  `;
+
+  data.cocina.forEach(item => {
+    const seleccionado =
+      Number(valorSeleccionado) ===
+      item.id
+        ? "selected"
+        : "";
+
+    opciones += `
+      <option
+        value="${item.id}"
+        ${seleccionado}
+      >
+        ${item.producto} -
+        ${item.cantidad}
+        ${item.unidad}
+      </option>
+    `;
+  });
+
+  return opciones;
+}
+
+/*
+  Agrega una nueva fila de ingrediente.
+*/
+function agregarFilaIngrediente() {
+  const contenedor =
+    $("ingredientesReceta");
+
+  if (!contenedor) return;
+
+  const fila =
+    document.createElement("div");
+
+  fila.className =
+    "form-row receta-ingrediente";
+
+  fila.innerHTML = `
+    <select
+      class="receta-insumo"
+      title="Seleccionar producto de cocina"
+    >
+      ${crearOpcionesIngredientesCocina()}
+    </select>
+
+    <input
+      class="receta-cantidad"
+      type="number"
+      min="0.01"
+      step="0.01"
+      placeholder="Cantidad usada"
+      title="Cantidad usada en la receta"
+    />
+
+    <input
+      class="receta-costo"
+      type="text"
+      value="$0"
+      title="Costo del ingrediente"
+      readonly
+    />
+
+    <button
+      type="button"
+      class="eliminar quitar-ingrediente"
+    >
+      Quitar
+    </button>
+  `;
+
+  contenedor.appendChild(fila);
+
+  actualizarBotonesQuitar();
+  actualizarCostoConstructorReceta();
+}
+
+/*
+  Mantiene al menos una fila visible.
+*/
+function asegurarPrimeraFilaReceta() {
+  const contenedor =
+    $("ingredientesReceta");
+
+  if (
+    contenedor &&
+    contenedor.children.length === 0
+  ) {
+    agregarFilaIngrediente();
+  }
+}
+
+/*
+  El botón Quitar aparece solamente
+  cuando existe más de una fila.
+*/
+function actualizarBotonesQuitar() {
+  const filas =
+    document.querySelectorAll(
+      ".receta-ingrediente"
+    );
+
+  filas.forEach(fila => {
+    const boton =
+      fila.querySelector(
+        ".quitar-ingrediente"
+      );
+
+    if (!boton) return;
+
+    boton.style.display =
+      filas.length === 1
+        ? "none"
+        : "block";
+  });
+}
+
+/*
+  Elimina solamente la fila seleccionada.
+*/
+function accionesIngredientesReceta(
+  evento
+) {
+  const boton =
+    evento.target.closest(
+      ".quitar-ingrediente"
+    );
+
+  if (!boton) return;
+
+  const fila =
+    boton.closest(
+      ".receta-ingrediente"
+    );
+
+  if (!fila) return;
+
+  fila.remove();
+
+  asegurarPrimeraFilaReceta();
+  actualizarBotonesQuitar();
+  actualizarCostoConstructorReceta();
+}
+
+/*
+  Calcula el costo individual y
+  el costo total del plato.
+*/
+function actualizarCostoConstructorReceta() {
+  const filas =
+    document.querySelectorAll(
+      ".receta-ingrediente"
+    );
+
+  let costoTotal = 0;
+
+  filas.forEach(fila => {
+    const cocinaId = Number(
+      fila.querySelector(
+        ".receta-insumo"
+      )?.value
+    );
+
+    const cantidad = numero(
+      fila.querySelector(
+        ".receta-cantidad"
+      )?.value
+    );
+
+    const itemCocina =
+      data.cocina.find(
+        item =>
+          item.id === cocinaId
+      );
+
+    const costoIngrediente =
+      redondear(
+        obtenerCostoUnitarioCocina(
+          itemCocina
+        ) * cantidad
+      );
+
+    costoTotal +=
+      costoIngrediente;
+
+    const campoCosto =
+      fila.querySelector(
+        ".receta-costo"
+      );
+
+    if (campoCosto) {
+      campoCosto.value =
+        moneda(costoIngrediente);
+    }
+  });
+
+  if ($("costoTotalReceta")) {
+    $("costoTotalReceta").value =
+      moneda(
+        redondear(costoTotal)
+      );
+  }
+}
+
+/*
+  Guarda todos los ingredientes visibles.
+*/
 async function agregarReceta() {
   const productoId = Number(
     $("selectProductoVenta").value
   );
 
-  const cocinaId = Number(
-    $("selectProductoCocina").value
-  );
+  if (!productoId) {
+    alert(
+      "Selecciona el producto de venta"
+    );
 
-  const cantidad = numero(
-    $("cantidadReceta").value
-  );
+    return;
+  }
+
+  const filas = [
+    ...document.querySelectorAll(
+      ".receta-ingrediente"
+    )
+  ];
+
+  const ingredientes =
+    filas.map(fila => ({
+      cocinaId: Number(
+        fila.querySelector(
+          ".receta-insumo"
+        )?.value
+      ),
+
+      cantidad: numero(
+        fila.querySelector(
+          ".receta-cantidad"
+        )?.value
+      )
+    }));
+
+  const incompleto =
+    ingredientes.some(
+      item =>
+        !item.cocinaId ||
+        item.cantidad <= 0
+    );
 
   if (
-    !productoId ||
-    !cocinaId ||
-    cantidad <= 0
+    ingredientes.length === 0 ||
+    incompleto
   ) {
-    alert("Completa la receta");
+    alert(
+      "Completa todos los ingredientes y sus cantidades"
+    );
+
+    return;
+  }
+
+  const idsNuevos =
+    ingredientes.map(
+      item => item.cocinaId
+    );
+
+  if (
+    new Set(idsNuevos).size !==
+    idsNuevos.length
+  ) {
+    alert(
+      "No repitas el mismo ingrediente en la receta"
+    );
+
+    return;
+  }
+
+  const idsGuardados =
+    new Set(
+      data.recetas
+        .filter(
+          item =>
+            item.producto_venta_id ===
+            productoId
+        )
+        .map(
+          item =>
+            item.inventario_cocina_id
+        )
+    );
+
+  const yaExiste =
+    ingredientes.some(
+      item =>
+        idsGuardados.has(
+          item.cocinaId
+        )
+    );
+
+  if (yaExiste) {
+    alert(
+      "Uno de los ingredientes ya está guardado en esta receta"
+    );
+
     return;
   }
 
   try {
-    await api("/recetas", {
-      method: "POST",
+    /*
+      La ruta actual recibe un ingrediente
+      por petición. Se envía una petición
+      por cada fila ingresada.
+    */
+    for (
+      const ingrediente of ingredientes
+    ) {
+      await api("/recetas", {
+        method: "POST",
 
-      body: JSON.stringify({
-        producto_venta_id:
-          productoId,
+        body: JSON.stringify({
+          producto_venta_id:
+            productoId,
 
-        inventario_cocina_id:
-          cocinaId,
+          inventario_cocina_id:
+            ingrediente.cocinaId,
 
-        cantidad_necesaria:
-          cantidad
-      })
-    });
-
-    $("cantidadReceta").value = "";
+          cantidad_necesaria:
+            ingrediente.cantidad
+        })
+      });
+    }
 
     await cargarTodoDesdeBD();
 
-    alert("Receta guardada correctamente");
+    $("selectProductoVenta").value =
+      "";
+
+    const contenedor =
+      $("ingredientesReceta");
+
+    if (contenedor) {
+      contenedor.innerHTML = "";
+    }
+
+    asegurarPrimeraFilaReceta();
+    actualizarCostoConstructorReceta();
+
+    alert(
+      "Receta guardada correctamente"
+    );
   } catch (error) {
     console.error(error);
     alert(error.message);
   }
 }
 
-function accionesProductos(evento) {
-  const boton = evento.target.closest(
-    "button[data-action]"
+/*
+  Calcula el costo total de una
+  receta que ya está guardada.
+*/
+function calcularCostoPlato(
+  productoId
+) {
+  return redondear(
+    data.recetas
+      .filter(
+        item =>
+          item.producto_venta_id ===
+          productoId
+      )
+      .reduce(
+        (total, receta) => {
+          const itemCocina =
+            data.cocina.find(
+              item =>
+                item.id ===
+                receta.inventario_cocina_id
+            );
+
+          const costoIngrediente =
+            obtenerCostoUnitarioCocina(
+              itemCocina
+            ) *
+            numero(
+              receta.cantidad_necesaria
+            );
+
+          return (
+            total +
+            costoIngrediente
+          );
+        },
+        0
+      )
   );
+}
+
+function accionesProductos(evento) {
+  const boton =
+    evento.target.closest(
+      "button[data-action]"
+    );
 
   if (!boton) return;
 
-  const id = Number(boton.dataset.id);
+  const id =
+    Number(boton.dataset.id);
 
-  if (boton.dataset.action === "editar") {
+  if (
+    boton.dataset.action ===
+    "editar"
+  ) {
     editarProducto(id);
   }
 
-  if (boton.dataset.action === "eliminar") {
+  if (
+    boton.dataset.action ===
+    "eliminar"
+  ) {
     eliminarProducto(id);
   }
 }
 
 async function editarProducto(id) {
-  const item = data.productos.find(
-    producto => producto.id === id
-  );
+  const item =
+    data.productos.find(
+      producto =>
+        producto.id === id
+    );
 
   if (!item) return;
 
@@ -1045,7 +1611,11 @@ async function editarProducto(id) {
 }
 
 async function eliminarProducto(id) {
-  if (!confirm("¿Eliminar producto?")) {
+  if (
+    !confirm(
+      "¿Eliminar producto?"
+    )
+  ) {
     return;
   }
 
@@ -1077,10 +1647,14 @@ async function registrarVenta() {
   const medioPago =
     $("medioPagoVenta").value;
 
-  if (!productoId || cantidad <= 0) {
+  if (
+    !productoId ||
+    cantidad <= 0
+  ) {
     alert(
       "Selecciona producto y cantidad"
     );
+
     return;
   }
 
@@ -1089,7 +1663,8 @@ async function registrarVenta() {
       method: "POST",
 
       body: JSON.stringify({
-        medio_pago: medioPago,
+        medio_pago:
+          medioPago,
 
         items: [
           {
@@ -1102,11 +1677,14 @@ async function registrarVenta() {
       })
     });
 
-    $("cantidadVenta").value = "";
+    $("cantidadVenta").value =
+      "";
 
     await cargarTodoDesdeBD();
 
-    alert("Venta registrada correctamente");
+    alert(
+      "Venta registrada correctamente"
+    );
   } catch (error) {
     console.error(error);
     alert(error.message);
@@ -1141,7 +1719,8 @@ function renderResumen() {
 }
 
 function renderBodega() {
-  const tbody = $("tablaBodega");
+  const tbody =
+    $("tablaBodega");
 
   if (!tbody) return;
 
@@ -1151,16 +1730,29 @@ function renderBodega() {
     tbody.innerHTML += `
       <tr>
         <td>${item.id}</td>
-        <td>${item.producto}</td>
-        <td>${item.unidad}</td>
-        <td>${item.cantidad}</td>
-        <td>${moneda(item.costo_total)}</td>
+
+        <td>
+          ${item.producto}
+        </td>
+
+        <td>
+          ${item.unidad}
+        </td>
+
+        <td>
+          ${item.cantidad}
+        </td>
+
+        <td>
+          ${moneda(item.costo_total)}
+        </td>
 
         <td>
           <button
             type="button"
             data-action="editar"
-            data-id="${item.id}">
+            data-id="${item.id}"
+          >
             Editar
           </button>
 
@@ -1168,7 +1760,8 @@ function renderBodega() {
             type="button"
             class="eliminar"
             data-action="eliminar"
-            data-id="${item.id}">
+            data-id="${item.id}"
+          >
             Eliminar
           </button>
         </td>
@@ -1178,7 +1771,8 @@ function renderBodega() {
 }
 
 function renderCocina() {
-  const tbody = $("tablaCocina");
+  const tbody =
+    $("tablaCocina");
 
   if (!tbody) return;
 
@@ -1188,16 +1782,29 @@ function renderCocina() {
     tbody.innerHTML += `
       <tr>
         <td>${item.id}</td>
-        <td>${item.producto}</td>
-        <td>${item.unidad}</td>
-        <td>${item.cantidad}</td>
-        <td>${moneda(item.costo_total)}</td>
+
+        <td>
+          ${item.producto}
+        </td>
+
+        <td>
+          ${item.unidad}
+        </td>
+
+        <td>
+          ${item.cantidad}
+        </td>
+
+        <td>
+          ${moneda(item.costo_total)}
+        </td>
 
         <td>
           <button
             type="button"
             data-action="editar"
-            data-id="${item.id}">
+            data-id="${item.id}"
+          >
             Editar
           </button>
 
@@ -1205,7 +1812,8 @@ function renderCocina() {
             type="button"
             class="eliminar"
             data-action="eliminar"
-            data-id="${item.id}">
+            data-id="${item.id}"
+          >
             Eliminar
           </button>
         </td>
@@ -1215,57 +1823,103 @@ function renderCocina() {
 }
 
 function renderProductos() {
-  const tbody = $("tablaProductos");
+  const tbody =
+    $("tablaProductos");
 
   if (!tbody) return;
 
   tbody.innerHTML = "";
 
-  data.productos.forEach(producto => {
-    const receta = data.recetas
-      .filter(
-        item =>
-          item.producto_venta_id ===
+  data.productos.forEach(
+    producto => {
+      const receta =
+        data.recetas
+          .filter(
+            item =>
+              item.producto_venta_id ===
+              producto.id
+          )
+          .map(item => {
+            const itemCocina =
+              data.cocina.find(
+                cocina =>
+                  cocina.id ===
+                  item.inventario_cocina_id
+              );
+
+            const costoIngrediente =
+              redondear(
+                obtenerCostoUnitarioCocina(
+                  itemCocina
+                ) *
+                item.cantidad_necesaria
+              );
+
+            return (
+              `${item.ingrediente}: ` +
+              `${item.cantidad_necesaria} ` +
+              `${item.unidad} ` +
+              `(${moneda(
+                costoIngrediente
+              )})`
+            );
+          })
+          .join("<br>");
+
+      const costoPlato =
+        calcularCostoPlato(
           producto.id
-      )
-      .map(
-        item =>
-          `${item.ingrediente}: ` +
-          `${item.cantidad_necesaria} ` +
-          `${item.unidad}`
-      )
-      .join("<br>");
+        );
 
-    tbody.innerHTML += `
-      <tr>
-        <td>${producto.id}</td>
-        <td>${producto.nombre}</td>
-        <td>${moneda(producto.precio)}</td>
-        <td>${receta || "Sin receta"}</td>
+      tbody.innerHTML += `
+        <tr>
+          <td>
+            ${producto.id}
+          </td>
 
-        <td>
-          <button
-            type="button"
-            data-action="editar"
-            data-id="${producto.id}">
-            Editar
-          </button>
+          <td>
+            ${producto.nombre}
+          </td>
 
-          <button
-            type="button"
-            class="eliminar"
-            data-action="eliminar"
-            data-id="${producto.id}">
-            Eliminar
-          </button>
-        </td>
-      </tr>
-    `;
-  });
+          <td>
+            ${moneda(producto.precio)}
+          </td>
+
+          <td>
+            ${receta || "Sin receta"}
+          </td>
+
+          <td>
+            ${moneda(costoPlato)}
+          </td>
+
+          <td>
+            <button
+              type="button"
+              data-action="editar"
+              data-id="${producto.id}"
+            >
+              Editar
+            </button>
+
+            <button
+              type="button"
+              class="eliminar"
+              data-action="eliminar"
+              data-id="${producto.id}"
+            >
+              Eliminar
+            </button>
+          </td>
+        </tr>
+      `;
+    }
+  );
 }
 
 function renderVentas() {
-  const tbody = $("tablaVentas");
+  const tbody =
+    $("tablaVentas");
 
   if (!tbody) return;
 
@@ -1274,9 +1928,17 @@ function renderVentas() {
   data.ventas.forEach(venta => {
     tbody.innerHTML += `
       <tr>
-        <td>${venta.id}</td>
-        <td>${venta.producto}</td>
-        <td>${venta.cantidad}</td>
+        <td>
+          ${venta.id}
+        </td>
+
+        <td>
+          ${venta.producto}
+        </td>
+
+        <td>
+          ${venta.cantidad}
+        </td>
 
         <td>
           ${nombreMedioPago(
@@ -1284,10 +1946,14 @@ function renderVentas() {
           )}
         </td>
 
-        <td>${moneda(venta.total)}</td>
+        <td>
+          ${moneda(venta.total)}
+        </td>
 
         <td>
-          ${formatearFecha(venta.fecha)}
+          ${formatearFecha(
+            venta.fecha
+          )}
         </td>
       </tr>
     `;
@@ -1301,14 +1967,12 @@ function renderSelects() {
   const selectProductoVenta =
     $("selectProductoVenta");
 
-  const selectProductoCocina =
-    $("selectProductoCocina");
-
   const selectVentaProducto =
     $("selectVentaProducto");
 
   if (selectBodega) {
-    const valor = selectBodega.value;
+    const valor =
+      selectBodega.value;
 
     selectBodega.innerHTML = `
       <option value="">
@@ -1332,7 +1996,8 @@ function renderSelects() {
         `;
       });
 
-    selectBodega.value = valor;
+    selectBodega.value =
+      valor;
   }
 
   if (selectProductoVenta) {
@@ -1346,7 +2011,9 @@ function renderSelects() {
     `;
 
     data.productos
-      .filter(item => item.activo)
+      .filter(
+        item => item.activo
+      )
       .forEach(item => {
         selectProductoVenta.innerHTML += `
           <option value="${item.id}">
@@ -1355,30 +2022,8 @@ function renderSelects() {
         `;
       });
 
-    selectProductoVenta.value = valor;
-  }
-
-  if (selectProductoCocina) {
-    const valor =
-      selectProductoCocina.value;
-
-    selectProductoCocina.innerHTML = `
-      <option value="">
-        Seleccionar insumo de cocina
-      </option>
-    `;
-
-    data.cocina.forEach(item => {
-      selectProductoCocina.innerHTML += `
-        <option value="${item.id}">
-          ${item.producto} -
-          ${item.cantidad}
-          ${item.unidad}
-        </option>
-      `;
-    });
-
-    selectProductoCocina.value = valor;
+    selectProductoVenta.value =
+      valor;
   }
 
   if (selectVentaProducto) {
@@ -1392,7 +2037,9 @@ function renderSelects() {
     `;
 
     data.productos
-      .filter(item => item.activo)
+      .filter(
+        item => item.activo
+      )
       .forEach(item => {
         selectVentaProducto.innerHTML += `
           <option value="${item.id}">
@@ -1402,6 +2049,30 @@ function renderSelects() {
         `;
       });
 
-    selectVentaProducto.value = valor;
+    selectVentaProducto.value =
+      valor;
   }
+
+  /*
+    Actualiza todas las filas dinámicas
+    con los productos existentes en Cocina.
+  */
+  document
+    .querySelectorAll(
+      ".receta-insumo"
+    )
+    .forEach(selector => {
+      const valor =
+        selector.value;
+
+      selector.innerHTML =
+        crearOpcionesIngredientesCocina(
+          valor
+        );
+
+      selector.value =
+        valor;
+    });
+
+  actualizarCostoConstructorReceta();
 }
