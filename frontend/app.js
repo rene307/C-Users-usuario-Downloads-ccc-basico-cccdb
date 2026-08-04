@@ -1832,13 +1832,15 @@ function renderProductos() {
 
   data.productos.forEach(
     producto => {
+      const ingredientesReceta =
+        data.recetas.filter(
+          item =>
+            item.producto_venta_id ===
+            producto.id
+        );
+
       const receta =
-        data.recetas
-          .filter(
-            item =>
-              item.producto_venta_id ===
-              producto.id
-          )
+        ingredientesReceta
           .map(item => {
             const itemCocina =
               data.cocina.find(
@@ -1852,19 +1854,47 @@ function renderProductos() {
                 obtenerCostoUnitarioCocina(
                   itemCocina
                 ) *
+                numero(
+                  item.cantidad_necesaria
+                )
+              );
+
+            const cantidadPorciones =
+              numero(
                 item.cantidad_necesaria
               );
 
-            return (
-              `${item.ingrediente}: ` +
-              `${item.cantidad_necesaria} ` +
-              `${item.unidad} ` +
-              `(${moneda(
-                costoIngrediente
-              )})`
-            );
+            const palabraPorcion =
+              cantidadPorciones === 1
+                ? "porción"
+                : "porciones";
+
+            const nombreIngrediente =
+              itemCocina?.producto ||
+              item.ingrediente ||
+              "Ingrediente";
+
+            const unidadIngrediente =
+              itemCocina?.unidad ||
+              item.unidad ||
+              "";
+
+            return `
+              <div>
+                ${cantidadPorciones}
+                ${palabraPorcion}
+                de ${nombreIngrediente}
+                ${
+                  unidadIngrediente
+                    ? `(${unidadIngrediente})`
+                    : ""
+                }
+                — Costo:
+                ${moneda(costoIngrediente)}
+              </div>
+            `;
           })
-          .join("<br>");
+          .join("");
 
       const costoPlato =
         calcularCostoPlato(
@@ -1890,7 +1920,10 @@ function renderProductos() {
           </td>
 
           <td>
-            ${moneda(costoPlato)}
+            <strong>
+              Costo total:
+              ${moneda(costoPlato)}
+            </strong>
           </td>
 
           <td>
