@@ -14,6 +14,223 @@
     rel="stylesheet"
     href="styles.css"
   />
+
+  <style>
+    /* =====================================================
+       PROVEEDORES
+       Estos estilos afectan solamente la nueva vista.
+    ===================================================== */
+
+    .proveedores-layout {
+      display: grid;
+      grid-template-columns:
+        minmax(0, 1.15fr)
+        minmax(320px, 0.85fr);
+      gap: 18px;
+      align-items: start;
+      margin-top: 18px;
+    }
+
+    .proveedores-panel {
+      border: 1px solid #dfe5ec;
+      border-radius: 14px;
+      padding: 18px;
+      background: #ffffff;
+    }
+
+    .proveedores-panel h3 {
+      margin-top: 0;
+      margin-bottom: 14px;
+    }
+
+    .proveedores-subtitulo {
+      margin: 22px 0 10px;
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: #5f6b7a;
+    }
+
+    .proveedores-grid {
+      display: grid;
+      grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .proveedores-campo {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .proveedores-campo.proveedores-full {
+      grid-column: 1 / -1;
+    }
+
+    .proveedores-campo label {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .proveedores-campo input,
+    .proveedores-campo select,
+    .proveedores-alias-form input {
+      width: 100%;
+    }
+
+    .proveedores-ayuda {
+      font-size: 12px;
+      color: #667085;
+      line-height: 1.45;
+    }
+
+    .proveedores-alias-box {
+      border: 1px solid #dfe5ec;
+      border-radius: 12px;
+      padding: 14px;
+      background: #f8fafc;
+    }
+
+    .proveedores-alias-form {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+    }
+
+    .proveedores-alias-lista {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+      min-height: 32px;
+    }
+
+    .proveedores-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #3730a3;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .proveedores-chip button {
+      border: 0;
+      background: transparent;
+      color: inherit;
+      padding: 0;
+      cursor: pointer;
+      font-weight: 900;
+    }
+
+    .proveedores-regla {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border: 1px solid #fed7aa;
+      border-radius: 10px;
+      background: #fff7ed;
+      color: #9a3412;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .proveedores-origen {
+      padding: 12px;
+      border: 1px solid #dfe5ec;
+      border-radius: 12px;
+      background: #fbfcfe;
+      margin-bottom: 12px;
+    }
+
+    .proveedores-origen small,
+    .proveedores-destino small {
+      display: block;
+      color: #667085;
+      margin-bottom: 4px;
+    }
+
+    .proveedores-origen strong,
+    .proveedores-destino strong {
+      display: block;
+      word-break: break-word;
+    }
+
+    .proveedores-flecha {
+      text-align: center;
+      font-size: 24px;
+      font-weight: 900;
+      margin: 4px 0;
+    }
+
+    .proveedores-destino {
+      padding: 12px;
+      border: 1px solid #abefc6;
+      border-radius: 12px;
+      background: #ecfdf3;
+      color: #067647;
+    }
+
+    .proveedores-estado {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      background: #fff7ed;
+      color: #9a3412;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .proveedores-estado.compatible {
+      background: #ecfdf3;
+      color: #067647;
+    }
+
+    .proveedores-aviso {
+      display: none;
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #abefc6;
+      background: #ecfdf3;
+      color: #067647;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .proveedores-botones {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .proveedores-tabla-vacia {
+      color: #667085;
+      text-align: center;
+    }
+
+    .proveedores-eliminar {
+      background: #dc2626;
+      color: #ffffff;
+    }
+
+    @media (max-width: 950px) {
+      .proveedores-layout,
+      .proveedores-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .proveedores-campo.proveedores-full {
+        grid-column: auto;
+      }
+    }
+  </style>
 </head>
 
 <body>
@@ -31,6 +248,7 @@
       </p>
 
       <form id="loginForm">
+
         <label for="correo">
           Correo
         </label>
@@ -60,9 +278,11 @@
         <button type="submit">
           Entrar
         </button>
+
       </form>
     </section>
   </main>
+
 
   <!-- APP PRINCIPAL -->
   <div
@@ -70,7 +290,9 @@
     class="app"
     style="display: none;"
   >
+
     <aside class="sidebar">
+
       <h1>CCC</h1>
 
       <p>
@@ -85,7 +307,9 @@
         </span>
       </p>
 
+
       <nav>
+
         <button
           type="button"
           id="btnResumen"
@@ -94,12 +318,22 @@
           Resumen
         </button>
 
+
         <button
           type="button"
           id="btnBodega"
         >
           Bodega
         </button>
+
+
+        <button
+          type="button"
+          id="btnProveedores"
+        >
+          Proveedores
+        </button>
+
 
         <button
           type="button"
@@ -108,12 +342,14 @@
           Cocina
         </button>
 
+
         <button
           type="button"
           id="btnProductos"
         >
           Productos / Recetas
         </button>
+
 
         <button
           type="button"
@@ -122,6 +358,7 @@
           Ventas del día
         </button>
 
+
         <button
           type="button"
           id="btnSalir"
@@ -129,20 +366,30 @@
         >
           Salir
         </button>
+
       </nav>
+
     </aside>
+
 
     <main class="main">
 
+
       <!-- ENCABEZADO -->
       <header class="top-card">
+
         <div>
-          <h1>CCC Básico</h1>
+
+          <h1>
+            CCC Básico
+          </h1>
 
           <p>
             Login + bodega + cocina + ventas + descuento automático
           </p>
+
         </div>
+
 
         <button
           type="button"
@@ -150,61 +397,103 @@
         >
           Actualizar
         </button>
+
       </header>
 
-      <!-- RESUMEN -->
+
+
+      <!-- =================================================
+           RESUMEN
+      ================================================== -->
+
       <section
         id="vistaResumen"
         class="card"
       >
-        <h2>Resumen</h2>
+
+        <h2>
+          Resumen
+        </h2>
+
 
         <div class="resumen-grid">
 
+
           <article class="resumen-card">
-            <h3>Productos en bodega</h3>
+
+            <h3>
+              Productos en bodega
+            </h3>
 
             <strong id="totalBodega">
               0
             </strong>
+
           </article>
 
+
           <article class="resumen-card">
-            <h3>Productos en cocina</h3>
+
+            <h3>
+              Productos en cocina
+            </h3>
 
             <strong id="totalCocina">
               0
             </strong>
+
           </article>
 
+
           <article class="resumen-card">
-            <h3>Productos / recetas</h3>
+
+            <h3>
+              Productos / recetas
+            </h3>
 
             <strong id="totalProductos">
               0
             </strong>
+
           </article>
 
+
           <article class="resumen-card">
-            <h3>Ventas del día</h3>
+
+            <h3>
+              Ventas del día
+            </h3>
 
             <strong id="totalVentas">
               $0
             </strong>
+
           </article>
 
+
         </div>
+
       </section>
 
-      <!-- BODEGA -->
+
+
+      <!-- =================================================
+           BODEGA
+      ================================================== -->
+
       <section
         id="vistaBodega"
         class="card"
         style="display: none;"
       >
-        <h2>Inventario de bodega</h2>
+
+        <h2>
+          Inventario de bodega
+        </h2>
+
 
         <div class="form-row">
+
 
           <input
             id="bodegaProducto"
@@ -213,12 +502,14 @@
             title="Producto de bodega"
           />
 
+
           <input
             id="bodegaUnidad"
             type="text"
             placeholder="Unidad: kg"
             title="Unidad de bodega"
           />
+
 
           <input
             id="bodegaCantidad"
@@ -227,12 +518,14 @@
             title="Cantidad de bodega"
           />
 
+
           <input
             id="bodegaCosto"
             type="number"
             placeholder="Costo total"
             title="Costo total de bodega"
           />
+
 
           <button
             type="button"
@@ -241,56 +534,658 @@
             Agregar a bodega
           </button>
 
+
         </div>
+
 
         <div class="table-wrap">
+
           <table>
+
             <thead>
+
               <tr>
-                <th>ID</th>
-                <th>PRODUCTO</th>
-                <th>UNIDAD</th>
-                <th>CANTIDAD</th>
-                <th>COSTO TOTAL</th>
-                <th>ACCIÓN</th>
+
+                <th>
+                  ID
+                </th>
+
+                <th>
+                  PRODUCTO
+                </th>
+
+                <th>
+                  UNIDAD
+                </th>
+
+                <th>
+                  CANTIDAD
+                </th>
+
+                <th>
+                  COSTO TOTAL
+                </th>
+
+                <th>
+                  ACCIÓN
+                </th>
+
               </tr>
+
             </thead>
 
-            <tbody id="tablaBodega"></tbody>
+
+            <tbody id="tablaBodega">
+            </tbody>
+
           </table>
+
         </div>
+
       </section>
 
-      <!-- COCINA -->
+
+
+      <!-- =================================================
+           PROVEEDORES
+      ================================================== -->
+
+      <section
+        id="vistaProveedores"
+        class="card"
+        style="display: none;"
+      >
+
+        <h2>
+          Proveedores
+        </h2>
+
+
+        <p class="proveedores-ayuda">
+
+          Guarda el nombre exacto de la boleta
+          y relaciónalo con un producto maestro
+          de CCC.
+
+          El producto maestro es el nombre que
+          manda dentro del sistema.
+
+        </p>
+
+
+        <div class="proveedores-layout">
+
+
+          <!-- COLUMNA IZQUIERDA -->
+
+          <div class="proveedores-panel">
+
+
+            <h3>
+              Nuevo proveedor
+            </h3>
+
+
+            <div class="proveedores-grid">
+
+
+              <div class="proveedores-campo">
+
+                <label for="proveedorNombre">
+                  Nombre proveedor
+                </label>
+
+                <input
+                  id="proveedorNombre"
+                  type="text"
+                  placeholder="Ej: Carnes San Martín"
+                />
+
+              </div>
+
+
+              <div class="proveedores-campo">
+
+                <label for="proveedorRut">
+                  RUT
+                </label>
+
+                <input
+                  id="proveedorRut"
+                  type="text"
+                  placeholder="76.123.456-7"
+                />
+
+              </div>
+
+
+              <div class="proveedores-campo">
+
+                <label for="proveedorContacto">
+                  Contacto
+                </label>
+
+                <input
+                  id="proveedorContacto"
+                  type="text"
+                  placeholder="Nombre del contacto"
+                />
+
+              </div>
+
+
+              <div class="proveedores-campo">
+
+                <label for="proveedorTelefono">
+                  Teléfono
+                </label>
+
+                <input
+                  id="proveedorTelefono"
+                  type="text"
+                  placeholder="+56 9 ..."
+                />
+
+              </div>
+
+
+              <div class="proveedores-campo">
+
+                <label for="proveedorCorreo">
+                  Correo
+                </label>
+
+                <input
+                  id="proveedorCorreo"
+                  type="email"
+                  placeholder="ventas@proveedor.cl"
+                />
+
+              </div>
+
+
+              <div class="proveedores-campo">
+
+                <label for="proveedorCondicionPago">
+                  Condición de pago
+                </label>
+
+                <select id="proveedorCondicionPago">
+
+                  <option value="Contado">
+                    Contado
+                  </option>
+
+                  <option value="7 días">
+                    7 días
+                  </option>
+
+                  <option value="30 días">
+                    30 días
+                  </option>
+
+                </select>
+
+              </div>
+
+
+              <div class="proveedores-campo">
+
+                <label for="proveedorEstado">
+                  Estado
+                </label>
+
+                <select id="proveedorEstado">
+
+                  <option value="Activo">
+                    Activo
+                  </option>
+
+                  <option value="Inactivo">
+                    Inactivo
+                  </option>
+
+                </select>
+
+              </div>
+
+
+              <div class="proveedores-campo">
+
+                <label for="proveedorFechaCompra">
+                  Fecha última compra
+                </label>
+
+                <input
+                  id="proveedorFechaCompra"
+                  type="date"
+                />
+
+              </div>
+
+
+            </div>
+
+
+
+            <div class="proveedores-subtitulo">
+              Producto y nombre de boleta
+            </div>
+
+
+            <div class="proveedores-grid">
+
+
+              <div
+                class="
+                  proveedores-campo
+                  proveedores-full
+                "
+              >
+
+                <label for="proveedorNombreBoleta">
+                  Nombre exacto de la boleta / factura
+                </label>
+
+                <input
+                  id="proveedorNombreBoleta"
+                  type="text"
+                  placeholder="Ej: BIFE VACUNO KG"
+                />
+
+                <span class="proveedores-ayuda">
+
+                  Este texto se conserva
+                  tal como lo escribe el proveedor.
+
+                </span>
+
+              </div>
+
+
+
+              <div
+                class="
+                  proveedores-campo
+                  proveedores-full
+                "
+              >
+
+                <label for="proveedorProductoMaestro">
+                  Producto maestro CCC
+                </label>
+
+
+                <select id="proveedorProductoMaestro">
+
+                  <option value="">
+                    Seleccionar producto de bodega
+                  </option>
+
+                </select>
+
+
+                <span class="proveedores-ayuda">
+
+                  Este es el nombre oficial.
+
+                  Por ejemplo, la boleta puede decir
+                  BIFE VACUNO KG, pero dentro de CCC
+                  puede mandar Carne vacuno.
+
+                </span>
+
+              </div>
+
+
+
+              <div class="proveedores-campo">
+
+                <label for="proveedorUnidad">
+                  Unidad
+                </label>
+
+                <input
+                  id="proveedorUnidad"
+                  type="text"
+                  placeholder="kg"
+                />
+
+              </div>
+
+
+
+              <div class="proveedores-campo">
+
+                <label for="proveedorPrecio">
+                  Último precio
+                </label>
+
+                <input
+                  id="proveedorPrecio"
+                  type="number"
+                  min="0"
+                  step="1"
+                  placeholder="6990"
+                />
+
+              </div>
+
+
+            </div>
+
+
+
+            <div class="proveedores-subtitulo">
+              Alias o nombres equivalentes
+            </div>
+
+
+            <div class="proveedores-alias-box">
+
+
+              <div class="proveedores-alias-form">
+
+                <input
+                  id="proveedorAlias"
+                  type="text"
+                  placeholder="Ej: carne, carnes, bife"
+                />
+
+
+                <button
+                  type="button"
+                  id="btnAgregarAliasProveedor"
+                >
+                  Agregar alias
+                </button>
+
+              </div>
+
+
+
+              <div
+                id="proveedorAliasLista"
+                class="proveedores-alias-lista"
+              >
+              </div>
+
+
+
+              <div class="proveedores-regla">
+
+                <strong>
+                  Regla:
+                </strong>
+
+                la boleta conserva su nombre original.
+
+                Los alias ayudan a reconocer otras
+                formas de llamar al mismo concepto,
+                pero todos apuntan a un único
+                producto maestro.
+
+              </div>
+
+
+            </div>
+
+
+
+            <div class="proveedores-botones">
+
+
+              <button
+                type="button"
+                id="btnGuardarProveedorVisual"
+              >
+                Guardar proveedor
+              </button>
+
+
+              <button
+                type="button"
+                id="btnLimpiarProveedorVisual"
+              >
+                Limpiar
+              </button>
+
+
+            </div>
+
+
+
+            <div
+              id="proveedorAvisoVisual"
+              class="proveedores-aviso"
+            >
+
+              Proveedor agregado a la vista.
+
+              Todavía no se guarda en
+              la base de datos.
+
+            </div>
+
+
+          </div>
+
+
+
+          <!-- COLUMNA DERECHA -->
+
+          <div class="proveedores-panel">
+
+
+            <h3>
+              Cómo lo interpreta CCC
+            </h3>
+
+
+
+            <div class="proveedores-origen">
+
+              <small>
+                Nombre original de boleta
+              </small>
+
+              <strong id="proveedorPreviewBoleta">
+                —
+              </strong>
+
+            </div>
+
+
+
+            <div class="proveedores-flecha">
+              ↓
+            </div>
+
+
+
+            <div class="proveedores-destino">
+
+              <small>
+                Producto maestro CCC
+              </small>
+
+              <strong id="proveedorPreviewMaestro">
+                —
+              </strong>
+
+            </div>
+
+
+
+            <span
+              id="proveedorPreviewEstado"
+              class="proveedores-estado"
+            >
+              Esperando relación
+            </span>
+
+
+
+            <div class="proveedores-subtitulo">
+              Ejemplo
+            </div>
+
+
+
+            <div class="proveedores-ayuda">
+
+              Si un proveedor utiliza
+
+              <strong>
+                CARNE
+              </strong>,
+
+              <strong>
+                CARNES
+              </strong>
+
+              o
+
+              <strong>
+                BIFE
+              </strong>,
+
+              esos nombres pueden quedar
+              registrados como alias.
+
+              El inventario seguirá usando
+              un solo nombre maestro.
+
+            </div>
+
+
+          </div>
+
+
+        </div>
+
+
+
+        <div
+          class="table-wrap"
+          style="margin-top: 18px;"
+        >
+
+          <table>
+
+            <thead>
+
+              <tr>
+
+                <th>
+                  PROVEEDOR
+                </th>
+
+                <th>
+                  NOMBRE BOLETA
+                </th>
+
+                <th>
+                  PRODUCTO CCC
+                </th>
+
+                <th>
+                  ALIAS
+                </th>
+
+                <th>
+                  UNIDAD
+                </th>
+
+                <th>
+                  ÚLTIMO PRECIO
+                </th>
+
+                <th>
+                  ESTADO
+                </th>
+
+                <th>
+                  ACCIÓN
+                </th>
+
+              </tr>
+
+            </thead>
+
+
+            <tbody id="tablaProveedoresVisual">
+
+              <tr>
+
+                <td
+                  colspan="8"
+                  class="proveedores-tabla-vacia"
+                >
+
+                  Sin proveedores agregados
+                  en esta vista.
+
+                </td>
+
+              </tr>
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+
+      </section>
+
+
+
+      <!-- =================================================
+           COCINA
+      ================================================== -->
+
       <section
         id="vistaCocina"
         class="card"
         style="display: none;"
       >
-        <h2>Inventario de cocina</h2>
+
+        <h2>
+          Inventario de cocina
+        </h2>
+
 
         <div class="form-row cocina-form">
+
 
           <select
             id="selectBodegaCocina"
             title="Producto de bodega a porcionar"
           >
+
             <option value="">
               Seleccionar producto de bodega
             </option>
+
           </select>
 
+
           <!--
-            CORRECCIÓN:
-            El nombre se toma automáticamente desde Bodega.
-            El usuario solo escribe la medida de cada porción.
+            El nombre se toma automáticamente
+            desde Bodega.
+
+            El usuario solamente escribe
+            los gramos por porción.
           -->
+
           <input
             id="cocinaUnidad"
             type="text"
             placeholder="Gramos por porción: 200 g"
             title="Gramos por porción"
           />
+
 
           <button
             type="button"
@@ -299,35 +1194,76 @@
             Agregar a cocina
           </button>
 
+
         </div>
+
 
         <div class="table-wrap">
+
           <table>
+
             <thead>
+
               <tr>
-                <th>ID</th>
-                <th>PRODUCTO</th>
-                <th>UNIDAD</th>
-                <th>CANTIDAD</th>
-                <th>COSTO TOTAL</th>
-                <th>ACCIÓN</th>
+
+                <th>
+                  ID
+                </th>
+
+                <th>
+                  PRODUCTO
+                </th>
+
+                <th>
+                  UNIDAD
+                </th>
+
+                <th>
+                  CANTIDAD
+                </th>
+
+                <th>
+                  COSTO TOTAL
+                </th>
+
+                <th>
+                  ACCIÓN
+                </th>
+
               </tr>
+
             </thead>
 
-            <tbody id="tablaCocina"></tbody>
+
+            <tbody id="tablaCocina">
+            </tbody>
+
           </table>
+
         </div>
+
+
       </section>
 
-      <!-- PRODUCTOS / RECETAS -->
+
+
+      <!-- =================================================
+           PRODUCTOS / RECETAS
+      ================================================== -->
+
       <section
         id="vistaProductos"
         class="card"
         style="display: none;"
       >
-        <h2>Productos / Recetas</h2>
+
+        <h2>
+          Productos / Recetas
+        </h2>
+
 
         <div class="form-row">
+
 
           <input
             id="nombreProductoVenta"
@@ -336,12 +1272,14 @@
             title="Nombre producto venta"
           />
 
+
           <input
             id="precioProductoVenta"
             type="number"
             placeholder="Precio venta"
             title="Precio producto venta"
           />
+
 
           <button
             type="button"
@@ -350,24 +1288,30 @@
             Crear producto
           </button>
 
+
         </div>
 
-        <h3>Crear receta</h3>
 
-        <!--
-          Producto de venta al que pertenece la receta.
-          Los ingredientes se cargan solamente desde Cocina.
-        -->
+
+        <h3>
+          Crear receta
+        </h3>
+
+
         <div class="form-row">
+
 
           <select
             id="selectProductoVenta"
             title="Seleccionar producto de venta"
           >
+
             <option value="">
               Seleccionar producto
             </option>
+
           </select>
+
 
           <button
             type="button"
@@ -375,6 +1319,7 @@
           >
             Agregar ingrediente
           </button>
+
 
           <input
             id="costoTotalReceta"
@@ -384,6 +1329,7 @@
             readonly
           />
 
+
           <button
             type="button"
             id="btnAgregarReceta"
@@ -391,50 +1337,95 @@
             Guardar receta
           </button>
 
+
         </div>
 
-        <!--
-          JavaScript muestra inicialmente una sola fila.
-          El botón Agregar ingrediente crea las siguientes.
-        -->
-        <div id="ingredientesReceta"></div>
+
+
+        <div id="ingredientesReceta">
+        </div>
+
+
 
         <div class="table-wrap">
+
           <table>
+
             <thead>
+
               <tr>
-                <th>ID</th>
-                <th>PRODUCTO</th>
-                <th>PRECIO</th>
-                <th>RECETA</th>
-                <th>COSTO PLATO</th>
-                <th>ACCIÓN</th>
+
+                <th>
+                  ID
+                </th>
+
+                <th>
+                  PRODUCTO
+                </th>
+
+                <th>
+                  PRECIO
+                </th>
+
+                <th>
+                  RECETA
+                </th>
+
+                <th>
+                  COSTO PLATO
+                </th>
+
+                <th>
+                  ACCIÓN
+                </th>
+
               </tr>
+
             </thead>
 
-            <tbody id="tablaProductos"></tbody>
+
+            <tbody id="tablaProductos">
+            </tbody>
+
           </table>
+
         </div>
+
+
       </section>
 
-      <!-- VENTAS -->
+
+
+      <!-- =================================================
+           VENTAS
+      ================================================== -->
+
       <section
         id="vistaVentas"
         class="card"
         style="display: none;"
       >
-        <h2>Ventas del día</h2>
+
+        <h2>
+          Ventas del día
+        </h2>
+
 
         <div class="form-row">
+
 
           <select
             id="selectVentaProducto"
             title="Seleccionar producto para venta"
           >
+
             <option value="">
               Seleccionar producto
             </option>
+
           </select>
+
+
 
           <input
             id="cantidadVenta"
@@ -443,10 +1434,13 @@
             title="Cantidad vendida"
           />
 
+
+
           <select
             id="medioPagoVenta"
             title="Seleccionar medio de pago"
           >
+
             <option value="efectivo">
               Efectivo
             </option>
@@ -462,7 +1456,10 @@
             <option value="transferencia">
               Transferencia
             </option>
+
           </select>
+
+
 
           <button
             type="button"
@@ -471,29 +1468,65 @@
             Registrar venta
           </button>
 
+
         </div>
+
+
 
         <div class="table-wrap">
+
           <table>
+
             <thead>
+
               <tr>
-                <th>ID</th>
-                <th>PRODUCTO</th>
-                <th>CANTIDAD</th>
-                <th>MEDIO DE PAGO</th>
-                <th>TOTAL</th>
-                <th>FECHA</th>
+
+                <th>
+                  ID
+                </th>
+
+                <th>
+                  PRODUCTO
+                </th>
+
+                <th>
+                  CANTIDAD
+                </th>
+
+                <th>
+                  MEDIO DE PAGO
+                </th>
+
+                <th>
+                  TOTAL
+                </th>
+
+                <th>
+                  FECHA
+                </th>
+
               </tr>
+
             </thead>
 
-            <tbody id="tablaVentas"></tbody>
+
+            <tbody id="tablaVentas">
+            </tbody>
+
           </table>
+
         </div>
+
+
       </section>
 
+
     </main>
+
   </div>
 
-  <script src="app.js?v=70"></script>
+
+  <script src="app.js?v=71"></script>
+
 </body>
 </html>
