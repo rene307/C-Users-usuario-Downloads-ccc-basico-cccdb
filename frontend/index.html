@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
+
   <meta charset="UTF-8" />
 
   <meta
@@ -15,243 +17,41 @@
     href="styles.css"
   />
 
-  <style>
-    /* =====================================================
-       PROVEEDORES
-       Estos estilos ya estaban en tu HTML original.
-    ===================================================== */
-
-    .proveedores-layout {
-      display: grid;
-      grid-template-columns:
-        minmax(0, 1.15fr)
-        minmax(320px, 0.85fr);
-      gap: 18px;
-      align-items: start;
-      margin-top: 18px;
-    }
-
-    .proveedores-panel {
-      border: 1px solid #dfe5ec;
-      border-radius: 14px;
-      padding: 18px;
-      background: #ffffff;
-    }
-
-    .proveedores-panel h3 {
-      margin-top: 0;
-      margin-bottom: 14px;
-    }
-
-    .proveedores-subtitulo {
-      margin: 22px 0 10px;
-      font-size: 13px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-      color: #5f6b7a;
-    }
-
-    .proveedores-grid {
-      display: grid;
-      grid-template-columns:
-        repeat(2, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .proveedores-campo {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .proveedores-campo.proveedores-full {
-      grid-column: 1 / -1;
-    }
-
-    .proveedores-campo label {
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    .proveedores-campo input,
-    .proveedores-campo select,
-    .proveedores-alias-form input {
-      width: 100%;
-    }
-
-    .proveedores-ayuda {
-      font-size: 12px;
-      color: #667085;
-      line-height: 1.45;
-    }
-
-    .proveedores-alias-box {
-      border: 1px solid #dfe5ec;
-      border-radius: 12px;
-      padding: 14px;
-      background: #f8fafc;
-    }
-
-    .proveedores-alias-form {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 10px;
-    }
-
-    .proveedores-alias-lista {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 12px;
-      min-height: 32px;
-    }
-
-    .proveedores-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      padding: 7px 10px;
-      border-radius: 999px;
-      background: #eef2ff;
-      color: #3730a3;
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .proveedores-chip button {
-      border: 0;
-      background: transparent;
-      color: inherit;
-      padding: 0;
-      cursor: pointer;
-      font-weight: 900;
-    }
-
-    .proveedores-regla {
-      margin-top: 12px;
-      padding: 10px 12px;
-      border: 1px solid #fed7aa;
-      border-radius: 10px;
-      background: #fff7ed;
-      color: #9a3412;
-      font-size: 12px;
-      line-height: 1.45;
-    }
-
-    .proveedores-origen {
-      padding: 12px;
-      border: 1px solid #dfe5ec;
-      border-radius: 12px;
-      background: #fbfcfe;
-      margin-bottom: 12px;
-    }
-
-    .proveedores-origen small,
-    .proveedores-destino small {
-      display: block;
-      color: #667085;
-      margin-bottom: 4px;
-    }
-
-    .proveedores-origen strong,
-    .proveedores-destino strong {
-      display: block;
-      word-break: break-word;
-    }
-
-    .proveedores-flecha {
-      text-align: center;
-      font-size: 24px;
-      font-weight: 900;
-      margin: 4px 0;
-    }
-
-    .proveedores-destino {
-      padding: 12px;
-      border: 1px solid #abefc6;
-      border-radius: 12px;
-      background: #ecfdf3;
-      color: #067647;
-    }
-
-    .proveedores-estado {
-      display: inline-block;
-      margin-top: 10px;
-      padding: 6px 9px;
-      border-radius: 999px;
-      background: #fff7ed;
-      color: #9a3412;
-      font-size: 12px;
-      font-weight: 800;
-    }
-
-    .proveedores-estado.compatible {
-      background: #ecfdf3;
-      color: #067647;
-    }
-
-    .proveedores-aviso {
-      display: none;
-      margin-top: 12px;
-      padding: 10px 12px;
-      border-radius: 10px;
-      border: 1px solid #abefc6;
-      background: #ecfdf3;
-      color: #067647;
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    .proveedores-botones {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 16px;
-    }
-
-    .proveedores-tabla-vacia {
-      color: #667085;
-      text-align: center;
-    }
-
-    .proveedores-eliminar {
-      background: #dc2626;
-      color: #ffffff;
-    }
-
-    @media (max-width: 950px) {
-      .proveedores-layout,
-      .proveedores-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .proveedores-campo.proveedores-full {
-        grid-column: auto;
-      }
-    }
-  </style>
 </head>
+
 
 <body>
 
-  <!-- LOGIN -->
+
+  <!-- =====================================================
+       LOGIN
+  ====================================================== -->
+
   <main
     id="loginView"
     class="login-page"
   >
+
     <section class="login-card">
-      <h1>CCC Básico</h1>
+
+
+      <h1>
+        CCC Básico
+      </h1>
+
 
       <p>
         Control simple de inventario y ventas diarias
       </p>
 
+
       <form id="loginForm">
+
 
         <label for="correo">
           Correo
         </label>
+
 
         <input
           id="correo"
@@ -259,12 +59,15 @@
           value="admin@ccc.cl"
           placeholder="Correo"
           title="Correo"
+          autocomplete="email"
           required
         />
+
 
         <label for="password">
           Contraseña
         </label>
+
 
         <input
           id="password"
@@ -272,30 +75,230 @@
           value="123456"
           placeholder="Contraseña"
           title="Contraseña"
+          autocomplete="current-password"
           required
         />
+
 
         <button type="submit">
           Entrar
         </button>
 
+
       </form>
+
+
+      <button
+        type="button"
+        id="btnMostrarRegistro"
+        class="registro-boton-secundario"
+      >
+        Registrarse
+      </button>
+
+
     </section>
+
   </main>
 
 
-  <!-- APP PRINCIPAL -->
+
+  <!-- =====================================================
+       REGISTRO
+  ====================================================== -->
+
+  <main
+    id="registerView"
+    class="login-page registro-page"
+    style="display: none;"
+  >
+
+    <section class="login-card registro-card">
+
+
+      <h1>
+        Crear cuenta
+      </h1>
+
+
+      <p>
+        Registra tu negocio en CCC Básico
+      </p>
+
+
+      <form id="registroForm">
+
+
+        <label for="registroNombre">
+          Nombre del administrador
+        </label>
+
+
+        <input
+          id="registroNombre"
+          type="text"
+          placeholder="Ej: Pedro González"
+          title="Nombre del administrador"
+          autocomplete="name"
+          required
+        />
+
+
+        <label for="registroEmpresa">
+          Nombre del negocio
+        </label>
+
+
+        <input
+          id="registroEmpresa"
+          type="text"
+          placeholder="Ej: Pizzería Pedro"
+          title="Nombre del negocio"
+          required
+        />
+
+
+        <label for="registroRut">
+          RUT empresa
+        </label>
+
+
+        <input
+          id="registroRut"
+          type="text"
+          placeholder="76.123.456-7"
+          title="RUT empresa"
+          required
+        />
+
+
+        <label for="registroWhatsapp">
+          WhatsApp
+        </label>
+
+
+        <input
+          id="registroWhatsapp"
+          type="tel"
+          placeholder="+56 9 1234 5678"
+          title="WhatsApp"
+          autocomplete="tel"
+          required
+        />
+
+
+        <label for="registroDireccion">
+          Dirección
+        </label>
+
+
+        <input
+          id="registroDireccion"
+          type="text"
+          placeholder="Dirección del negocio"
+          title="Dirección"
+          autocomplete="street-address"
+        />
+
+
+        <label for="registroEmail">
+          Correo
+        </label>
+
+
+        <input
+          id="registroEmail"
+          type="email"
+          placeholder="correo@empresa.cl"
+          title="Correo"
+          autocomplete="email"
+          required
+        />
+
+
+        <label for="registroPassword">
+          Contraseña
+        </label>
+
+
+        <input
+          id="registroPassword"
+          type="password"
+          placeholder="Mínimo 6 caracteres"
+          title="Contraseña"
+          autocomplete="new-password"
+          minlength="6"
+          required
+        />
+
+
+        <label for="registroConfirmarPassword">
+          Confirmar contraseña
+        </label>
+
+
+        <input
+          id="registroConfirmarPassword"
+          type="password"
+          placeholder="Repite la contraseña"
+          title="Confirmar contraseña"
+          autocomplete="new-password"
+          minlength="6"
+          required
+        />
+
+
+        <p
+          id="registroMensaje"
+          class="registro-mensaje"
+        >
+        </p>
+
+
+        <button type="submit">
+          Crear cuenta
+        </button>
+
+
+      </form>
+
+
+      <button
+        type="button"
+        id="btnVolverLogin"
+        class="registro-boton-secundario"
+      >
+        Volver al login
+      </button>
+
+
+    </section>
+
+  </main>
+
+
+
+  <!-- =====================================================
+       APP PRINCIPAL
+  ====================================================== -->
+
   <div
     id="appView"
     class="app"
     style="display: none;"
   >
 
+
     <aside class="sidebar">
 
-      <h1>CCC</h1>
+
+      <h1>
+        CCC
+      </h1>
+
 
       <p>
+
         <span id="rolUsuario">
           Administrador
         </span>
@@ -305,10 +308,12 @@
         <span id="nombreUsuario">
           admin
         </span>
+
       </p>
 
 
       <nav>
+
 
         <button
           type="button"
@@ -367,26 +372,36 @@
           Salir
         </button>
 
+
       </nav>
 
+
     </aside>
+
 
 
     <main class="main">
 
 
-      <!-- ENCABEZADO -->
+      <!-- =================================================
+           ENCABEZADO
+      ================================================== -->
+
       <header class="top-card">
 
+
         <div>
+
 
           <h1>
             CCC Básico
           </h1>
 
+
           <p>
             Login + bodega + cocina + ventas + descuento automático
           </p>
+
 
         </div>
 
@@ -397,6 +412,7 @@
         >
           Actualizar
         </button>
+
 
       </header>
 
@@ -411,6 +427,7 @@
         class="card"
       >
 
+
         <h2>
           Resumen
         </h2>
@@ -421,57 +438,73 @@
 
           <article class="resumen-card">
 
+
             <h3>
               Productos en bodega
             </h3>
+
 
             <strong id="totalBodega">
               0
             </strong>
 
+
           </article>
 
 
+
           <article class="resumen-card">
+
 
             <h3>
               Productos en cocina
             </h3>
 
+
             <strong id="totalCocina">
               0
             </strong>
 
+
           </article>
 
 
+
           <article class="resumen-card">
+
 
             <h3>
               Productos / recetas
             </h3>
 
+
             <strong id="totalProductos">
               0
             </strong>
 
+
           </article>
 
 
+
           <article class="resumen-card">
+
 
             <h3>
               Ventas del día
             </h3>
 
+
             <strong id="totalVentas">
               $0
             </strong>
+
 
           </article>
 
 
         </div>
+
 
       </section>
 
@@ -484,8 +517,8 @@
       <section
         id="vistaBodega"
         class="card"
-        style="display: none;"
       >
+
 
         <h2>
           Inventario de bodega
@@ -538,9 +571,12 @@
         </div>
 
 
+
         <div class="table-wrap">
 
+
           <table>
+
 
             <thead>
 
@@ -578,9 +614,12 @@
             <tbody id="tablaBodega">
             </tbody>
 
+
           </table>
 
+
         </div>
+
 
       </section>
 
@@ -593,8 +632,8 @@
       <section
         id="vistaProveedores"
         class="card"
-        style="display: none;"
       >
+
 
         <h2>
           Proveedores
@@ -611,6 +650,7 @@
           manda dentro del sistema.
 
         </p>
+
 
 
         <div class="proveedores-layout">
@@ -631,9 +671,11 @@
 
               <div class="proveedores-campo">
 
+
                 <label for="proveedorNombre">
                   Nombre proveedor
                 </label>
+
 
                 <input
                   id="proveedorNombre"
@@ -641,14 +683,18 @@
                   placeholder="Ej: Carnes San Martín"
                 />
 
+
               </div>
+
 
 
               <div class="proveedores-campo">
 
+
                 <label for="proveedorRut">
                   RUT
                 </label>
+
 
                 <input
                   id="proveedorRut"
@@ -656,14 +702,18 @@
                   placeholder="76.123.456-7"
                 />
 
+
               </div>
+
 
 
               <div class="proveedores-campo">
 
+
                 <label for="proveedorContacto">
                   Contacto
                 </label>
+
 
                 <input
                   id="proveedorContacto"
@@ -671,14 +721,18 @@
                   placeholder="Nombre del contacto"
                 />
 
+
               </div>
+
 
 
               <div class="proveedores-campo">
 
+
                 <label for="proveedorTelefono">
                   Teléfono
                 </label>
+
 
                 <input
                   id="proveedorTelefono"
@@ -686,14 +740,18 @@
                   placeholder="+56 9 ..."
                 />
 
+
               </div>
+
 
 
               <div class="proveedores-campo">
 
+
                 <label for="proveedorCorreo">
                   Correo
                 </label>
+
 
                 <input
                   id="proveedorCorreo"
@@ -701,65 +759,85 @@
                   placeholder="ventas@proveedor.cl"
                 />
 
+
               </div>
 
 
+
               <div class="proveedores-campo">
+
 
                 <label for="proveedorCondicionPago">
                   Condición de pago
                 </label>
 
+
                 <select id="proveedorCondicionPago">
+
 
                   <option value="Contado">
                     Contado
                   </option>
 
+
                   <option value="7 días">
                     7 días
                   </option>
+
 
                   <option value="30 días">
                     30 días
                   </option>
 
+
                 </select>
+
 
               </div>
 
 
+
               <div class="proveedores-campo">
+
 
                 <label for="proveedorEstado">
                   Estado
                 </label>
 
+
                 <select id="proveedorEstado">
+
 
                   <option value="Activo">
                     Activo
                   </option>
 
+
                   <option value="Inactivo">
                     Inactivo
                   </option>
 
+
                 </select>
+
 
               </div>
 
 
+
               <div class="proveedores-campo">
+
 
                 <label for="proveedorFechaCompra">
                   Fecha última compra
                 </label>
 
+
                 <input
                   id="proveedorFechaCompra"
                   type="date"
                 />
+
 
               </div>
 
@@ -773,6 +851,7 @@
             </div>
 
 
+
             <div class="proveedores-grid">
 
 
@@ -783,9 +862,11 @@
                 "
               >
 
+
                 <label for="proveedorNombreBoleta">
                   Nombre exacto de la boleta / factura
                 </label>
+
 
                 <input
                   id="proveedorNombreBoleta"
@@ -793,12 +874,14 @@
                   placeholder="Ej: BIFE VACUNO KG"
                 />
 
+
                 <span class="proveedores-ayuda">
 
                   Este texto se conserva
                   tal como lo escribe el proveedor.
 
                 </span>
+
 
               </div>
 
@@ -811,6 +894,7 @@
                 "
               >
 
+
                 <label for="proveedorProductoMaestro">
                   Producto maestro CCC
                 </label>
@@ -818,9 +902,11 @@
 
                 <select id="proveedorProductoMaestro">
 
+
                   <option value="">
                     Seleccionar producto de bodega
                   </option>
+
 
                 </select>
 
@@ -835,15 +921,18 @@
 
                 </span>
 
+
               </div>
 
 
 
               <div class="proveedores-campo">
 
+
                 <label for="proveedorUnidad">
                   Unidad
                 </label>
+
 
                 <input
                   id="proveedorUnidad"
@@ -851,15 +940,18 @@
                   placeholder="kg"
                 />
 
+
               </div>
 
 
 
               <div class="proveedores-campo">
 
+
                 <label for="proveedorPrecio">
                   Último precio
                 </label>
+
 
                 <input
                   id="proveedorPrecio"
@@ -868,6 +960,7 @@
                   step="1"
                   placeholder="6990"
                 />
+
 
               </div>
 
@@ -881,10 +974,12 @@
             </div>
 
 
+
             <div class="proveedores-alias-box">
 
 
               <div class="proveedores-alias-form">
+
 
                 <input
                   id="proveedorAlias"
@@ -900,6 +995,7 @@
                   Agregar alias
                 </button>
 
+
               </div>
 
 
@@ -914,9 +1010,11 @@
 
               <div class="proveedores-regla">
 
+
                 <strong>
                   Regla:
                 </strong>
+
 
                 la boleta conserva su nombre original.
 
@@ -924,6 +1022,7 @@
                 formas de llamar al mismo concepto,
                 pero todos apuntan a un único
                 producto maestro.
+
 
               </div>
 
@@ -962,9 +1061,6 @@
 
               Proveedor agregado a la vista.
 
-              Todavía no se guarda en
-              la base de datos.
-
             </div>
 
 
@@ -985,13 +1081,16 @@
 
             <div class="proveedores-origen">
 
+
               <small>
                 Nombre original de boleta
               </small>
 
+
               <strong id="proveedorPreviewBoleta">
                 —
               </strong>
+
 
             </div>
 
@@ -1005,13 +1104,16 @@
 
             <div class="proveedores-destino">
 
+
               <small>
                 Producto maestro CCC
               </small>
 
+
               <strong id="proveedorPreviewMaestro">
                 —
               </strong>
+
 
             </div>
 
@@ -1034,27 +1136,35 @@
 
             <div class="proveedores-ayuda">
 
+
               Si un proveedor utiliza
+
 
               <strong>
                 CARNE
               </strong>,
 
+
               <strong>
                 CARNES
               </strong>
 
+
               o
+
 
               <strong>
                 BIFE
               </strong>,
 
+
               esos nombres pueden quedar
               registrados como alias.
 
+
               El inventario seguirá usando
               un solo nombre maestro.
+
 
             </div>
 
@@ -1066,57 +1176,70 @@
 
 
 
-        <div
-          class="table-wrap"
-          style="margin-top: 18px;"
-        >
+        <div class="table-wrap">
+
 
           <table>
 
+
             <thead>
 
+
               <tr>
+
 
                 <th>
                   PROVEEDOR
                 </th>
 
+
                 <th>
                   NOMBRE BOLETA
                 </th>
+
 
                 <th>
                   PRODUCTO CCC
                 </th>
 
+
                 <th>
                   ALIAS
                 </th>
+
 
                 <th>
                   UNIDAD
                 </th>
 
+
                 <th>
                   ÚLTIMO PRECIO
                 </th>
+
 
                 <th>
                   ESTADO
                 </th>
 
+
                 <th>
                   ACCIÓN
                 </th>
 
+
               </tr>
+
 
             </thead>
 
 
+
             <tbody id="tablaProveedoresVisual">
 
+
               <tr>
+
 
                 <td
                   colspan="8"
@@ -1128,11 +1251,15 @@
 
                 </td>
 
+
               </tr>
+
 
             </tbody>
 
+
           </table>
+
 
         </div>
 
@@ -1148,12 +1275,13 @@
       <section
         id="vistaCocina"
         class="card"
-        style="display: none;"
       >
+
 
         <h2>
           Inventario de cocina
         </h2>
+
 
 
         <div class="form-row cocina-form">
@@ -1164,11 +1292,14 @@
             title="Producto de bodega a porcionar"
           >
 
+
             <option value="">
               Seleccionar producto de bodega
             </option>
 
+
           </select>
+
 
 
           <input
@@ -1177,6 +1308,7 @@
             placeholder="Gramos por porción: 200 g"
             title="Gramos por porción"
           />
+
 
 
           <button
@@ -1190,51 +1322,67 @@
         </div>
 
 
+
         <div class="table-wrap">
+
 
           <table>
 
+
             <thead>
 
+
               <tr>
+
 
                 <th>
                   ID
                 </th>
 
+
                 <th>
                   PRODUCTO
                 </th>
+
 
                 <th>
                   UNIDAD
                 </th>
 
+
                 <th>
                   CANTIDAD
                 </th>
+
 
                 <th>
                   VALOR POR UNIDAD
                 </th>
 
+
                 <th>
                   COSTO TOTAL
                 </th>
+
 
                 <th>
                   ACCIÓN
                 </th>
 
+
               </tr>
 
+
             </thead>
+
 
 
             <tbody id="tablaCocina">
             </tbody>
 
+
           </table>
+
 
         </div>
 
@@ -1250,12 +1398,13 @@
       <section
         id="vistaProductos"
         class="card"
-        style="display: none;"
       >
+
 
         <h2>
           Productos / Recetas
         </h2>
+
 
 
         <div class="form-row">
@@ -1269,12 +1418,14 @@
           />
 
 
+
           <input
             id="precioProductoVenta"
             type="number"
             placeholder="Precio venta"
             title="Precio producto venta"
           />
+
 
 
           <button
@@ -1294,6 +1445,7 @@
         </h3>
 
 
+
         <div class="form-row">
 
 
@@ -1302,11 +1454,14 @@
             title="Seleccionar producto de venta"
           >
 
+
             <option value="">
               Seleccionar producto
             </option>
 
+
           </select>
+
 
 
           <button
@@ -1317,6 +1472,7 @@
           </button>
 
 
+
           <input
             id="costoTotalReceta"
             type="text"
@@ -1324,6 +1480,7 @@
             title="Costo total del plato"
             readonly
           />
+
 
 
           <button
@@ -1345,45 +1502,59 @@
 
         <div class="table-wrap">
 
+
           <table>
+
 
             <thead>
 
+
               <tr>
+
 
                 <th>
                   ID
                 </th>
 
+
                 <th>
                   PRODUCTO
                 </th>
+
 
                 <th>
                   PRECIO
                 </th>
 
+
                 <th>
                   RECETA
                 </th>
+
 
                 <th>
                   COSTO PLATO
                 </th>
 
+
                 <th>
                   ACCIÓN
                 </th>
 
+
               </tr>
 
+
             </thead>
+
 
 
             <tbody id="tablaProductos">
             </tbody>
 
+
           </table>
+
 
         </div>
 
@@ -1399,12 +1570,13 @@
       <section
         id="vistaVentas"
         class="card"
-        style="display: none;"
       >
+
 
         <h2>
           Ventas del día
         </h2>
+
 
 
         <div class="form-row">
@@ -1415,9 +1587,11 @@
             title="Seleccionar producto para venta"
           >
 
+
             <option value="">
               Seleccionar producto
             </option>
+
 
           </select>
 
@@ -1437,21 +1611,26 @@
             title="Seleccionar medio de pago"
           >
 
+
             <option value="efectivo">
               Efectivo
             </option>
+
 
             <option value="debito">
               Débito
             </option>
 
+
             <option value="credito">
               Crédito
             </option>
 
+
             <option value="transferencia">
               Transferencia
             </option>
+
 
           </select>
 
@@ -1471,45 +1650,59 @@
 
         <div class="table-wrap">
 
+
           <table>
+
 
             <thead>
 
+
               <tr>
+
 
                 <th>
                   ID
                 </th>
 
+
                 <th>
                   PRODUCTO
                 </th>
+
 
                 <th>
                   CANTIDAD
                 </th>
 
+
                 <th>
                   MEDIO DE PAGO
                 </th>
+
 
                 <th>
                   TOTAL
                 </th>
 
+
                 <th>
                   FECHA
                 </th>
 
+
               </tr>
 
+
             </thead>
+
 
 
             <tbody id="tablaVentas">
             </tbody>
 
+
           </table>
+
 
         </div>
 
@@ -1519,10 +1712,14 @@
 
     </main>
 
+
   </div>
 
 
-  <script src="app.js?v=71"></script>
+
+  <script src="app.js?v=72"></script>
+
 
 </body>
+
 </html>

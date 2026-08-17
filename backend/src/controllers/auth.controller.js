@@ -2,6 +2,7 @@ const pool = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+
 /* =========================================================
    CREAR TOKEN
 ========================================================= */
@@ -200,11 +201,11 @@ async function login(req, res) {
    CREA:
 
    EMPRESA
-       ↓
+      ↓
    obtiene empresa_id
-       ↓
+      ↓
    USUARIO ADMINISTRADOR
-       ↓
+      ↓
    usuario.empresa_id = empresa.id
 ========================================================= */
 
@@ -402,16 +403,25 @@ async function register(req, res) {
 
 
     /* =====================================================
-       5. COMPROBAR SI LA TABLA EMPRESAS TIENE RUT
+       5. LEER COLUMNAS DE EMPRESAS
 
-       Esto permite usar la misma tabla de CCC sin crear
-       otra tabla para CCC-Básico.
+       CCC y CCC-Básico utilizan la misma tabla:
+       public.empresas
+
+       Esto permite adaptarnos si el RUT se llama:
+
+       rut
+
+       o
+
+       rut_empresa
     ===================================================== */
 
     const columnasEmpresaResultado =
       await client.query(
         `
-        SELECT column_name
+        SELECT
+          column_name
 
         FROM information_schema.columns
 
@@ -427,27 +437,49 @@ async function register(req, res) {
       );
 
 
+    /*
+       Determinamos cuál columna usa actualmente
+       la tabla empresas para guardar el RUT.
+    */
 
-    /* =====================================================
-       6. VERIFICAR RUT DUPLICADO
+    let columnaRut = null;
 
-       Solo se hace si empresas tiene columna rut.
-    ===================================================== */
 
     if (
       columnasEmpresa.includes('rut')
     ) {
 
+      columnaRut = 'rut';
+
+    } else if (
+      columnasEmpresa.includes('rut_empresa')
+    ) {
+
+      columnaRut = 'rut_empresa';
+
+    }
+
+
+
+    /* =====================================================
+       6. VERIFICAR RUT DUPLICADO
+
+       Solo se realiza si existe una columna de RUT.
+    ===================================================== */
+
+    if (columnaRut) {
+
       const empresaRutExistente =
         await client.query(
           `
-          SELECT id
+          SELECT
+            id
 
           FROM public.empresas
 
           WHERE
             REGEXP_REPLACE(
-              LOWER(rut),
+              LOWER(${columnaRut}),
               '[^0-9k]',
               '',
               'g'
@@ -495,26 +527,32 @@ async function register(req, res) {
     /* =====================================================
        7. CREAR EMPRESA
 
-       CCC-BÁSICO NO TIENE OTRA BASE DE DATOS.
+       CCC-BÁSICO NO CREA OTRA BASE DE DATOS.
 
-       Se guarda en:
+       Todo queda en:
 
        public.empresas
 
-       Después toda la información será separada usando
-       empresa_id.
+       Después cada empresa queda separada
+       mediante empresa_id.
     ===================================================== */
 
     let empresaResultado;
 
 
-    /*
-       Versión completa cuando existen las columnas
-       usadas por el registro de CCC.
-    */
+
+    /* -----------------------------------------------------
+       CASO 1
+
+       Existe:
+
+       rut o rut_empresa
+       whatsapp
+       direccion
+    ----------------------------------------------------- */
 
     if (
-      columnasEmpresa.includes('rut') &&
+      columnaRut &&
       columnasEmpresa.includes('whatsapp') &&
       columnasEmpresa.includes('direccion')
     ) {
@@ -525,7 +563,7 @@ async function register(req, res) {
           INSERT INTO public.empresas
           (
             nombre,
-            rut,
+            ${columnaRut},
             whatsapp,
             direccion,
             activo,
@@ -557,12 +595,15 @@ async function register(req, res) {
     }
 
 
-    /*
-       Si la tabla usa telefono en lugar de whatsapp.
-    */
+
+    /* -----------------------------------------------------
+       CASO 2
+
+       La tabla usa telefono en vez de whatsapp.
+    ----------------------------------------------------- */
 
     else if (
-      columnasEmpresa.includes('rut') &&
+      columnaRut &&
       columnasEmpresa.includes('telefono') &&
       columnasEmpresa.includes('direccion')
     ) {
@@ -573,7 +614,7 @@ async function register(req, res) {
           INSERT INTO public.empresas
           (
             nombre,
-            rut,
+            ${columnaRut},
             telefono,
             direccion,
             activo,
@@ -605,15 +646,111 @@ async function register(req, res) {
     }
 
 
-    /*
-       Compatibilidad con la estructura mínima que ya
-       usábamos en CCC:
+
+    /* -----------------------------------------------------
+       CASO 3
+
+       Tiene RUT pero no dirección.
+    ----------------------------------------------------- */
+
+    else if (
+      columnaRut &&
+      columnasEmpresa.includes('whatsapp')
+    ) {
+
+      empresaResultado =
+        await client.query(
+          `
+          INSERT INTO public.empresas
+          (
+            nombre,
+            ${columnaRut},
+            whatsapp,
+            activo,
+            plan,
+            creado_en
+          )
+
+          VALUES
+          (
+            $1,
+            $2,
+            $3,
+            TRUE,
+            'basico',
+            CURRENT_TIMESTAMP
+          )
+
+          RETURNING *
+          `,
+          [
+            nombreEmpresa,
+            rutEmpresa,
+            whatsapp
+          ]
+        );
+
+    }
+
+
+
+    /* -----------------------------------------------------
+       CASO 4
+
+       Tiene RUT + teléfono.
+    ----------------------------------------------------- */
+
+    else if (
+      columnaRut &&
+      columnasEmpresa.includes('telefono')
+    ) {
+
+      empresaResultado =
+        await client.query(
+          `
+          INSERT INTO public.empresas
+          (
+            nombre,
+            ${columnaRut},
+            telefono,
+            activo,
+            plan,
+            creado_en
+          )
+
+          VALUES
+          (
+            $1,
+            $2,
+            $3,
+            TRUE,
+            'basico',
+            CURRENT_TIMESTAMP
+          )
+
+          RETURNING *
+          `,
+          [
+            nombreEmpresa,
+            rutEmpresa,
+            whatsapp
+          ]
+        );
+
+    }
+
+
+
+    /* -----------------------------------------------------
+       CASO 5
+
+       La estructura mínima de CCC.
 
        nombre
        activo
        plan
        creado_en
-    */
+    ----------------------------------------------------- */
 
     else {
 
@@ -707,12 +844,12 @@ async function register(req, res) {
     /* =====================================================
        10. CREAR ADMINISTRADOR
 
-       IMPORTANTE:
+       empresa.id recién creado se guarda en:
 
-       empresa.id recién creado se guarda dentro de
-       usuarios.empresa_id.
+       usuarios.empresa_id
 
-       Esa es la separación de empresas.
+       Esta relación es la que permite separar
+       Pedro, Paula, GFAS, etc.
     ===================================================== */
 
     const usuarioResultado =
@@ -780,7 +917,8 @@ async function register(req, res) {
     /* =====================================================
        12. CREAR TOKEN
 
-       El usuario puede entrar inmediatamente.
+       El usuario puede entrar inmediatamente
+       después del registro.
     ===================================================== */
 
     const token =
@@ -810,7 +948,9 @@ async function register(req, res) {
           empresa.nombre,
 
         rut:
-          empresa.rut || rutEmpresa,
+          empresa.rut ||
+          empresa.rut_empresa ||
+          rutEmpresa,
 
         whatsapp:
           empresa.whatsapp ||
@@ -822,7 +962,8 @@ async function register(req, res) {
           direccion,
 
         plan:
-          empresa.plan || 'basico'
+          empresa.plan ||
+          'basico'
 
       },
 
@@ -855,7 +996,7 @@ async function register(req, res) {
 
     /*
        Si ocurre cualquier error después del BEGIN,
-       PostgreSQL vuelve atrás.
+       PostgreSQL revierte los cambios.
     */
 
     if (client) {

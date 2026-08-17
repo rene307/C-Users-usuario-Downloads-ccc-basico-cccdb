@@ -1105,3 +1105,308 @@ td:last-child button {
     grid-template-columns: 1fr;
   }
 }
+
+/* =========================================================
+   PROVEEDORES
+   Estos estilos estaban antes dentro del index.html.
+   Se pasan al CSS sin cambiar el diseño.
+   ========================================================= */
+
+.proveedores-layout {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1.15fr)
+    minmax(320px, 0.85fr);
+  gap: 18px;
+  align-items: start;
+  margin-top: 18px;
+}
+
+.proveedores-panel {
+  border: 1px solid #dfe5ec;
+  border-radius: 14px;
+  padding: 18px;
+  background: #ffffff;
+}
+
+.proveedores-panel h3 {
+  margin-top: 0;
+  margin-bottom: 14px;
+}
+
+.proveedores-subtitulo {
+  margin: 22px 0 10px;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #5f6b7a;
+}
+
+.proveedores-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.proveedores-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.proveedores-campo.proveedores-full {
+  grid-column: 1 / -1;
+}
+
+.proveedores-campo label {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.proveedores-campo input,
+.proveedores-campo select,
+.proveedores-alias-form input {
+  width: 100%;
+}
+
+.proveedores-ayuda {
+  font-size: 12px;
+  color: #667085;
+  line-height: 1.45;
+}
+
+.proveedores-alias-box {
+  border: 1px solid #dfe5ec;
+  border-radius: 12px;
+  padding: 14px;
+  background: #f8fafc;
+}
+
+.proveedores-alias-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+}
+
+.proveedores-alias-lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  min-height: 32px;
+}
+
+.proveedores-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #3730a3;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.proveedores-chip button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.proveedores-regla {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+  background: #fff7ed;
+  color: #9a3412;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.proveedores-origen {
+  padding: 12px;
+  border: 1px solid #dfe5ec;
+  border-radius: 12px;
+  background: #fbfcfe;
+  margin-bottom: 12px;
+}
+
+.proveedores-origen small,
+.proveedores-destino small {
+  display: block;
+  color: #667085;
+  margin-bottom: 4px;
+}
+
+.proveedores-origen strong,
+.proveedores-destino strong {
+  display: block;
+  word-break: break-word;
+}
+
+.proveedores-flecha {
+  text-align: center;
+  font-size: 24px;
+  font-weight: 900;
+  margin: 4px 0;
+}
+
+.proveedores-destino {
+  padding: 12px;
+  border: 1px solid #abefc6;
+  border-radius: 12px;
+  background: #ecfdf3;
+  color: #067647;
+}
+
+.proveedores-estado {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: #fff7ed;
+  color: #9a3412;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.proveedores-estado.compatible {
+  background: #ecfdf3;
+  color: #067647;
+}
+
+.proveedores-aviso {
+  display: none;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #abefc6;
+  background: #ecfdf3;
+  color: #067647;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.proveedores-botones {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.proveedores-tabla-vacia {
+  color: #667085;
+  text-align: center;
+}
+
+.proveedores-eliminar {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+
+/* =========================================================
+   REGISTRO CCC BÁSICO
+   ========================================================= */
+
+/*
+   El formulario de registro comienza oculto.
+   app.js lo muestra al presionar Registrarse.
+*/
+#registerView {
+  display: none;
+}
+
+
+/*
+   La aplicación comienza oculta hasta que exista
+   una sesión válida.
+*/
+#appView {
+  display: none;
+}
+
+
+/*
+   Estas vistas comienzan ocultas.
+
+   Resumen queda visible cuando se entra a la aplicación.
+*/
+#vistaBodega,
+#vistaProveedores,
+#vistaCocina,
+#vistaProductos,
+#vistaVentas {
+  display: none;
+}
+
+
+/*
+   El registro usa el mismo fondo y estructura
+   visual del login.
+*/
+.registro-page {
+  padding-top: 32px;
+  padding-bottom: 32px;
+}
+
+
+/*
+   Permite un poco más de ancho porque el registro
+   tiene más campos que el login.
+*/
+.registro-card {
+  max-width: 460px;
+}
+
+
+/*
+   Botones:
+
+   Registrarse
+   Volver al login
+*/
+.registro-boton-secundario {
+  margin-top: 12px !important;
+}
+
+
+/*
+   Mensajes del registro.
+
+   app.js cambia el color según sea:
+   - error
+   - éxito
+*/
+.login-card .registro-mensaje {
+  display: none;
+  margin: 12px 0 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+
+/* =========================================================
+   RESPONSIVE PROVEEDORES
+   ========================================================= */
+
+@media (max-width: 950px) {
+
+  .proveedores-layout,
+  .proveedores-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .proveedores-campo.proveedores-full {
+    grid-column: auto;
+  }
+
+}
