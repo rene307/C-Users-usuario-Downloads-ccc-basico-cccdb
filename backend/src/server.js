@@ -4,80 +4,719 @@ const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
+
 const pool = require('./config/db');
-const initDatabase = require('./config/initDatabase');
 
 const authRoutes = require('./routes/auth.routes');
 const inventarioRoutes = require('./routes/inventario.routes');
 const productosRoutes = require('./routes/productos.routes');
 const ventasRoutes = require('./routes/ventas.routes');
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+// Rutas de proveedores
+const proveedoresRoutes = require('./routes/proveedores.routes');
 
+const app = express();
+
+const PORT = Number(process.env.PORT || 3000);
+
+
+/* =========================================================
+   POSTGRESQL
+
+   El modelo maestro de CCC está en el schema public.
+
+   IMPORTANTE:
+   Ya NO usamos:
+
+   pool.on('connect', client => {
+       client.query('SET search_path TO public')
+   });
+
+   porque PostgreSQL ya está trabajando directamente
+   sobre el schema public.
+========================================================= */
+
+
+/* =========================================================
+   MIDDLEWARE
+========================================================= */
+
+// Permite peticiones desde el frontend.
 app.use(cors());
+
+// Permite recibir JSON en las peticiones.
 app.use(express.json());
 
+
+/* =========================================================
+   HEALTH
+========================================================= */
+
+/*
+   Esta ruta sirve para comprobar:
+
+   - que Node está funcionando
+   - que PostgreSQL responde
+   - qué base de datos estamos usando
+   - qué schema está activo
+
+   URL:
+   http://localhost:3000/api/health
+*/
+
 app.get('/api/health', async (req, res) => {
-  const db = await pool.query('SELECT current_database() AS database, current_schema() AS schema');
 
-  res.json({
-    message: 'CCC Básico funcionando',
-    database: db.rows[0].database,
-    schema: db.rows[0].schema,
-  });
+  try {
+
+    const db = await pool.query(`
+      SELECT
+        current_database() AS database,
+        current_schema() AS schema,
+        NOW() AS fecha
+    `);
+
+
+    res.json({
+
+      ok: true,
+
+      message:
+        'CCC Básico funcionando',
+
+      database:
+        db.rows[0].database,
+
+      schema:
+        db.rows[0].schema,
+
+      fecha:
+        db.rows[0].fecha
+
+    });
+
+
+  } catch (error) {
+
+    console.error(
+      'Error comprobando PostgreSQL:',
+      error
+    );
+
+
+    res.status(500).json({
+
+      ok: false,
+
+      message:
+        'Error conectando con PostgreSQL',
+
+      detalle:
+        error.message
+
+    });
+
+  }
+
 });
 
-app.use('/api/auth', authRoutes);
-app.use('/api', inventarioRoutes);
-app.use('/api', productosRoutes);
-app.use('/api', ventasRoutes);
 
-// Frontend estático DESPUÉS de las rutas API
-app.use(express.static(path.join(__dirname, '../../frontend')));
+/* =========================================================
+   TEST BASE DE DATOS
+========================================================= */
 
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../../frontend/index.html'));
+/*
+   Segunda ruta de prueba de PostgreSQL.
+
+   URL:
+   http://localhost:3000/api/test-db
+*/
+
+app.get('/api/test-db', async (req, res) => {
+
+  try {
+
+    const result = await pool.query(`
+      SELECT
+        NOW() AS fecha,
+        current_database() AS database,
+        current_schema() AS schema
+    `);
+
+
+    res.json({
+
+      ok: true,
+
+      database:
+        result.rows[0].database,
+
+      schema:
+        result.rows[0].schema,
+
+      fecha:
+        result.rows[0].fecha
+
+    });
+
+
+  } catch (error) {
+
+    console.error(
+      'Error conectando a PostgreSQL:',
+      error
+    );
+
+
+    res.status(500).json({
+
+      ok: false,
+
+      error:
+        'No se pudo conectar a PostgreSQL',
+
+      detalle:
+        error.message
+
+    });
+
+  }
+
 });
+
+
+/* =========================================================
+   RUTAS API
+========================================================= */
+
+
+/* ---------------------------------------------------------
+   AUTENTICACIÓN
+
+   Estas rutas vienen desde:
+
+   backend/src/routes/auth.routes.js
+
+   Y quedan disponibles como:
+
+   POST /api/auth/login
+   POST /api/auth/register
+--------------------------------------------------------- */
+
+app.use(
+  '/api/auth',
+  authRoutes
+);
+
+
+/* ---------------------------------------------------------
+   INVENTARIO
+
+   Aquí están las rutas de:
+
+   - Bodega
+   - Cocina
+--------------------------------------------------------- */
+
+app.use(
+  '/api',
+  inventarioRoutes
+);
+
+
+/* ---------------------------------------------------------
+   PRODUCTOS
+
+   Aquí están las rutas relacionadas con:
+
+   - Productos
+   - Recetas
+--------------------------------------------------------- */
+
+app.use(
+  '/api',
+  productosRoutes
+);
+
+
+/* ---------------------------------------------------------
+   VENTAS
+
+   Aquí están las rutas relacionadas con:
+
+   - Ventas
+   - Detalle de ventas / pedidos
+--------------------------------------------------------- */
+
+app.use(
+  '/api',
+  ventasRoutes
+);
+
+
+/* ---------------------------------------------------------
+   PROVEEDORES
+
+   Aquí están las rutas relacionadas con:
+
+   - Proveedores
+   - Relación proveedor / materia prima
+   - Aliases
+   - Historial de precios
+--------------------------------------------------------- */
+
+app.use(
+  '/api',
+  proveedoresRoutes
+);
+
+
+/* =========================================================
+   ADMINISTRADOR DE DESARROLLO
+========================================================= */
+
+/*
+   Este usuario solamente se crea si no existe.
+
+   Los datos vienen desde .env:
+
+   ADMIN_NAME
+   ADMIN_EMAIL
+   ADMIN_PASSWORD
+   ADMIN_EMPRESA_NAME
+
+   El administrador pertenece a una empresa mediante
+   empresa_id.
+*/
 
 async function crearAdminSiNoExiste() {
-  const adminEmail = process.env.ADMIN_EMAIL || 'admin@ccc.cl';
-  const adminPassword = process.env.ADMIN_PASSWORD || '123456';
-  const adminName = process.env.ADMIN_NAME || 'Administrador';
 
-  const result = await pool.query('SELECT id FROM usuarios WHERE correo = $1', [adminEmail]);
+  const adminEmail =
+    process.env.ADMIN_EMAIL ||
+    'admin@ccc.cl';
 
-  if (result.rows.length === 0) {
-    const hash = await bcrypt.hash(adminPassword, 10);
 
+  const adminPassword =
+    process.env.ADMIN_PASSWORD ||
+    '123456';
+
+
+  const adminName =
+    process.env.ADMIN_NAME ||
+    'Administrador';
+
+
+  const empresaNombre =
+    process.env.ADMIN_EMPRESA_NAME ||
+    'CCC Empresa Demo';
+
+
+
+  /* -------------------------------------------------------
+     1. BUSCAR USUARIO
+  ------------------------------------------------------- */
+
+  /*
+     Primero comprobamos si el administrador ya existe.
+
+     Se usa LOWER() para evitar problemas entre:
+
+     admin@ccc.cl
+     ADMIN@CCC.CL
+     Admin@ccc.cl
+  */
+
+  const usuarioExistente =
     await pool.query(
-      `INSERT INTO usuarios (nombre, correo, password_hash, rol)
-       VALUES ($1, $2, $3, 'admin')`,
-      [adminName, adminEmail, hash]
+      `
+      SELECT
+        id,
+        empresa_id
+
+      FROM public.usuarios
+
+      WHERE LOWER(email) = LOWER($1)
+
+      LIMIT 1
+      `,
+      [
+        adminEmail
+      ]
     );
 
-    console.log(`Usuario admin creado: ${adminEmail} / ${adminPassword}`);
-  }
-}
 
-async function iniciarServidor() {
-  try {
-    const dbInfo = await pool.query('SELECT current_database() AS database, current_schema() AS schema');
+
+  /*
+     Si el usuario ya existe,
+     no hacemos INSERT nuevamente.
+  */
+
+  if (
+    usuarioExistente.rows.length > 0
+  ) {
 
     console.log(
-      `Conexión a PostgreSQL correcta: BD=${dbInfo.rows[0].database}, schema=${dbInfo.rows[0].schema}`
+      `Usuario admin existente: ${adminEmail}`
     );
 
-    await initDatabase();
+    return;
+
+  }
+
+
+
+  /* -------------------------------------------------------
+     2. BUSCAR EMPRESA DE DESARROLLO
+  ------------------------------------------------------- */
+
+  /*
+     Cada usuario debe pertenecer a una empresa.
+
+     Por eso primero buscamos la empresa demo.
+  */
+
+  let empresaResult =
+    await pool.query(
+      `
+      SELECT
+        id
+
+      FROM public.empresas
+
+      WHERE nombre = $1
+
+      ORDER BY id
+
+      LIMIT 1
+      `,
+      [
+        empresaNombre
+      ]
+    );
+
+
+  let empresaId;
+
+
+
+  /* -------------------------------------------------------
+     3. SI NO EXISTE EMPRESA, CREARLA
+  ------------------------------------------------------- */
+
+  if (
+    empresaResult.rows.length === 0
+  ) {
+
+    empresaResult =
+      await pool.query(
+        `
+        INSERT INTO public.empresas
+        (
+          nombre,
+          activo,
+          plan,
+          creado_en
+        )
+
+        VALUES
+        (
+          $1,
+          TRUE,
+          'basico',
+          CURRENT_TIMESTAMP
+        )
+
+        RETURNING id
+        `,
+        [
+          empresaNombre
+        ]
+      );
+
+
+    empresaId =
+      empresaResult.rows[0].id;
+
+
+    console.log(
+      `Empresa de desarrollo creada: ${empresaNombre}`
+    );
+
+  } else {
+
+    /*
+       Si la empresa ya existe,
+       usamos su ID.
+    */
+
+    empresaId =
+      empresaResult.rows[0].id;
+
+  }
+
+
+
+  /* -------------------------------------------------------
+     4. CREAR CONTRASEÑA
+  ------------------------------------------------------- */
+
+  /*
+     Nunca guardamos la contraseña directamente.
+
+     bcrypt genera el hash que se guarda en:
+
+     usuarios.password_hash
+  */
+
+  const hash =
+    await bcrypt.hash(
+      adminPassword,
+      10
+    );
+
+
+
+  /* -------------------------------------------------------
+     5. CREAR ADMINISTRADOR
+  ------------------------------------------------------- */
+
+  /*
+     IMPORTANTE:
+
+     El rol correcto según la restricción
+     chk_rol_usuario de PostgreSQL es:
+
+     administrador
+
+     NO:
+
+     admin
+     ADMIN
+  */
+
+  await pool.query(
+    `
+    INSERT INTO public.usuarios
+    (
+      nombre,
+      email,
+      password_hash,
+      rol,
+      activo,
+      empresa_id,
+      creado_en
+    )
+
+    VALUES
+    (
+      $1,
+      $2,
+      $3,
+      'administrador',
+      TRUE,
+      $4,
+      CURRENT_TIMESTAMP
+    )
+    `,
+    [
+      adminName,
+      adminEmail,
+      hash,
+      empresaId
+    ]
+  );
+
+
+  console.log(
+    `Usuario admin creado: ${adminEmail}`
+  );
+
+
+  console.log(
+    `Empresa ID: ${empresaId}`
+  );
+
+}
+
+
+/* =========================================================
+   FRONTEND
+========================================================= */
+
+/*
+   Express también entrega directamente el frontend.
+
+   La estructura es:
+
+   backend/
+   frontend/
+
+   server.js está dentro de:
+
+   backend/src/server.js
+
+   Por eso debemos retroceder dos carpetas.
+*/
+
+app.use(
+  express.static(
+    path.join(
+      __dirname,
+      '../../frontend'
+    )
+  )
+);
+
+
+/* =========================================================
+   API NO ENCONTRADA
+========================================================= */
+
+/*
+   IMPORTANTE:
+
+   Esta ruta debe estar después de las APIs reales.
+
+   Evita que una URL como:
+
+   /api/cualquier-cosa
+
+   termine devolviendo index.html.
+*/
+
+app.use(
+  '/api',
+  (req, res) => {
+
+    res.status(404).json({
+
+      ok: false,
+
+      error:
+        'Ruta API no encontrada'
+
+    });
+
+  }
+);
+
+
+/* =========================================================
+   SPA / FRONTEND
+========================================================= */
+
+/*
+   Cualquier ruta que NO sea /api
+   entrega index.html.
+
+   Esto permite abrir normalmente CCC Básico desde:
+
+   http://localhost:3000
+*/
+
+app.get(
+  /.*/,
+  (req, res) => {
+
+    res.sendFile(
+      path.join(
+        __dirname,
+        '../../frontend/index.html'
+      )
+    );
+
+  }
+);
+
+
+/* =========================================================
+   INICIAR SERVIDOR
+========================================================= */
+
+async function iniciarServidor() {
+
+  try {
+
+    /*
+       Antes de levantar Express comprobamos
+       que PostgreSQL realmente esté disponible.
+    */
+
+    const dbInfo =
+      await pool.query(`
+        SELECT
+          current_database() AS database,
+          current_schema() AS schema
+      `);
+
+
+    console.log(
+      `Conexión PostgreSQL correcta: ` +
+      `BD=${dbInfo.rows[0].database}, ` +
+      `schema=${dbInfo.rows[0].schema}`
+    );
+
+
+    /*
+       IMPORTANTE:
+
+       Ya NO ejecutamos initDatabase().
+
+       Las tablas maestras de CCC ya existen
+       dentro del schema public.
+
+       PostgreSQL local es nuestro modelo maestro.
+    */
+
+
+    /*
+       Comprueba que exista el administrador
+       de desarrollo.
+    */
+
     await crearAdminSiNoExiste();
 
-    app.listen(PORT, () => {
-      console.log(`Servidor CCC Básico en http://localhost:${PORT}`);
-    });
+
+    /*
+       Finalmente levantamos el servidor.
+    */
+
+    app.listen(
+      PORT,
+      () => {
+
+        console.log(
+          `Servidor CCC Básico en http://localhost:${PORT}`
+        );
+
+        console.log(
+          `Login: POST http://localhost:${PORT}/api/auth/login`
+        );
+
+        console.log(
+          `Registro: POST http://localhost:${PORT}/api/auth/register`
+        );
+
+      }
+    );
+
+
   } catch (error) {
-    console.error('No se pudo iniciar el servidor:', error.message);
+
+    console.error(
+      'No se pudo iniciar el servidor:',
+      error
+    );
+
+
     process.exit(1);
+
   }
+
 }
+
+
+/* =========================================================
+   EJECUTAR
+========================================================= */
 
 iniciarServidor();

@@ -1,50 +1,922 @@
+const pool = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const pool = require('../config/db');
 
-async function login(req, res) {
-  try {
-    const { correo, password } = req.body;
+/* =========================================================
+   CREAR TOKEN
+========================================================= */
 
-    if (!correo || !password) {
-      return res.status(400).json({ message: 'Correo y contraseña son obligatorios' });
+function crearToken(usuario) {
+
+  return jwt.sign(
+    {
+      id: usuario.id,
+      nombre: usuario.nombre,
+      email: usuario.email,
+      rol: usuario.rol,
+      rol_id: usuario.rol_id,
+      empresa_id: usuario.empresa_id
+    },
+    process.env.JWT_SECRET || 'ccc_clave_secreta_2026',
+    {
+      expiresIn: '8h'
     }
+  );
 
-    const result = await pool.query(
-      'SELECT id, nombre, correo, password_hash, rol FROM usuarios WHERE correo = $1',
-      [correo]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(401).json({ message: 'Credenciales incorrectas' });
-    }
-
-    const user = result.rows[0];
-    const validPassword = await bcrypt.compare(password, user.password_hash);
-
-    if (!validPassword) {
-      return res.status(401).json({ message: 'Credenciales incorrectas' });
-    }
-
-    const token = jwt.sign(
-      { id: user.id, nombre: user.nombre, correo: user.correo, rol: user.rol },
-      process.env.JWT_SECRET,
-      { expiresIn: '8h' }
-    );
-
-    return res.json({
-      token,
-      user: {
-        id: user.id,
-        nombre: user.nombre,
-        correo: user.correo,
-        rol: user.rol,
-      },
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Error en login' });
-  }
 }
 
-module.exports = { login };
+
+/* =========================================================
+   LOGIN
+   POST /api/auth/login
+========================================================= */
+
+async function login(req, res) {
+
+  try {
+
+    const email = String(
+      req.body.email ||
+      req.body.correo ||
+      ''
+    )
+      .trim()
+      .toLowerCase();
+
+
+    const password = String(
+      req.body.password ||
+      req.body.clave ||
+      ''
+    ).trim();
+
+
+    if (!email || !password) {
+
+      return res.status(400).json({
+        ok: false,
+        message: 'Correo y contraseña son obligatorios'
+      });
+
+    }
+
+
+    const resultado = await pool.query(
+      `
+      SELECT
+        u.id,
+        u.nombre,
+        u.email,
+        u.password_hash,
+        u.rol,
+        u.rol_id,
+        u.empresa_id,
+        u.activo,
+        e.nombre AS empresa_nombre
+
+      FROM public.usuarios u
+
+      LEFT JOIN public.empresas e
+        ON e.id = u.empresa_id
+
+      WHERE LOWER(u.email) = $1
+
+      LIMIT 1
+      `,
+      [email]
+    );
+
+
+    if (resultado.rows.length === 0) {
+
+      return res.status(401).json({
+        ok: false,
+        message: 'Usuario o contraseña incorrectos'
+      });
+
+    }
+
+
+    const usuario = resultado.rows[0];
+
+
+    if (usuario.activo === false) {
+
+      return res.status(403).json({
+        ok: false,
+        message: 'Usuario desactivado'
+      });
+
+    }
+
+
+    const passwordCorrecta =
+      await bcrypt.compare(
+        password,
+        usuario.password_hash
+      );
+
+
+    if (!passwordCorrecta) {
+
+      return res.status(401).json({
+        ok: false,
+        message: 'Usuario o contraseña incorrectos'
+      });
+
+    }
+
+
+    const token =
+      crearToken(usuario);
+
+
+    return res.json({
+
+      ok: true,
+
+      message: 'Login correcto',
+
+      token,
+
+      usuario: {
+
+        id:
+          usuario.id,
+
+        nombre:
+          usuario.nombre,
+
+        email:
+          usuario.email,
+
+        rol:
+          usuario.rol,
+
+        rol_id:
+          usuario.rol_id,
+
+        empresa_id:
+          usuario.empresa_id,
+
+        empresa_nombre:
+          usuario.empresa_nombre
+
+      }
+
+    });
+
+
+  } catch (error) {
+
+    console.error(
+      'Error login:',
+      error
+    );
+
+
+    return res.status(500).json({
+
+      ok: false,
+
+      message:
+        'Error al iniciar sesión',
+
+      detalle:
+        error.message
+
+    });
+
+  }
+
+}
+
+
+/* =========================================================
+   REGISTRO CCC / CCC-BÁSICO
+
+   POST /api/auth/register
+
+   CREA:
+
+   EMPRESA
+       ↓
+   obtiene empresa_id
+       ↓
+   USUARIO ADMINISTRADOR
+       ↓
+   usuario.empresa_id = empresa.id
+========================================================= */
+
+async function register(req, res) {
+
+  let client;
+
+
+  try {
+
+    client =
+      await pool.connect();
+
+
+    /* =====================================================
+       1. RECIBIR DATOS
+    ===================================================== */
+
+    const nombreUsuario = String(
+      req.body.nombre ||
+      req.body.nombreUsuario ||
+      req.body.nombre_usuario ||
+      ''
+    ).trim();
+
+
+    const email = String(
+      req.body.email ||
+      req.body.correo ||
+      ''
+    )
+      .trim()
+      .toLowerCase();
+
+
+    const whatsapp = String(
+      req.body.whatsapp ||
+      req.body.telefono ||
+      req.body.celular ||
+      ''
+    ).trim();
+
+
+    const nombreEmpresa = String(
+      req.body.nombreEmpresa ||
+      req.body.nombre_empresa ||
+      req.body.empresa ||
+      req.body.nombreNegocio ||
+      req.body.nombre_negocio ||
+      ''
+    ).trim();
+
+
+    const rutEmpresa = String(
+      req.body.rutEmpresa ||
+      req.body.rut_empresa ||
+      req.body.rut ||
+      ''
+    ).trim();
+
+
+    const direccion = String(
+      req.body.direccion ||
+      ''
+    ).trim();
+
+
+    const password = String(
+      req.body.password ||
+      req.body.clave ||
+      req.body.contrasena ||
+      ''
+    ).trim();
+
+
+    const confirmarPassword = String(
+      req.body.confirmarPassword ||
+      req.body.confirmar_password ||
+      req.body.confirmarClave ||
+      req.body.confirmar_clave ||
+      ''
+    ).trim();
+
+
+
+    /* =====================================================
+       2. VALIDACIONES
+    ===================================================== */
+
+    if (
+      !nombreUsuario ||
+      !email ||
+      !whatsapp ||
+      !nombreEmpresa ||
+      !rutEmpresa ||
+      !password
+    ) {
+
+      return res.status(400).json({
+
+        ok: false,
+
+        message:
+          'Nombre, correo, WhatsApp, empresa, RUT y contraseña son obligatorios'
+
+      });
+
+    }
+
+
+    if (password.length < 6) {
+
+      return res.status(400).json({
+
+        ok: false,
+
+        message:
+          'La contraseña debe tener al menos 6 caracteres'
+
+      });
+
+    }
+
+
+    if (
+      confirmarPassword &&
+      password !== confirmarPassword
+    ) {
+
+      return res.status(400).json({
+
+        ok: false,
+
+        message:
+          'Las contraseñas no coinciden'
+
+      });
+
+    }
+
+
+
+    /* =====================================================
+       3. INICIAR TRANSACCIÓN
+    ===================================================== */
+
+    await client.query(
+      'BEGIN'
+    );
+
+
+
+    /* =====================================================
+       4. COMPROBAR CORREO
+    ===================================================== */
+
+    const usuarioExistente =
+      await client.query(
+        `
+        SELECT
+          id
+
+        FROM public.usuarios
+
+        WHERE LOWER(email) = $1
+
+        LIMIT 1
+        `,
+        [
+          email
+        ]
+      );
+
+
+    if (
+      usuarioExistente.rows.length > 0
+    ) {
+
+      await client.query(
+        'ROLLBACK'
+      );
+
+
+      return res.status(409).json({
+
+        ok: false,
+
+        message:
+          'Ya existe un usuario registrado con ese correo'
+
+      });
+
+    }
+
+
+
+    /* =====================================================
+       5. COMPROBAR SI LA TABLA EMPRESAS TIENE RUT
+
+       Esto permite usar la misma tabla de CCC sin crear
+       otra tabla para CCC-Básico.
+    ===================================================== */
+
+    const columnasEmpresaResultado =
+      await client.query(
+        `
+        SELECT column_name
+
+        FROM information_schema.columns
+
+        WHERE table_schema = 'public'
+          AND table_name = 'empresas'
+        `
+      );
+
+
+    const columnasEmpresa =
+      columnasEmpresaResultado.rows.map(
+        fila => fila.column_name
+      );
+
+
+
+    /* =====================================================
+       6. VERIFICAR RUT DUPLICADO
+
+       Solo se hace si empresas tiene columna rut.
+    ===================================================== */
+
+    if (
+      columnasEmpresa.includes('rut')
+    ) {
+
+      const empresaRutExistente =
+        await client.query(
+          `
+          SELECT id
+
+          FROM public.empresas
+
+          WHERE
+            REGEXP_REPLACE(
+              LOWER(rut),
+              '[^0-9k]',
+              '',
+              'g'
+            )
+            =
+            REGEXP_REPLACE(
+              LOWER($1),
+              '[^0-9k]',
+              '',
+              'g'
+            )
+
+          LIMIT 1
+          `,
+          [
+            rutEmpresa
+          ]
+        );
+
+
+      if (
+        empresaRutExistente.rows.length > 0
+      ) {
+
+        await client.query(
+          'ROLLBACK'
+        );
+
+
+        return res.status(409).json({
+
+          ok: false,
+
+          message:
+            'Ya existe una empresa registrada con ese RUT'
+
+        });
+
+      }
+
+    }
+
+
+
+    /* =====================================================
+       7. CREAR EMPRESA
+
+       CCC-BÁSICO NO TIENE OTRA BASE DE DATOS.
+
+       Se guarda en:
+
+       public.empresas
+
+       Después toda la información será separada usando
+       empresa_id.
+    ===================================================== */
+
+    let empresaResultado;
+
+
+    /*
+       Versión completa cuando existen las columnas
+       usadas por el registro de CCC.
+    */
+
+    if (
+      columnasEmpresa.includes('rut') &&
+      columnasEmpresa.includes('whatsapp') &&
+      columnasEmpresa.includes('direccion')
+    ) {
+
+      empresaResultado =
+        await client.query(
+          `
+          INSERT INTO public.empresas
+          (
+            nombre,
+            rut,
+            whatsapp,
+            direccion,
+            activo,
+            plan,
+            creado_en
+          )
+
+          VALUES
+          (
+            $1,
+            $2,
+            $3,
+            $4,
+            TRUE,
+            'basico',
+            CURRENT_TIMESTAMP
+          )
+
+          RETURNING *
+          `,
+          [
+            nombreEmpresa,
+            rutEmpresa,
+            whatsapp,
+            direccion
+          ]
+        );
+
+    }
+
+
+    /*
+       Si la tabla usa telefono en lugar de whatsapp.
+    */
+
+    else if (
+      columnasEmpresa.includes('rut') &&
+      columnasEmpresa.includes('telefono') &&
+      columnasEmpresa.includes('direccion')
+    ) {
+
+      empresaResultado =
+        await client.query(
+          `
+          INSERT INTO public.empresas
+          (
+            nombre,
+            rut,
+            telefono,
+            direccion,
+            activo,
+            plan,
+            creado_en
+          )
+
+          VALUES
+          (
+            $1,
+            $2,
+            $3,
+            $4,
+            TRUE,
+            'basico',
+            CURRENT_TIMESTAMP
+          )
+
+          RETURNING *
+          `,
+          [
+            nombreEmpresa,
+            rutEmpresa,
+            whatsapp,
+            direccion
+          ]
+        );
+
+    }
+
+
+    /*
+       Compatibilidad con la estructura mínima que ya
+       usábamos en CCC:
+
+       nombre
+       activo
+       plan
+       creado_en
+    */
+
+    else {
+
+      empresaResultado =
+        await client.query(
+          `
+          INSERT INTO public.empresas
+          (
+            nombre,
+            activo,
+            plan,
+            creado_en
+          )
+
+          VALUES
+          (
+            $1,
+            TRUE,
+            'basico',
+            CURRENT_TIMESTAMP
+          )
+
+          RETURNING *
+          `,
+          [
+            nombreEmpresa
+          ]
+        );
+
+    }
+
+
+
+    const empresa =
+      empresaResultado.rows[0];
+
+
+
+    /* =====================================================
+       8. BUSCAR ROL ADMINISTRADOR
+    ===================================================== */
+
+    const rolResultado =
+      await client.query(
+        `
+        SELECT
+          id,
+          nombre
+
+        FROM public.roles
+
+        WHERE LOWER(nombre)
+          IN (
+            'administrador',
+            'admin'
+          )
+
+        ORDER BY id
+
+        LIMIT 1
+        `
+      );
+
+
+    let rolId = null;
+
+
+    if (
+      rolResultado.rows.length > 0
+    ) {
+
+      rolId =
+        rolResultado.rows[0].id;
+
+    }
+
+
+
+    /* =====================================================
+       9. GENERAR PASSWORD HASH
+    ===================================================== */
+
+    const passwordHash =
+      await bcrypt.hash(
+        password,
+        10
+      );
+
+
+
+    /* =====================================================
+       10. CREAR ADMINISTRADOR
+
+       IMPORTANTE:
+
+       empresa.id recién creado se guarda dentro de
+       usuarios.empresa_id.
+
+       Esa es la separación de empresas.
+    ===================================================== */
+
+    const usuarioResultado =
+      await client.query(
+        `
+        INSERT INTO public.usuarios
+        (
+          nombre,
+          email,
+          password_hash,
+          rol,
+          rol_id,
+          empresa_id,
+          activo,
+          creado_en
+        )
+
+        VALUES
+        (
+          $1,
+          $2,
+          $3,
+          'administrador',
+          $4,
+          $5,
+          TRUE,
+          CURRENT_TIMESTAMP
+        )
+
+        RETURNING
+          id,
+          nombre,
+          email,
+          rol,
+          rol_id,
+          empresa_id,
+          activo,
+          creado_en
+        `,
+        [
+          nombreUsuario,
+          email,
+          passwordHash,
+          rolId,
+          empresa.id
+        ]
+      );
+
+
+    const usuario =
+      usuarioResultado.rows[0];
+
+
+
+    /* =====================================================
+       11. CONFIRMAR TRANSACCIÓN
+    ===================================================== */
+
+    await client.query(
+      'COMMIT'
+    );
+
+
+
+    /* =====================================================
+       12. CREAR TOKEN
+
+       El usuario puede entrar inmediatamente.
+    ===================================================== */
+
+    const token =
+      crearToken(usuario);
+
+
+
+    /* =====================================================
+       13. RESPUESTA
+    ===================================================== */
+
+    return res.status(201).json({
+
+      ok: true,
+
+      message:
+        'Empresa y usuario creados correctamente',
+
+      token,
+
+      empresa: {
+
+        id:
+          empresa.id,
+
+        nombre:
+          empresa.nombre,
+
+        rut:
+          empresa.rut || rutEmpresa,
+
+        whatsapp:
+          empresa.whatsapp ||
+          empresa.telefono ||
+          whatsapp,
+
+        direccion:
+          empresa.direccion ||
+          direccion,
+
+        plan:
+          empresa.plan || 'basico'
+
+      },
+
+      usuario: {
+
+        id:
+          usuario.id,
+
+        nombre:
+          usuario.nombre,
+
+        email:
+          usuario.email,
+
+        rol:
+          usuario.rol,
+
+        rol_id:
+          usuario.rol_id,
+
+        empresa_id:
+          usuario.empresa_id
+
+      }
+
+    });
+
+
+  } catch (error) {
+
+    /*
+       Si ocurre cualquier error después del BEGIN,
+       PostgreSQL vuelve atrás.
+    */
+
+    if (client) {
+
+      try {
+
+        await client.query(
+          'ROLLBACK'
+        );
+
+      } catch (rollbackError) {
+
+        console.error(
+          'Error rollback:',
+          rollbackError.message
+        );
+
+      }
+
+    }
+
+
+    console.error(
+      'Error register:',
+      error
+    );
+
+
+    return res.status(500).json({
+
+      ok: false,
+
+      message:
+        'Error al registrar la empresa',
+
+      detalle:
+        error.message
+
+    });
+
+
+  } finally {
+
+    if (client) {
+
+      client.release();
+
+    }
+
+  }
+
+}
+
+
+/* =========================================================
+   EXPORTAR
+========================================================= */
+
+module.exports = {
+
+  login,
+  register
+
+};

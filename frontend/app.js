@@ -1,14 +1,24 @@
 const API_BASE = "http://localhost:3000/api";
 
-
 let token =
   sessionStorage.getItem("ccc_token") || "";
 
+let usuario = null;
 
-let usuario = JSON.parse(
-  sessionStorage.getItem("ccc_usuario") || "null"
-);
+try {
+  usuario = JSON.parse(
+    sessionStorage.getItem("ccc_usuario") || "null"
+  );
+} catch (error) {
+  console.warn(
+    "Sesión anterior inválida. Se limpiará el usuario guardado.",
+    error
+  );
 
+  sessionStorage.removeItem(
+    "ccc_usuario"
+  );
+}
 
 let data = {
   bodega: [],
@@ -24,20 +34,24 @@ let data = {
   =====================================================
   PROVEEDORES
 
-  Por ahora es solamente visual.
+  Los proveedores se cargan y guardan en PostgreSQL
+  mediante:
 
-  NO llama al backend.
-  NO modifica PostgreSQL.
-  NO modifica SQLite.
+  GET  /api/proveedores
+  POST /api/proveedores
 
-  Los datos permanecen mientras
-  la página esté abierta.
+  Se mantiene el nombre proveedoresVisual porque
+  la interfaz ya utiliza ese arreglo para renderizar.
   =====================================================
 */
 
 let proveedoresVisual = [];
 
 let aliasesProveedorVisual = [];
+
+// ID del registro de proveedor que se está modificando.
+// null = se está creando un registro nuevo.
+let proveedorEditandoId = null;
 
 
 
@@ -46,6 +60,8 @@ document.addEventListener(
   async () => {
 
     iniciarLogin();
+
+    iniciarRegistro();
 
     iniciarNavegacion();
 
@@ -409,12 +425,79 @@ function normalizarReceta(item) {
 
 
 
+function normalizarProveedor(item) {
+
+  return {
+
+    id:
+      Number(item.id),
+
+    proveedorId:
+      Number(item.proveedor_id),
+
+    proveedor:
+      item.proveedor || "",
+
+    rut:
+      item.rut || "",
+
+    contacto:
+      item.contacto || "",
+
+    telefono:
+      item.telefono || "",
+
+    correo:
+      item.correo || "",
+
+    condicionPago:
+      item.condicion_pago || "Contado",
+
+    estado:
+      item.estado ||
+      item.proveedor_estado ||
+      "Activo",
+
+    nombreBoleta:
+      item.nombre_boleta || "",
+
+    productoMaestroId:
+      Number(item.materia_prima_id),
+
+    productoMaestro:
+      item.producto_maestro || "",
+
+    unidad:
+      item.unidad || "",
+
+    precio:
+      numero(item.precio),
+
+    aliases:
+      Array.isArray(item.aliases)
+        ? item.aliases
+        : []
+
+  };
+
+}
+
+
+
 /* =====================================================
    CARGA DESDE POSTGRESQL
 ===================================================== */
 
 
 async function cargarTodoDesdeBD() {
+
+  /*
+    Los módulos principales se cargan juntos.
+
+    Proveedores se carga aparte para que un problema
+    en /api/proveedores NO impida entrar a CCC Básico
+    ni cierre la sesión.
+  */
 
   const [
 
@@ -544,6 +627,44 @@ async function cargarTodoDesdeBD() {
     );
 
 
+  /*
+    PROVEEDORES
+
+    Se consulta aparte. Si esta ruta presenta un error,
+    el resto de CCC sigue funcionando.
+  */
+
+  try {
+
+    const proveedores =
+      await api(
+        "/proveedores"
+      );
+
+
+    proveedoresVisual =
+      Array.isArray(proveedores)
+
+        ? proveedores.map(
+            normalizarProveedor
+          )
+
+        : [];
+
+
+  } catch (error) {
+
+    console.error(
+      "Error cargando proveedores:",
+      error
+    );
+
+
+    proveedoresVisual = [];
+
+  }
+
+
   renderizarTodo();
 
 }
@@ -551,7 +672,7 @@ async function cargarTodoDesdeBD() {
 
 
 /* =====================================================
-   LOGIN
+   LOGIN / REGISTRO
 ===================================================== */
 
 
@@ -577,13 +698,27 @@ function iniciarLogin() {
 
       const correo =
         $("correo")
-          .value
-          .trim();
+          ?.value
+          .trim() || "";
 
 
       const password =
         $("password")
-          .value;
+          ?.value || "";
+
+
+      if (
+        !correo ||
+        !password
+      ) {
+
+        alert(
+          "Ingresa correo y contraseña"
+        );
+
+        return;
+
+      }
 
 
       try {
@@ -615,31 +750,28 @@ function iniciarLogin() {
 
 
         token =
-          resultado.token;
+          resultado.token || "";
 
 
         usuario =
-          resultado.user;
+          resultado.usuario ||
+          resultado.user ||
+          null;
 
 
-        sessionStorage.setItem(
+        if (
+          !token ||
+          !usuario
+        ) {
 
-          "ccc_token",
+          throw new Error(
+            "El servidor no devolvió una sesión válida"
+          );
 
-          token
-
-        );
+        }
 
 
-        sessionStorage.setItem(
-
-          "ccc_usuario",
-
-          JSON.stringify(
-            usuario
-          )
-
-        );
+        guardarSesion();
 
 
         mostrarAplicacion();
@@ -676,28 +808,370 @@ function iniciarLogin() {
 
 
 
+function iniciarRegistro() {
+
+  const botonMostrar =
+    $("btnMostrarRegistro");
+
+  const botonVolver =
+    $("btnVolverLogin");
+
+  const formulario =
+    $("registroForm");
+
+
+  botonMostrar
+    ?.addEventListener(
+
+      "click",
+
+      mostrarRegistro
+
+    );
+
+
+  botonVolver
+    ?.addEventListener(
+
+      "click",
+
+      mostrarLogin
+
+    );
+
+
+  if (!formulario) {
+    return;
+  }
+
+
+  formulario.addEventListener(
+
+    "submit",
+
+    async evento => {
+
+      evento.preventDefault();
+
+
+      const nombre =
+        $("registroNombre")
+          ?.value
+          .trim() || "";
+
+
+      const nombreEmpresa =
+        $("registroEmpresa")
+          ?.value
+          .trim() || "";
+
+
+      const rutEmpresa =
+        $("registroRut")
+          ?.value
+          .trim() || "";
+
+
+      const whatsapp =
+        $("registroWhatsapp")
+          ?.value
+          .trim() || "";
+
+
+      const direccion =
+        $("registroDireccion")
+          ?.value
+          .trim() || "";
+
+
+      const email =
+        $("registroEmail")
+          ?.value
+          .trim()
+          .toLowerCase() || "";
+
+
+      const password =
+        $("registroPassword")
+          ?.value || "";
+
+
+      const confirmarPassword =
+        $("registroConfirmarPassword")
+          ?.value || "";
+
+
+      if (
+        !nombre ||
+        !nombreEmpresa ||
+        !rutEmpresa ||
+        !whatsapp ||
+        !email ||
+        !password
+      ) {
+
+        mostrarMensajeRegistro(
+          "Completa todos los datos obligatorios",
+          true
+        );
+
+        return;
+
+      }
+
+
+      if (password.length < 6) {
+
+        mostrarMensajeRegistro(
+          "La contraseña debe tener al menos 6 caracteres",
+          true
+        );
+
+        return;
+
+      }
+
+
+      if (
+        password !==
+        confirmarPassword
+      ) {
+
+        mostrarMensajeRegistro(
+          "Las contraseñas no coinciden",
+          true
+        );
+
+        return;
+
+      }
+
+
+      try {
+
+        mostrarMensajeRegistro(
+          "Creando cuenta...",
+          false
+        );
+
+
+        const resultado =
+          await api(
+
+            "/auth/register",
+
+            {
+
+              method:
+                "POST",
+
+              body:
+                JSON.stringify({
+
+                  nombre,
+
+                  nombreEmpresa,
+
+                  rutEmpresa,
+
+                  whatsapp,
+
+                  direccion,
+
+                  email,
+
+                  password,
+
+                  confirmarPassword
+
+                })
+
+            },
+
+            false
+
+          );
+
+
+        token =
+          resultado.token || "";
+
+
+        usuario =
+          resultado.usuario ||
+          resultado.user ||
+          null;
+
+
+        if (
+          !token ||
+          !usuario
+        ) {
+
+          throw new Error(
+            "La cuenta se creó, pero el servidor no devolvió una sesión válida"
+          );
+
+        }
+
+
+        guardarSesion();
+
+
+        mostrarMensajeRegistro(
+          "Cuenta creada correctamente",
+          false
+        );
+
+
+        formulario.reset();
+
+
+        mostrarAplicacion();
+
+
+        await cargarTodoDesdeBD();
+
+
+        mostrarVista(
+          "vistaResumen"
+        );
+
+
+        activarBoton(
+          "btnResumen"
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          "Error registro:",
+          error
+        );
+
+
+        mostrarMensajeRegistro(
+          error.message,
+          true
+        );
+
+      }
+
+    }
+
+  );
+
+}
+
+
+
+function guardarSesion() {
+
+  sessionStorage.setItem(
+
+    "ccc_token",
+
+    token
+
+  );
+
+
+  sessionStorage.setItem(
+
+    "ccc_usuario",
+
+    JSON.stringify(
+      usuario
+    )
+
+  );
+
+}
+
+
+
+function mostrarMensajeRegistro(
+  mensaje,
+  esError = false
+) {
+
+  const campo =
+    $("registroMensaje");
+
+
+  if (!campo) {
+    return;
+  }
+
+
+  campo.textContent =
+    mensaje || "";
+
+
+  campo.style.display =
+    mensaje
+      ? "block"
+      : "none";
+
+
+  campo.style.color =
+    esError
+      ? "#b42318"
+      : "#067647";
+
+}
+
+
+
 function mostrarAplicacion() {
 
-  $("loginView")
-    .style
-    .display =
-      "none";
+  if ($("loginView")) {
+
+    $("loginView")
+      .style
+      .display =
+        "none";
+
+  }
 
 
-  $("appView")
-    .style
-    .display =
-      "flex";
+  if ($("registerView")) {
+
+    $("registerView")
+      .style
+      .display =
+        "none";
+
+  }
 
 
-  $("rolUsuario")
-    .textContent =
-      usuario?.rol || "";
+  if ($("appView")) {
+
+    $("appView")
+      .style
+      .display =
+        "flex";
+
+  }
 
 
-  $("nombreUsuario")
-    .textContent =
-      usuario?.nombre || "";
+  if ($("rolUsuario")) {
+
+    $("rolUsuario")
+      .textContent =
+        usuario?.rol || "";
+
+  }
+
+
+  if ($("nombreUsuario")) {
+
+    $("nombreUsuario")
+      .textContent =
+        usuario?.nombre || "";
+
+  }
 
 }
 
@@ -705,16 +1179,85 @@ function mostrarAplicacion() {
 
 function mostrarLogin() {
 
-  $("appView")
-    .style
-    .display =
-      "none";
+  if ($("appView")) {
+
+    $("appView")
+      .style
+      .display =
+        "none";
+
+  }
 
 
-  $("loginView")
-    .style
-    .display =
-      "flex";
+  if ($("registerView")) {
+
+    $("registerView")
+      .style
+      .display =
+        "none";
+
+  }
+
+
+  if ($("loginView")) {
+
+    $("loginView")
+      .style
+      .display =
+        "flex";
+
+  }
+
+
+  mostrarMensajeRegistro(
+    "",
+    false
+  );
+
+}
+
+
+
+function mostrarRegistro() {
+
+  if ($("appView")) {
+
+    $("appView")
+      .style
+      .display =
+        "none";
+
+  }
+
+
+  if ($("loginView")) {
+
+    $("loginView")
+      .style
+      .display =
+        "none";
+
+  }
+
+
+  if ($("registerView")) {
+
+    $("registerView")
+      .style
+      .display =
+        "flex";
+
+  }
+
+
+  mostrarMensajeRegistro(
+    "",
+    false
+  );
+
+
+  $("registroNombre")
+    ?.focus();
 
 }
 
@@ -1261,22 +1804,9 @@ function iniciarBotones() {
 
 /* =====================================================
    PROVEEDORES
-   SOLO VISUAL
+   POSTGRESQL
 ===================================================== */
 
-
-/*
-  Esta función normaliza textos para comparar.
-
-  Ejemplo:
-
-  "CARNES"
-  " carnes "
-  "Cárnes"
-
-  se pueden comparar sin que mayúsculas,
-  tildes o espacios generen diferencias.
-*/
 
 function normalizarTextoProveedor(valor) {
 
@@ -1298,11 +1828,6 @@ function normalizarTextoProveedor(valor) {
 }
 
 
-
-/*
-  Evita meter HTML escrito por el usuario
-  dentro de las tablas.
-*/
 
 function escaparHTML(valor) {
 
@@ -1339,11 +1864,6 @@ function escaparHTML(valor) {
 
 
 
-/*
-  Devuelve el producto de Bodega
-  seleccionado como producto maestro.
-*/
-
 function obtenerProductoMaestroProveedor() {
 
   const id =
@@ -1374,11 +1894,6 @@ function obtenerProductoMaestroProveedor() {
 }
 
 
-
-/*
-  Carga el selector Producto maestro
-  desde los productos reales de Bodega.
-*/
 
 function renderSelectProductoMaestroProveedor() {
 
@@ -1450,11 +1965,6 @@ function renderSelectProductoMaestroProveedor() {
 
 
 
-/*
-  Si Bodega tiene unidad kg,
-  automáticamente la propone.
-*/
-
 function completarUnidadProveedorDesdeBodega() {
 
   const producto =
@@ -1483,14 +1993,6 @@ function completarUnidadProveedorDesdeBodega() {
 }
 
 
-
-/*
-  Permite escribir:
-
-  carne, carnes, bife
-
-  de una sola vez.
-*/
 
 function agregarAliasProveedorVisual() {
 
@@ -1575,10 +2077,6 @@ function agregarAliasProveedorVisual() {
 
 
 
-/*
-  Quita un alias.
-*/
-
 function accionesAliasProveedorVisual(
   evento
 ) {
@@ -1632,10 +2130,6 @@ function accionesAliasProveedorVisual(
 }
 
 
-
-/*
-  Muestra visualmente los alias.
-*/
 
 function renderAliasesProveedorVisual() {
 
@@ -1703,14 +2197,6 @@ function renderAliasesProveedorVisual() {
 }
 
 
-
-/*
-  Muestra:
-
-  NOMBRE BOLETA
-       ↓
-  PRODUCTO MAESTRO
-*/
 
 function actualizarPreviewProveedorVisual() {
 
@@ -1787,27 +2273,6 @@ function actualizarPreviewProveedorVisual() {
 
 
 
-/*
-  REGLA IMPORTANTE:
-
-  Para el mismo proveedor no permitimos
-  que un mismo nombre de boleta o alias
-  quede asociado a productos maestros
-  distintos.
-
-  Ejemplo incorrecto:
-
-  Proveedor A
-  "BIFE" -> Carne vacuno
-
-  y después:
-
-  Proveedor A
-  "BIFE" -> Pollo
-
-  Eso genera conflicto.
-*/
-
 function existeConflictoNombreProveedor(
 
   proveedorNombre,
@@ -1816,7 +2281,9 @@ function existeConflictoNombreProveedor(
 
   nombreBoleta,
 
-  aliases
+  aliases,
+
+  registroIgnorarId = null
 
 ) {
 
@@ -1851,6 +2318,20 @@ function existeConflictoNombreProveedor(
   return proveedoresVisual.some(
 
     registro => {
+
+
+      if (
+
+        registroIgnorarId !== null &&
+
+        Number(registro.id) ===
+        Number(registroIgnorarId)
+
+      ) {
+
+        return false;
+
+      }
 
 
       if (
@@ -1925,13 +2406,7 @@ function existeConflictoNombreProveedor(
 
 
 
-/*
-  Guarda solamente en memoria.
-
-  No usa base de datos todavía.
-*/
-
-function guardarProveedorVisual() {
+async function guardarProveedorVisual() {
 
   const proveedor =
     $("proveedorNombre")
@@ -1965,17 +2440,12 @@ function guardarProveedorVisual() {
 
   const condicionPago =
     $("proveedorCondicionPago")
-      ?.value || "";
+      ?.value || "Contado";
 
 
   const estado =
     $("proveedorEstado")
       ?.value || "Activo";
-
-
-  const fechaUltimaCompra =
-    $("proveedorFechaCompra")
-      ?.value || "";
 
 
   const nombreBoleta =
@@ -2071,7 +2541,9 @@ function guardarProveedorVisual() {
 
       nombreBoleta,
 
-      aliasesProveedorVisual
+      aliasesProveedorVisual,
+
+      proveedorEditandoId
 
     );
 
@@ -2099,119 +2571,135 @@ function guardarProveedorVisual() {
 
 
 
-  proveedoresVisual.push({
+  try {
 
-    id:
-
-      Date.now() +
-
-      Math.floor(
-        Math.random() * 1000
-      ),
+    const editando =
+      proveedorEditandoId !== null;
 
 
-    proveedor,
+    await api(
 
-    rut,
+      editando
+        ? `/proveedores/${proveedorEditandoId}`
+        : "/proveedores",
 
-    contacto,
+      {
 
-    telefono,
+        method:
+          editando ? "PUT" : "POST",
 
-    correo,
+        body:
+          JSON.stringify({
 
-    condicionPago,
+            proveedor,
 
-    estado,
+            rut,
 
-    fechaUltimaCompra,
+            contacto,
 
+            telefono,
 
-    nombreBoleta,
+            correo,
 
+            condicion_pago:
+              condicionPago,
 
-    productoMaestroId:
-      productoMaestro.id,
+            estado,
 
+            materia_prima_id:
+              productoMaestro.id,
 
-    productoMaestro:
-      productoMaestro.producto,
+            nombre_boleta:
+              nombreBoleta,
 
+            unidad,
 
-    unidad,
+            precio,
 
-    precio,
+            aliases:
+              [
+                ...aliasesProveedorVisual
+              ]
 
+          })
 
-    aliases:
-      [
-        ...aliasesProveedorVisual
-      ]
+      }
 
-  });
-
-
-
-  renderProveedoresVisual();
-
-
-
-  const aviso =
-    $("proveedorAvisoVisual");
-
-
-  if (aviso) {
-
-    aviso.style.display =
-      "block";
+    );
 
 
-    window.setTimeout(
+    await cargarTodoDesdeBD();
 
-      () => {
 
-        aviso.style.display =
-          "none";
+    const aviso =
+      $("proveedorAvisoVisual");
 
-      },
 
-      2600
+    if (aviso) {
 
+      aviso.style.display =
+        "block";
+
+
+      window.setTimeout(
+
+        () => {
+
+          aviso.style.display =
+            "none";
+
+        },
+
+        2600
+
+      );
+
+    }
+
+
+    limpiarFormularioProveedorVisual(
+      true
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "Error guardar proveedor:",
+      error
+    );
+
+
+    alert(
+      error.message
     );
 
   }
 
-
-
-  /*
-    Después de guardar dejamos
-    los datos del proveedor.
-
-    Así puede registrar varios productos
-    del mismo proveedor sin escribir
-    nuevamente todos sus datos.
-  */
-
-  limpiarFormularioProveedorVisual(
-    true
-  );
-
 }
 
 
-
-/*
-  Limpia formulario.
-
-  Si mantenerProveedor es true,
-  conserva nombre, RUT, contacto, etc.
-*/
 
 function limpiarFormularioProveedorVisual(
 
   mantenerProveedor = false
 
 ) {
+
+  proveedorEditandoId = null;
+
+
+  const botonGuardar =
+    $("btnGuardarProveedorVisual");
+
+
+  if (botonGuardar) {
+
+    botonGuardar.textContent =
+      "Guardar proveedor";
+
+  }
+
 
   const camposProveedor = [
 
@@ -2321,10 +2809,6 @@ function limpiarFormularioProveedorVisual(
 
 
 
-/*
-  Elimina una fila visual.
-*/
-
 function accionesTablaProveedoresVisual(
   evento
 ) {
@@ -2348,24 +2832,146 @@ function accionesTablaProveedoresVisual(
     );
 
 
-  proveedoresVisual =
-    proveedoresVisual.filter(
+  if (
+    boton.dataset.action ===
+    "editar"
+  ) {
 
-      item =>
-        item.id !== id
+    editarProveedorVisual(id);
 
+    return;
+
+  }
+
+
+  if (
+    boton.dataset.action ===
+    "eliminar"
+  ) {
+
+    alert(
+      "El proveedor está guardado en PostgreSQL. " +
+      "La eliminación se habilitará cuando conectemos " +
+      "la ruta DELETE del backend."
     );
 
-
-  renderProveedoresVisual();
+  }
 
 }
 
 
 
-/*
-  Render tabla proveedores.
-*/
+function editarProveedorVisual(id) {
+
+  const item =
+    proveedoresVisual.find(
+      registro =>
+        Number(registro.id) === Number(id)
+    );
+
+
+  if (!item) {
+
+    return;
+
+  }
+
+
+  proveedorEditandoId =
+    Number(item.id);
+
+
+  if ($("proveedorNombre")) {
+    $("proveedorNombre").value = item.proveedor || "";
+  }
+
+
+  if ($("proveedorRut")) {
+    $("proveedorRut").value = item.rut || "";
+  }
+
+
+  if ($("proveedorContacto")) {
+    $("proveedorContacto").value = item.contacto || "";
+  }
+
+
+  if ($("proveedorTelefono")) {
+    $("proveedorTelefono").value = item.telefono || "";
+  }
+
+
+  if ($("proveedorCorreo")) {
+    $("proveedorCorreo").value = item.correo || "";
+  }
+
+
+  if ($("proveedorCondicionPago")) {
+    $("proveedorCondicionPago").value =
+      item.condicionPago || "Contado";
+  }
+
+
+  if ($("proveedorEstado")) {
+    $("proveedorEstado").value =
+      item.estado || "Activo";
+  }
+
+
+  if ($("proveedorNombreBoleta")) {
+    $("proveedorNombreBoleta").value =
+      item.nombreBoleta || "";
+  }
+
+
+  if ($("proveedorProductoMaestro")) {
+    $("proveedorProductoMaestro").value =
+      String(item.productoMaestroId || "");
+  }
+
+
+  if ($("proveedorUnidad")) {
+    $("proveedorUnidad").value = item.unidad || "";
+  }
+
+
+  if ($("proveedorPrecio")) {
+    $("proveedorPrecio").value = item.precio || 0;
+  }
+
+
+  aliasesProveedorVisual =
+    Array.isArray(item.aliases)
+      ? [...item.aliases]
+      : [];
+
+
+  renderAliasesProveedorVisual();
+
+  actualizarPreviewProveedorVisual();
+
+
+  const botonGuardar =
+    $("btnGuardarProveedorVisual");
+
+
+  if (botonGuardar) {
+
+    botonGuardar.textContent =
+      "Actualizar proveedor";
+
+  }
+
+
+  $("proveedorNombre")
+    ?.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+
+}
+
+
 
 function renderProveedoresVisual() {
 
@@ -2528,7 +3134,17 @@ function renderProveedoresVisual() {
 
               <button
                 type="button"
+                data-action="editar"
+                data-proveedor-id="${item.id}"
+              >
+                Modificar
+              </button>
+
+
+              <button
+                type="button"
                 class="eliminar proveedores-eliminar"
+                data-action="eliminar"
                 data-proveedor-id="${item.id}"
               >
                 Eliminar
@@ -3550,11 +4166,6 @@ async function crearProductoVenta() {
 
 
 
-/*
-  Obtiene el costo de una unidad
-  o porción guardada en Cocina.
-*/
-
 function obtenerCostoUnitarioCocina(
   item
 ) {
@@ -3607,11 +4218,6 @@ function obtenerCostoUnitarioCocina(
 }
 
 
-
-/*
-  Genera las opciones utilizando
-  exclusivamente Cocina.
-*/
 
 function crearOpcionesIngredientesCocina(
   valorSeleccionado = ""
@@ -3669,11 +4275,6 @@ function crearOpcionesIngredientesCocina(
 }
 
 
-
-/*
-  Agrega una nueva fila
-  de ingrediente.
-*/
 
 function agregarFilaIngrediente() {
 
@@ -3752,10 +4353,6 @@ function agregarFilaIngrediente() {
 
 
 
-/*
-  Mantiene al menos una fila visible.
-*/
-
 function asegurarPrimeraFilaReceta() {
 
   const contenedor =
@@ -3777,11 +4374,6 @@ function asegurarPrimeraFilaReceta() {
 }
 
 
-
-/*
-  El botón Quitar aparece solamente
-  cuando existe más de una fila.
-*/
 
 function actualizarBotonesQuitar() {
 
@@ -3823,10 +4415,6 @@ function actualizarBotonesQuitar() {
 }
 
 
-
-/*
-  Elimina solamente la fila seleccionada.
-*/
 
 function accionesIngredientesReceta(
   evento
@@ -3870,11 +4458,6 @@ function accionesIngredientesReceta(
 }
 
 
-
-/*
-  Calcula el costo individual
-  y el costo total del plato.
-*/
 
 function actualizarCostoConstructorReceta() {
 
@@ -3978,11 +4561,6 @@ function actualizarCostoConstructorReceta() {
 }
 
 
-
-/*
-  Guarda todos los ingredientes
-  visibles en la receta.
-*/
 
 async function agregarReceta() {
 
@@ -4169,11 +4747,6 @@ async function agregarReceta() {
 
   try {
 
-    /*
-      La ruta actual recibe
-      un ingrediente por petición.
-    */
-
     for (
       const ingrediente of ingredientes
     ) {
@@ -4254,11 +4827,6 @@ async function agregarReceta() {
 }
 
 
-
-/*
-  Calcula costo total de
-  una receta guardada.
-*/
 
 function calcularCostoPlato(
   productoId
@@ -4433,7 +5001,6 @@ async function editarProducto(id) {
     return;
 
   }
-
 
 
   try {
@@ -4844,6 +5411,15 @@ function renderCocina() {
           <td>
 
             ${moneda(
+              item.costo_unitario
+            )}
+
+          </td>
+
+
+          <td>
+
+            ${moneda(
               item.costo_total
             )}
 
@@ -5218,10 +5794,6 @@ function renderSelects() {
 
 
 
-  /*
-    SELECT BODEGA -> COCINA
-  */
-
   if (selectBodega) {
 
     const valor =
@@ -5281,10 +5853,6 @@ function renderSelects() {
 
 
 
-  /*
-    SELECT PRODUCTO RECETA
-  */
-
   if (selectProductoVenta) {
 
     const valor =
@@ -5336,10 +5904,6 @@ function renderSelects() {
   }
 
 
-
-  /*
-    SELECT PRODUCTO VENTA
-  */
 
   if (selectVentaProducto) {
 
@@ -5397,11 +5961,6 @@ function renderSelects() {
 
 
 
-  /*
-    Actualiza todas las filas dinámicas
-    de recetas con Cocina.
-  */
-
   document
 
     .querySelectorAll(
@@ -5430,12 +5989,6 @@ function renderSelects() {
     );
 
 
-
-  /*
-    NUEVO:
-    actualiza el producto maestro
-    del módulo Proveedores usando Bodega.
-  */
 
   renderSelectProductoMaestroProveedor();
 
