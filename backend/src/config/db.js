@@ -39,14 +39,51 @@ let connectionString;
 /*
    LOCAL
 
-   Utilizamos DATABASE_URL porque actualmente
-   tu proyecto ya trabaja con esa variable.
+   CCC y CCC-BÁSICO deben trabajar sobre:
+
+   ccc_db
+
+   Se toma DATABASE_URL pero se fuerza exclusivamente
+   el nombre de la base de datos a ccc_db.
 */
 
 if (dbMode === 'local') {
 
-  connectionString =
+  const databaseUrl =
     process.env.DATABASE_URL;
+
+
+  if (!databaseUrl) {
+
+    throw new Error(
+      'Falta DATABASE_URL en el archivo .env'
+    );
+
+  }
+
+
+  const urlLocal =
+    new URL(databaseUrl);
+
+
+  /*
+     IMPORTANTE:
+
+     No importa si accidentalmente DATABASE_URL termina en:
+
+     /postgres
+
+     CCC-BÁSICO siempre utilizará:
+
+     /ccc_db
+  */
+
+  urlLocal.pathname =
+    '/ccc_db';
+
+
+  connectionString =
+    urlLocal.toString();
 
 }
 
@@ -176,7 +213,7 @@ pool.on(
     );
 
   }
-);  
+);
 
 
 
