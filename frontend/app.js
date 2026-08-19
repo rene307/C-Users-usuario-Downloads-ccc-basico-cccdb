@@ -26,7 +26,15 @@ let data = {
   productos: [],
   recetas: [],
   ventas: [],
-  totalVentas: 0
+  totalVentas: 0,
+  totalVentasSemana: 0,
+  totalVentasMes: 0,
+  totalVentasAnio: 0,
+  costoVentasDia: 0,
+  costoVentasMes: 0,
+  costoDiarioPromedio: 0,
+  resultadoBrutoMes: 0,
+  rankingVentas: []
 };
 
 
@@ -149,6 +157,10 @@ function moneda(valor) {
 
 
 
+/* =====================================================
+   FECHA Y HORA
+===================================================== */
+
 function formatearFecha(valor) {
 
   if (!valor) {
@@ -156,13 +168,109 @@ function formatearFecha(valor) {
   }
 
 
-  return new Date(valor)
-    .toLocaleString(
-      "es-CL"
+  /*
+    PostgreSQL/Supabase puede devolver la fecha
+    sin indicar explícitamente la zona horaria.
+
+    Si no viene Z ni offset, la tratamos como UTC.
+  */
+  let fechaServidor =
+    String(valor).trim();
+
+
+  const tieneZonaHoraria =
+    /Z$|[+-]\d{2}:\d{2}$/.test(
+      fechaServidor
     );
 
-}
 
+  if (!tieneZonaHoraria) {
+
+    fechaServidor += "Z";
+
+  }
+
+
+  const fecha =
+    new Date(
+      fechaServidor
+    );
+
+
+  const fechaTexto =
+    fecha.toLocaleDateString(
+      "es-CL",
+      {
+        timeZone:
+          "America/Santiago",
+
+        day:
+          "2-digit",
+
+        month:
+          "2-digit",
+
+        year:
+          "numeric"
+      }
+    );
+
+
+  const horaTexto =
+    fecha.toLocaleTimeString(
+      "es-CL",
+      {
+        timeZone:
+          "America/Santiago",
+
+        hour:
+          "2-digit",
+
+        minute:
+          "2-digit",
+
+        hour12:
+          false
+      }
+    );
+
+
+  return `
+
+    <div
+      style="
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 95px;
+        line-height: 1.15;
+      "
+    >
+
+      <span
+        style="
+          white-space: nowrap;
+          font-weight: 600;
+        "
+      >
+        ${fechaTexto}
+      </span>
+
+      <span
+        style="
+          white-space: nowrap;
+          font-size: 12px;
+          opacity: 0.70;
+        "
+      >
+        ${horaTexto}
+      </span>
+
+    </div>
+
+  `;
+
+}
 
 
 function nombreMedioPago(valor) {
@@ -273,6 +381,8 @@ async function api(
   if (!respuesta.ok) {
 
     throw new Error(
+
+      resultado.detalle ||
 
       resultado.message ||
 
@@ -554,6 +664,88 @@ async function cargarTodoDesdeBD() {
     numero(
       ventasHoy.total_dia
     );
+
+
+  data.totalVentasSemana =
+    numero(
+      ventasHoy.total_semana
+    );
+
+
+  data.totalVentasMes =
+    numero(
+      ventasHoy.total_mes
+    );
+
+
+  data.totalVentasAnio =
+    numero(
+      ventasHoy.total_anio
+    );
+
+
+  data.costoVentasDia =
+    numero(
+      ventasHoy.costo_dia
+    );
+
+
+  data.costoVentasMes =
+    numero(
+      ventasHoy.costo_mes
+    );
+
+
+  data.costoDiarioPromedio =
+    numero(
+      ventasHoy.costo_diario_promedio
+    );
+
+
+  data.resultadoBrutoMes =
+    numero(
+      ventasHoy.resultado_bruto_mes
+    );
+
+
+  data.rankingVentas =
+    Array.isArray(
+      ventasHoy.ranking_mes
+    )
+      ? ventasHoy.ranking_mes.map(
+          item => ({
+
+            producto_id:
+              Number(
+                item.producto_id
+              ),
+
+            producto:
+              item.producto || "",
+
+            cantidad:
+              numero(
+                item.cantidad
+              ),
+
+            total_venta:
+              numero(
+                item.total_venta
+              ),
+
+            costo:
+              numero(
+                item.costo
+              ),
+
+            resultado_bruto:
+              numero(
+                item.resultado_bruto
+              )
+
+          })
+        )
+      : [];
 
 
   const ventasPorId =
@@ -1292,7 +1484,23 @@ function cerrarSesion() {
 
     ventas: [],
 
-    totalVentas: 0
+    totalVentas: 0,
+
+    totalVentasSemana: 0,
+
+    totalVentasMes: 0,
+
+    totalVentasAnio: 0,
+
+    costoVentasDia: 0,
+
+    costoVentasMes: 0,
+
+    costoDiarioPromedio: 0,
+
+    resultadoBrutoMes: 0,
+
+    rankingVentas: []
 
   };
 
@@ -5236,26 +5444,171 @@ function renderizarTodo() {
 
 function renderResumen() {
 
-  $("totalBodega")
-    .textContent =
-      data.bodega.length;
+  const valores = {
 
+    totalBodega:
+      data.bodega.length,
 
-  $("totalCocina")
-    .textContent =
-      data.cocina.length;
+    totalCocina:
+      data.cocina.length,
 
+    totalProductos:
+      data.productos.length,
 
-  $("totalProductos")
-    .textContent =
-      data.productos.length;
-
-
-  $("totalVentas")
-    .textContent =
+    totalVentas:
       moneda(
         data.totalVentas
-      );
+      ),
+
+    totalVentasSemana:
+      moneda(
+        data.totalVentasSemana
+      ),
+
+    totalVentasMes:
+      moneda(
+        data.totalVentasMes
+      ),
+
+    totalVentasAnio:
+      moneda(
+        data.totalVentasAnio
+      ),
+
+    costoVentasDia:
+      moneda(
+        data.costoVentasDia
+      ),
+
+    costoVentasMes:
+      moneda(
+        data.costoVentasMes
+      ),
+
+    costoDiarioPromedio:
+      moneda(
+        data.costoDiarioPromedio
+      ),
+
+    resultadoBrutoMes:
+      moneda(
+        data.resultadoBrutoMes
+      )
+
+  };
+
+
+  Object.entries(
+    valores
+  ).forEach(
+
+    ([id, valor]) => {
+
+      const elemento =
+        $(id);
+
+
+      if (elemento) {
+
+        elemento.textContent =
+          valor;
+
+      }
+
+    }
+
+  );
+
+
+  renderRankingVentas();
+
+}
+
+
+
+function renderRankingVentas() {
+
+  const tbody =
+    $("tablaRankingVentas");
+
+
+  if (!tbody) {
+
+    return;
+
+  }
+
+
+  if (
+    data.rankingVentas.length === 0
+  ) {
+
+    tbody.innerHTML = `
+
+      <tr>
+
+        <td colspan="6">
+          Sin ventas registradas este mes.
+        </td>
+
+      </tr>
+
+    `;
+
+
+    return;
+
+  }
+
+
+  tbody.innerHTML =
+    data.rankingVentas
+
+      .map(
+
+        (item, indice) => `
+
+          <tr>
+
+            <td>
+              ${indice + 1}
+            </td>
+
+            <td>
+              ${escaparHTML(
+                item.producto
+              )}
+            </td>
+
+            <td>
+              ${item.cantidad}
+            </td>
+
+            <td>
+              ${moneda(
+                item.total_venta
+              )}
+            </td>
+
+            <td>
+              ${moneda(
+                item.costo
+              )}
+            </td>
+
+            <td>
+              ${moneda(
+                item.resultado_bruto
+              )}
+            </td>
+
+          </tr>
+
+        `
+
+      )
+
+      .join("");
 
 }
 

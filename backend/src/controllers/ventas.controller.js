@@ -76,195 +76,711 @@ async function ventasHoy(req, res) {
 
 
     /* =====================================================
-       1. LISTAR VENTAS
+       1. LISTAR VENTAS DE HOY
     ===================================================== */
-
-    /*
-       Antes:
-
-       ventas.fecha
-       ventas.medio_pago
-
-       Ahora:
-
-       pedidos.creado_en / cerrado_en
-       pedidos.metodo_pago
-
-       Usamos alias para no romper app.js.
-    */
 
     const ventasResult = await pool.query(
       `
-      SELECT
+        SELECT
+          p.id,
 
-        p.id,
+          COALESCE(
+            p.cerrado_en,
+            p.creado_en
+          ) AS fecha,
 
-        COALESCE(
-          p.cerrado_en,
-          p.creado_en
-        ) AS fecha,
+          p.total,
 
-        p.total,
+          p.metodo_pago
+            AS medio_pago,
 
-        p.metodo_pago
-          AS medio_pago,
+          u.nombre
+            AS usuario
 
-        u.nombre
-          AS usuario
+        FROM public.pedidos p
 
-      FROM public.pedidos p
+        LEFT JOIN public.usuarios u
+          ON u.id = p.usuario_id
 
-      LEFT JOIN public.usuarios u
-        ON u.id = p.usuario_id
+        WHERE p.empresa_id = $1
 
-      WHERE p.empresa_id = $1
+          AND COALESCE(
+                p.cerrado_en,
+                p.creado_en
+              )::date =
+              (
+                CURRENT_TIMESTAMP
+                AT TIME ZONE 'America/Santiago'
+              )::date
 
-        AND COALESCE(
-              p.cerrado_en,
-              p.creado_en
-            )::date = CURRENT_DATE
-
-        AND (
-          p.cerrado_en IS NOT NULL
-          OR UPPER(COALESCE(p.estado, '')) IN (
-            'CERRADO',
-            'PAGADO',
-            'COMPLETADO',
-            'FINALIZADO'
+          AND (
+            p.cerrado_en IS NOT NULL
+            OR UPPER(COALESCE(p.estado, '')) IN (
+              'CERRADO',
+              'PAGADO',
+              'COMPLETADO',
+              'FINALIZADO'
+            )
           )
-        )
 
-      ORDER BY
-        COALESCE(
-          p.cerrado_en,
-          p.creado_en
-        ) DESC
+        ORDER BY
+          COALESCE(
+            p.cerrado_en,
+            p.creado_en
+          ) DESC
       `,
       [empresaId]
     );
 
 
     /* =====================================================
-       2. TOTAL DEL DÍA
+       2. DETALLE DE LAS VENTAS DE HOY
     ===================================================== */
-
-    const totalResult = await pool.query(
-      `
-      SELECT
-
-        COALESCE(
-          SUM(total),
-          0
-        ) AS total_dia
-
-      FROM public.pedidos
-
-      WHERE empresa_id = $1
-
-        AND COALESCE(
-              cerrado_en,
-              creado_en
-            )::date = CURRENT_DATE
-
-        AND (
-          cerrado_en IS NOT NULL
-          OR UPPER(COALESCE(estado, '')) IN (
-            'CERRADO',
-            'PAGADO',
-            'COMPLETADO',
-            'FINALIZADO'
-          )
-        )
-      `,
-      [empresaId]
-    );
-
-
-    /* =====================================================
-       3. DETALLE DE LAS VENTAS
-    ===================================================== */
-
-    /*
-       El frontend antiguo espera:
-
-       venta_id
-       producto_venta_id
-       producto
-       cantidad
-       precio_unitario
-       subtotal
-
-       Ahora:
-
-       pedido_id     → venta_id
-       menu_id       → producto_venta_id
-    */
 
     const detalleResult = await pool.query(
       `
-      SELECT
+        SELECT
+          d.id,
 
-        d.id,
+          d.pedido_id
+            AS venta_id,
 
-        d.pedido_id
-          AS venta_id,
+          d.menu_id
+            AS producto_venta_id,
 
-        d.menu_id
-          AS producto_venta_id,
+          m.nombre
+            AS producto,
 
-        m.nombre
-          AS producto,
+          d.cantidad,
+          d.precio_unitario,
+          d.subtotal
 
-        d.cantidad,
+        FROM public.detalle_pedido d
 
-        d.precio_unitario,
+        INNER JOIN public.pedidos p
+          ON p.id = d.pedido_id
 
-        d.subtotal
+        INNER JOIN public.menu m
+          ON m.id = d.menu_id
 
-      FROM public.detalle_pedido d
+        WHERE p.empresa_id = $1
+          AND m.empresa_id = $1
 
-      INNER JOIN public.pedidos p
-        ON p.id = d.pedido_id
+          AND COALESCE(
+                p.cerrado_en,
+                p.creado_en
+              )::date =
+              (
+                CURRENT_TIMESTAMP
+                AT TIME ZONE 'America/Santiago'
+              )::date
 
-      INNER JOIN public.menu m
-        ON m.id = d.menu_id
-
-      WHERE p.empresa_id = $1
-
-        AND m.empresa_id = $1
-
-        AND COALESCE(
-              p.cerrado_en,
-              p.creado_en
-            )::date = CURRENT_DATE
-
-        AND (
-          p.cerrado_en IS NOT NULL
-          OR UPPER(COALESCE(p.estado, '')) IN (
-            'CERRADO',
-            'PAGADO',
-            'COMPLETADO',
-            'FINALIZADO'
+          AND (
+            p.cerrado_en IS NOT NULL
+            OR UPPER(COALESCE(p.estado, '')) IN (
+              'CERRADO',
+              'PAGADO',
+              'COMPLETADO',
+              'FINALIZADO'
+            )
           )
-        )
 
-      ORDER BY d.id DESC
+        ORDER BY d.id DESC
       `,
       [empresaId]
     );
 
 
     /* =====================================================
-       RESPUESTA
+       3. TOTALES: DÍA, SEMANA, MES Y AÑO
+
+       PostgreSQL considera el inicio de la semana en lunes.
+       Todas las comparaciones usan la fecha local de Santiago.
     ===================================================== */
+
+    const totalesResult = await pool.query(
+      `
+        SELECT
+
+          COALESCE(
+            SUM(p.total) FILTER (
+              WHERE COALESCE(
+                      p.cerrado_en,
+                      p.creado_en
+                    )::date =
+                    (
+                      CURRENT_TIMESTAMP
+                      AT TIME ZONE 'America/Santiago'
+                    )::date
+            ),
+            0
+          ) AS total_dia,
+
+          COALESCE(
+            SUM(p.total) FILTER (
+              WHERE COALESCE(
+                      p.cerrado_en,
+                      p.creado_en
+                    )::date >=
+                    DATE_TRUNC(
+                      'week',
+                      CURRENT_TIMESTAMP
+                      AT TIME ZONE 'America/Santiago'
+                    )::date
+
+                AND COALESCE(
+                      p.cerrado_en,
+                      p.creado_en
+                    )::date <
+                    (
+                      DATE_TRUNC(
+                        'week',
+                        CURRENT_TIMESTAMP
+                        AT TIME ZONE 'America/Santiago'
+                      )
+                      + INTERVAL '1 week'
+                    )::date
+            ),
+            0
+          ) AS total_semana,
+
+          COALESCE(
+            SUM(p.total) FILTER (
+              WHERE COALESCE(
+                      p.cerrado_en,
+                      p.creado_en
+                    )::date >=
+                    DATE_TRUNC(
+                      'month',
+                      CURRENT_TIMESTAMP
+                      AT TIME ZONE 'America/Santiago'
+                    )::date
+
+                AND COALESCE(
+                      p.cerrado_en,
+                      p.creado_en
+                    )::date <
+                    (
+                      DATE_TRUNC(
+                        'month',
+                        CURRENT_TIMESTAMP
+                        AT TIME ZONE 'America/Santiago'
+                      )
+                      + INTERVAL '1 month'
+                    )::date
+            ),
+            0
+          ) AS total_mes,
+
+          COALESCE(
+            SUM(p.total) FILTER (
+              WHERE COALESCE(
+                      p.cerrado_en,
+                      p.creado_en
+                    )::date >=
+                    DATE_TRUNC(
+                      'year',
+                      CURRENT_TIMESTAMP
+                      AT TIME ZONE 'America/Santiago'
+                    )::date
+
+                AND COALESCE(
+                      p.cerrado_en,
+                      p.creado_en
+                    )::date <
+                    (
+                      DATE_TRUNC(
+                        'year',
+                        CURRENT_TIMESTAMP
+                        AT TIME ZONE 'America/Santiago'
+                      )
+                      + INTERVAL '1 year'
+                    )::date
+            ),
+            0
+          ) AS total_anio
+
+        FROM public.pedidos p
+
+        WHERE p.empresa_id = $1
+
+          AND (
+            p.cerrado_en IS NOT NULL
+            OR UPPER(COALESCE(p.estado, '')) IN (
+              'CERRADO',
+              'PAGADO',
+              'COMPLETADO',
+              'FINALIZADO'
+            )
+          )
+      `,
+      [empresaId]
+    );
+
+
+    /* =====================================================
+       4. COSTO DE VENTA
+
+       Se obtiene el costo de cada producto desde su receta:
+
+       receta_detalle
+          -> tipo_porcion
+          -> materias_primas
+          -> porciones.costo_unidad
+
+       Para cada producto usamos la primera receta activa,
+       igual que crearVenta().
+    ===================================================== */
+
+    const costosResult = await pool.query(
+      `
+        WITH receta_elegida AS (
+
+          SELECT DISTINCT ON (r.menu_id)
+            r.id,
+            r.menu_id
+
+          FROM public.recetas r
+
+          WHERE r.empresa_id = $1
+            AND r.activo = TRUE
+
+          ORDER BY
+            r.menu_id,
+            r.id
+        ),
+
+        costo_menu AS (
+
+          SELECT
+            re.menu_id,
+
+            COALESCE(
+              SUM(
+                rd.cantidad_necesaria
+                * COALESCE(pc.costo_unidad, 0)
+              ),
+              0
+            ) AS costo_unitario
+
+          FROM receta_elegida re
+
+          INNER JOIN public.receta_detalle rd
+            ON rd.receta_id = re.id
+
+          INNER JOIN public.tipo_porcion tp
+            ON tp.id = rd.tipo_porcion_id
+
+          INNER JOIN public.materias_primas mp
+            ON mp.id = tp.id_materia_prima
+           AND mp.empresa_id = $1
+
+          LEFT JOIN LATERAL (
+
+            SELECT
+              p.costo_unidad
+
+            FROM public.porciones p
+
+            WHERE p.empresa_id = $1
+
+              AND LOWER(TRIM(p.proteina)) =
+                  LOWER(TRIM(mp.nombre))
+
+              AND p.gramos = tp.gramos
+
+            ORDER BY p.id DESC
+
+            LIMIT 1
+
+          ) pc ON TRUE
+
+          GROUP BY re.menu_id
+        ),
+
+        lineas AS (
+
+          SELECT
+            COALESCE(
+              p.cerrado_en,
+              p.creado_en
+            ) AS fecha,
+
+            d.menu_id,
+            d.cantidad,
+            d.subtotal,
+
+            COALESCE(
+              cm.costo_unitario,
+              0
+            ) AS costo_unitario
+
+          FROM public.detalle_pedido d
+
+          INNER JOIN public.pedidos p
+            ON p.id = d.pedido_id
+
+          INNER JOIN public.menu m
+            ON m.id = d.menu_id
+           AND m.empresa_id = $1
+
+          LEFT JOIN costo_menu cm
+            ON cm.menu_id = d.menu_id
+
+          WHERE p.empresa_id = $1
+
+            AND (
+              p.cerrado_en IS NOT NULL
+              OR UPPER(COALESCE(p.estado, '')) IN (
+                'CERRADO',
+                'PAGADO',
+                'COMPLETADO',
+                'FINALIZADO'
+              )
+            )
+        )
+
+        SELECT
+
+          COALESCE(
+            SUM(
+              cantidad * costo_unitario
+            ) FILTER (
+              WHERE fecha::date =
+                    (
+                      CURRENT_TIMESTAMP
+                      AT TIME ZONE 'America/Santiago'
+                    )::date
+            ),
+            0
+          ) AS costo_dia,
+
+          COALESCE(
+            SUM(
+              cantidad * costo_unitario
+            ) FILTER (
+              WHERE fecha::date >=
+                    DATE_TRUNC(
+                      'month',
+                      CURRENT_TIMESTAMP
+                      AT TIME ZONE 'America/Santiago'
+                    )::date
+
+                AND fecha::date <
+                    (
+                      DATE_TRUNC(
+                        'month',
+                        CURRENT_TIMESTAMP
+                        AT TIME ZONE 'America/Santiago'
+                      )
+                      + INTERVAL '1 month'
+                    )::date
+            ),
+            0
+          ) AS costo_mes,
+
+          EXTRACT(
+            DAY FROM
+            CURRENT_TIMESTAMP
+            AT TIME ZONE 'America/Santiago'
+          ) AS dias_transcurridos_mes
+
+        FROM lineas
+      `,
+      [empresaId]
+    );
+
+
+    /* =====================================================
+       5. RANKING DEL MES
+       Más vendido -> menos vendido
+    ===================================================== */
+
+    const rankingResult = await pool.query(
+      `
+        WITH receta_elegida AS (
+
+          SELECT DISTINCT ON (r.menu_id)
+            r.id,
+            r.menu_id
+
+          FROM public.recetas r
+
+          WHERE r.empresa_id = $1
+            AND r.activo = TRUE
+
+          ORDER BY
+            r.menu_id,
+            r.id
+        ),
+
+        costo_menu AS (
+
+          SELECT
+            re.menu_id,
+
+            COALESCE(
+              SUM(
+                rd.cantidad_necesaria
+                * COALESCE(pc.costo_unidad, 0)
+              ),
+              0
+            ) AS costo_unitario
+
+          FROM receta_elegida re
+
+          INNER JOIN public.receta_detalle rd
+            ON rd.receta_id = re.id
+
+          INNER JOIN public.tipo_porcion tp
+            ON tp.id = rd.tipo_porcion_id
+
+          INNER JOIN public.materias_primas mp
+            ON mp.id = tp.id_materia_prima
+           AND mp.empresa_id = $1
+
+          LEFT JOIN LATERAL (
+
+            SELECT
+              p.costo_unidad
+
+            FROM public.porciones p
+
+            WHERE p.empresa_id = $1
+
+              AND LOWER(TRIM(p.proteina)) =
+                  LOWER(TRIM(mp.nombre))
+
+              AND p.gramos = tp.gramos
+
+            ORDER BY p.id DESC
+
+            LIMIT 1
+
+          ) pc ON TRUE
+
+          GROUP BY re.menu_id
+        )
+
+        SELECT
+          m.id AS producto_id,
+          m.nombre AS producto,
+
+          COALESCE(
+            SUM(d.cantidad),
+            0
+          ) AS cantidad,
+
+          COALESCE(
+            SUM(d.subtotal),
+            0
+          ) AS total_venta,
+
+          COALESCE(
+            SUM(
+              d.cantidad
+              * COALESCE(cm.costo_unitario, 0)
+            ),
+            0
+          ) AS costo,
+
+          COALESCE(
+            SUM(d.subtotal),
+            0
+          )
+          -
+          COALESCE(
+            SUM(
+              d.cantidad
+              * COALESCE(cm.costo_unitario, 0)
+            ),
+            0
+          ) AS resultado_bruto
+
+        FROM public.detalle_pedido d
+
+        INNER JOIN public.pedidos p
+          ON p.id = d.pedido_id
+
+        INNER JOIN public.menu m
+          ON m.id = d.menu_id
+         AND m.empresa_id = $1
+
+        LEFT JOIN costo_menu cm
+          ON cm.menu_id = d.menu_id
+
+        WHERE p.empresa_id = $1
+
+          AND COALESCE(
+                p.cerrado_en,
+                p.creado_en
+              )::date >=
+              DATE_TRUNC(
+                'month',
+                CURRENT_TIMESTAMP
+                AT TIME ZONE 'America/Santiago'
+              )::date
+
+          AND COALESCE(
+                p.cerrado_en,
+                p.creado_en
+              )::date <
+              (
+                DATE_TRUNC(
+                  'month',
+                  CURRENT_TIMESTAMP
+                  AT TIME ZONE 'America/Santiago'
+                )
+                + INTERVAL '1 month'
+              )::date
+
+          AND (
+            p.cerrado_en IS NOT NULL
+            OR UPPER(COALESCE(p.estado, '')) IN (
+              'CERRADO',
+              'PAGADO',
+              'COMPLETADO',
+              'FINALIZADO'
+            )
+          )
+
+        GROUP BY
+          m.id,
+          m.nombre,
+          cm.costo_unitario
+
+        ORDER BY
+          cantidad DESC,
+          total_venta DESC,
+          m.nombre ASC
+      `,
+      [empresaId]
+    );
+
+
+    /* =====================================================
+       6. ARMAR RESPUESTA
+    ===================================================== */
+
+    const totales =
+      totalesResult.rows[0] || {};
+
+
+    const costos =
+      costosResult.rows[0] || {};
+
+
+    const totalDia =
+      Number(
+        totales.total_dia || 0
+      );
+
+
+    const totalSemana =
+      Number(
+        totales.total_semana || 0
+      );
+
+
+    const totalMes =
+      Number(
+        totales.total_mes || 0
+      );
+
+
+    const totalAnio =
+      Number(
+        totales.total_anio || 0
+      );
+
+
+    const costoDia =
+      Number(
+        costos.costo_dia || 0
+      );
+
+
+    const costoMes =
+      Number(
+        costos.costo_mes || 0
+      );
+
+
+    const diasTranscurridosMes =
+      Math.max(
+        Number(
+          costos.dias_transcurridos_mes || 1
+        ),
+        1
+      );
+
+
+    const costoDiarioPromedio =
+      costoMes /
+      diasTranscurridosMes;
+
+
+    const resultadoBrutoMes =
+      totalMes -
+      costoMes;
+
+
+    const rankingMes =
+      rankingResult.rows.map(
+        item => ({
+
+          producto_id:
+            Number(item.producto_id),
+
+          producto:
+            item.producto,
+
+          cantidad:
+            Number(item.cantidad || 0),
+
+          total_venta:
+            Number(item.total_venta || 0),
+
+          costo:
+            Number(item.costo || 0),
+
+          resultado_bruto:
+            Number(
+              item.resultado_bruto || 0
+            )
+
+        })
+      );
+
 
     return res.json({
 
       total_dia:
-        Number(
-          totalResult.rows[0]
-            .total_dia || 0
-        ),
+        totalDia,
+
+      total_semana:
+        totalSemana,
+
+      total_mes:
+        totalMes,
+
+      total_anio:
+        totalAnio,
+
+      costo_dia:
+        costoDia,
+
+      costo_mes:
+        costoMes,
+
+      costo_diario_promedio:
+        costoDiarioPromedio,
+
+      resultado_bruto_mes:
+        resultadoBrutoMes,
+
+      ranking_mes:
+        rankingMes,
 
       ventas:
         ventasResult.rows,
@@ -286,7 +802,7 @@ async function ventasHoy(req, res) {
     return res.status(500).json({
 
       message:
-        'Error al listar ventas del día',
+        'Error al listar ventas y estadísticas',
 
       detalle:
         error.message
@@ -1007,7 +1523,6 @@ async function crearVenta(req, res) {
           iva,
           total,
           metodo_pago,
-          observacion,
           cerrado_en,
           empresa_id
         )
@@ -1021,8 +1536,7 @@ async function crearVenta(req, res) {
           0,
           $2,
           $3,
-          'Venta registrada desde CCC Básico',
-          CURRENT_TIMESTAMP,
+          CURRENT_TIMESTAMP AT TIME ZONE 'America/Santiago',
           $4
         )
 

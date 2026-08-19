@@ -46,4 +46,20 @@ router.post(
 );
 
 
+/*
+   PUT /api/proveedores/:id
+
+   Actualiza el registro seleccionado.
+
+   El :id corresponde al ID de
+   proveedor_materia_prima que devuelve
+   GET /api/proveedores.
+*/
+router.put(
+  '/proveedores/:id',
+  auth,
+  controller.actualizarProveedor
+);
+
+
 module.exports = router;

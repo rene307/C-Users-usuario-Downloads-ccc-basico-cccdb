@@ -1096,12 +1096,759 @@ async function guardarProveedor(req, res) {
 
 
 /* =========================================================
+   ACTUALIZAR PROVEEDOR
+   PUT /api/proveedores/:id
+
+   IMPORTANTE:
+   :id corresponde a proveedor_materia_prima.id,
+   que es el mismo id que devuelve listarProveedores().
+========================================================= */
+
+async function actualizarProveedor(req, res) {
+
+  const client =
+    await pool.connect();
+
+  let transaccionIniciada = false;
+
+
+  try {
+
+    const empresaId =
+      obtenerEmpresaId(req);
+
+    const relacionId =
+      Number(req.params.id);
+
+
+    const {
+
+      /*
+         Datos del proveedor
+      */
+      proveedor,
+      nombre,
+      rut,
+      contacto,
+      telefono,
+      correo,
+      condicion_pago = 'Contado',
+      estado = 'Activo',
+
+      /*
+         Relación con materia prima
+      */
+      materia_prima_id,
+      producto_maestro,
+      nombre_boleta,
+      unidad,
+      precio,
+
+      /*
+         Alias del producto para este proveedor
+      */
+      aliases = []
+
+    } = req.body;
+
+
+    /* =====================================================
+       VALIDACIONES
+    ===================================================== */
+
+    if (!empresaId) {
+
+      return res.status(403).json({
+        message:
+          'Usuario sin empresa asignada'
+      });
+
+    }
+
+
+    if (
+      !Number.isInteger(relacionId) ||
+      relacionId <= 0
+    ) {
+
+      return res.status(400).json({
+        message:
+          'ID de proveedor inválido'
+      });
+
+    }
+
+
+    const nombreProveedor =
+      String(
+        proveedor ||
+        nombre ||
+        ''
+      ).trim();
+
+
+    const nombreBoleta =
+      String(
+        nombre_boleta ||
+        ''
+      ).trim();
+
+
+    const precioNumero =
+      convertirNumero(precio);
+
+
+    if (!nombreProveedor) {
+
+      return res.status(400).json({
+        message:
+          'El nombre del proveedor es obligatorio'
+      });
+
+    }
+
+
+    if (!nombreBoleta) {
+
+      return res.status(400).json({
+        message:
+          'El nombre que aparece en la boleta es obligatorio'
+      });
+
+    }
+
+
+    if (
+      !materia_prima_id &&
+      !producto_maestro
+    ) {
+
+      return res.status(400).json({
+        message:
+          'Debes seleccionar el producto maestro'
+      });
+
+    }
+
+
+    if (precioNumero < 0) {
+
+      return res.status(400).json({
+        message:
+          'El precio no puede ser negativo'
+      });
+
+    }
+
+
+    await client.query('BEGIN');
+    transaccionIniciada = true;
+
+
+    /* =====================================================
+       1. BUSCAR LA RELACIÓN QUE SE ESTÁ EDITANDO
+    ===================================================== */
+
+    const relacionActualResult =
+      await client.query(
+        `
+        SELECT
+          ppm.id,
+          ppm.proveedor_id,
+          ppm.materia_prima_id,
+          ppm.nombre_boleta,
+          ppm.nombre_boleta_normalizado,
+          ppm.unidad,
+          ppm.ultimo_precio,
+          ppm.estado
+
+        FROM public.proveedor_materia_prima ppm
+
+        WHERE ppm.id = $1
+          AND ppm.empresa_id = $2
+
+        LIMIT 1
+        `,
+        [
+          relacionId,
+          empresaId
+        ]
+      );
+
+
+    if (
+      relacionActualResult.rows.length === 0
+    ) {
+
+      await client.query('ROLLBACK');
+      transaccionIniciada = false;
+
+      return res.status(404).json({
+        message:
+          'Proveedor no encontrado'
+      });
+
+    }
+
+
+    const relacionActual =
+      relacionActualResult.rows[0];
+
+    const proveedorId =
+      Number(
+        relacionActual.proveedor_id
+      );
+
+    const materiaPrimaAnteriorId =
+      Number(
+        relacionActual.materia_prima_id
+      );
+
+
+    /* =====================================================
+       2. BUSCAR LA MATERIA PRIMA OFICIAL
+    ===================================================== */
+
+    let materiaResult;
+
+
+    if (materia_prima_id) {
+
+      materiaResult =
+        await client.query(
+          `
+          SELECT
+            id,
+            nombre,
+            unidad,
+            empresa_id
+
+          FROM public.materias_primas
+
+          WHERE id = $1
+            AND empresa_id = $2
+
+          LIMIT 1
+          `,
+          [
+            Number(materia_prima_id),
+            empresaId
+          ]
+        );
+
+    }
+
+
+    else {
+
+      materiaResult =
+        await client.query(
+          `
+          SELECT
+            id,
+            nombre,
+            unidad,
+            empresa_id
+
+          FROM public.materias_primas
+
+          WHERE empresa_id = $1
+
+            AND LOWER(TRIM(nombre))
+                =
+                LOWER(TRIM($2))
+
+          LIMIT 1
+          `,
+          [
+            empresaId,
+            producto_maestro
+          ]
+        );
+
+    }
+
+
+    if (
+      materiaResult.rows.length === 0
+    ) {
+
+      await client.query('ROLLBACK');
+      transaccionIniciada = false;
+
+      return res.status(404).json({
+        message:
+          'El producto maestro no existe en Bodega'
+      });
+
+    }
+
+
+    const materiaPrima =
+      materiaResult.rows[0];
+
+
+    /* =====================================================
+       3. ACTUALIZAR DATOS GENERALES DEL PROVEEDOR
+    ===================================================== */
+
+    const proveedorActualizadoResult =
+      await client.query(
+        `
+        UPDATE public.proveedores
+
+        SET
+          nombre = $1,
+          rut = $2,
+          contacto = $3,
+          telefono = $4,
+          correo = $5,
+          condicion_pago = $6,
+          estado = $7,
+          actualizado_en =
+            CURRENT_TIMESTAMP
+
+        WHERE id = $8
+          AND empresa_id = $9
+
+        RETURNING *
+        `,
+        [
+          nombreProveedor,
+          String(rut || '').trim() || null,
+          String(contacto || '').trim() || null,
+          String(telefono || '').trim() || null,
+          String(correo || '').trim() || null,
+          condicion_pago || 'Contado',
+          estado || 'Activo',
+          proveedorId,
+          empresaId
+        ]
+      );
+
+
+    if (
+      proveedorActualizadoResult.rows.length === 0
+    ) {
+
+      await client.query('ROLLBACK');
+      transaccionIniciada = false;
+
+      return res.status(404).json({
+        message:
+          'Proveedor no encontrado'
+      });
+
+    }
+
+
+    const proveedorActualizado =
+      proveedorActualizadoResult.rows[0];
+
+
+    /* =====================================================
+       4. VALIDAR EL NOMBRE DE BOLETA
+    ===================================================== */
+
+    const nombreBoletaNormalizado =
+      normalizarTexto(
+        nombreBoleta
+      );
+
+
+    const conflictoBoleta =
+      await client.query(
+        `
+        SELECT
+          id,
+          materia_prima_id
+
+        FROM public.proveedor_materia_prima
+
+        WHERE empresa_id = $1
+          AND proveedor_id = $2
+          AND nombre_boleta_normalizado = $3
+          AND id <> $4
+
+        LIMIT 1
+        `,
+        [
+          empresaId,
+          proveedorId,
+          nombreBoletaNormalizado,
+          relacionId
+        ]
+      );
+
+
+    if (
+      conflictoBoleta.rows.length > 0
+    ) {
+
+      await client.query('ROLLBACK');
+      transaccionIniciada = false;
+
+      return res.status(409).json({
+        message:
+          `"${nombreBoleta}" ya pertenece a otro ` +
+          'registro de este proveedor'
+      });
+
+    }
+
+
+    const precioAnterior =
+      Number(
+        relacionActual.ultimo_precio || 0
+      );
+
+
+    /* =====================================================
+       5. ACTUALIZAR RELACIÓN PROVEEDOR / MATERIA PRIMA
+    ===================================================== */
+
+    const relacionActualizadaResult =
+      await client.query(
+        `
+        UPDATE public.proveedor_materia_prima
+
+        SET
+          materia_prima_id = $1,
+          nombre_boleta = $2,
+          nombre_boleta_normalizado = $3,
+          unidad = $4,
+          ultimo_precio = $5,
+          estado = $6,
+          actualizado_en =
+            CURRENT_TIMESTAMP
+
+        WHERE id = $7
+          AND empresa_id = $8
+
+        RETURNING *
+        `,
+        [
+          materiaPrima.id,
+          nombreBoleta,
+          nombreBoletaNormalizado,
+          String(unidad || '').trim()
+            || materiaPrima.unidad,
+          precioNumero,
+          estado || 'Activo',
+          relacionId,
+          empresaId
+        ]
+      );
+
+
+    if (
+      relacionActualizadaResult.rows.length === 0
+    ) {
+
+      await client.query('ROLLBACK');
+      transaccionIniciada = false;
+
+      return res.status(404).json({
+        message:
+          'No se pudo actualizar la relación del proveedor'
+      });
+
+    }
+
+
+    const relacionActualizada =
+      relacionActualizadaResult.rows[0];
+
+
+    /* =====================================================
+       6. PREPARAR ALIASES
+    ===================================================== */
+
+    const aliasesLimpios =
+      Array.isArray(aliases)
+        ? aliases
+            .map(item =>
+              String(item || '').trim()
+            )
+            .filter(Boolean)
+        : [];
+
+
+    /*
+       Primero quitamos los aliases de la relación
+       que se estaba editando.
+
+       Si cambió la materia prima, se eliminan de la
+       materia prima anterior para que no queden alias
+       antiguos apuntando al producto equivocado.
+    */
+
+    await client.query(
+      `
+      DELETE FROM public.proveedor_alias
+
+      WHERE empresa_id = $1
+        AND proveedor_id = $2
+        AND materia_prima_id = $3
+      `,
+      [
+        empresaId,
+        proveedorId,
+        materiaPrimaAnteriorId
+      ]
+    );
+
+
+    /* =====================================================
+       7. GUARDAR ALIASES ACTUALIZADOS
+    ===================================================== */
+
+    for (
+      const alias
+      of aliasesLimpios
+    ) {
+
+      const aliasNormalizado =
+        normalizarTexto(alias);
+
+
+      const aliasExistente =
+        await client.query(
+          `
+          SELECT
+            id,
+            materia_prima_id
+
+          FROM public.proveedor_alias
+
+          WHERE empresa_id = $1
+            AND proveedor_id = $2
+            AND alias_normalizado = $3
+
+          LIMIT 1
+          `,
+          [
+            empresaId,
+            proveedorId,
+            aliasNormalizado
+          ]
+        );
+
+
+      if (
+        aliasExistente.rows.length > 0 &&
+        Number(
+          aliasExistente.rows[0]
+            .materia_prima_id
+        ) !== Number(
+          materiaPrima.id
+        )
+      ) {
+
+        await client.query('ROLLBACK');
+        transaccionIniciada = false;
+
+        return res.status(409).json({
+          message:
+            `El alias "${alias}" ya está relacionado ` +
+            'con otra materia prima'
+        });
+
+      }
+
+
+      if (
+        aliasExistente.rows.length === 0
+      ) {
+
+        await client.query(
+          `
+          INSERT INTO public.proveedor_alias
+          (
+            empresa_id,
+            proveedor_id,
+            materia_prima_id,
+            alias,
+            alias_normalizado
+          )
+
+          VALUES
+          (
+            $1,
+            $2,
+            $3,
+            $4,
+            $5
+          )
+          `,
+          [
+            empresaId,
+            proveedorId,
+            materiaPrima.id,
+            alias,
+            aliasNormalizado
+          ]
+        );
+
+      }
+
+    }
+
+
+    /* =====================================================
+       8. HISTORIAL DE PRECIOS
+    ===================================================== */
+
+    if (
+      precioNumero > 0 &&
+      precioAnterior !== precioNumero
+    ) {
+
+      await client.query(
+        `
+        INSERT INTO public.proveedor_historial_precio
+        (
+          empresa_id,
+          proveedor_materia_prima_id,
+          precio
+        )
+
+        VALUES
+        (
+          $1,
+          $2,
+          $3
+        )
+        `,
+        [
+          empresaId,
+          relacionActualizada.id,
+          precioNumero
+        ]
+      );
+
+    }
+
+
+    /* =====================================================
+       9. CONFIRMAR CAMBIOS
+    ===================================================== */
+
+    await client.query('COMMIT');
+    transaccionIniciada = false;
+
+
+    return res.status(200).json({
+
+      message:
+        'Proveedor actualizado correctamente',
+
+      id:
+        Number(relacionActualizada.id),
+
+      proveedor_id:
+        Number(proveedorActualizado.id),
+
+      proveedor:
+        proveedorActualizado.nombre,
+
+      rut:
+        proveedorActualizado.rut,
+
+      contacto:
+        proveedorActualizado.contacto,
+
+      telefono:
+        proveedorActualizado.telefono,
+
+      correo:
+        proveedorActualizado.correo,
+
+      condicion_pago:
+        proveedorActualizado.condicion_pago,
+
+      nombre_boleta:
+        relacionActualizada.nombre_boleta,
+
+      materia_prima_id:
+        Number(materiaPrima.id),
+
+      producto_maestro:
+        materiaPrima.nombre,
+
+      unidad:
+        relacionActualizada.unidad,
+
+      precio:
+        Number(
+          relacionActualizada.ultimo_precio || 0
+        ),
+
+      estado:
+        relacionActualizada.estado,
+
+      aliases:
+        aliasesLimpios
+
+    });
+
+
+  } catch (error) {
+
+    if (transaccionIniciada) {
+
+      try {
+
+        await client.query(
+          'ROLLBACK'
+        );
+
+      } catch (rollbackError) {
+
+        console.error(
+          'Error haciendo ROLLBACK:',
+          rollbackError
+        );
+
+      }
+
+    }
+
+
+    console.error(
+      'Error actualizarProveedor:',
+      error
+    );
+
+
+    return res.status(500).json({
+
+      message:
+        'Error al actualizar proveedor',
+
+      detalle:
+        error.message
+
+    });
+
+
+  } finally {
+
+    client.release();
+
+  }
+
+}
+
+
+/* =========================================================
    EXPORTAR
 ========================================================= */
 
 module.exports = {
 
   listarProveedores,
-  guardarProveedor
+  guardarProveedor,
+  actualizarProveedor
 
 };
