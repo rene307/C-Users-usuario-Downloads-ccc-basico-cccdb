@@ -1,5 +1,5 @@
-const API_BASE = "http://localhost:3000/api";
-
+//const API_BASE = "http://localhost:3000/api";
+const API_BASE = "/api";
 let token =
   sessionStorage.getItem("ccc_token") || "";
 
@@ -3741,6 +3741,380 @@ async function eliminarBodega(id) {
 ===================================================== */
 
 
+function normalizarClaveUnidad(valor) {
+
+  return String(valor || "")
+    .normalize("NFD")
+    .replace(
+      /[\u0300-\u036f]/g,
+      ""
+    )
+    .toLowerCase()
+    .trim()
+    .replace(
+      /[_-]+/g,
+      " "
+    )
+    .replace(
+      /\s+/g,
+      " "
+    );
+
+}
+
+
+function obtenerUnidadMedida(valor) {
+
+  const clave =
+    normalizarClaveUnidad(valor);
+
+
+  const unidades = {
+
+    // PESO
+    "kg": {
+      familia: "peso",
+      factorBase: 1000,
+      simbolo: "kg",
+      unidadBase: "g"
+    },
+    "kilo": {
+      familia: "peso",
+      factorBase: 1000,
+      simbolo: "kg",
+      unidadBase: "g"
+    },
+    "kilos": {
+      familia: "peso",
+      factorBase: 1000,
+      simbolo: "kg",
+      unidadBase: "g"
+    },
+    "kilogramo": {
+      familia: "peso",
+      factorBase: 1000,
+      simbolo: "kg",
+      unidadBase: "g"
+    },
+    "kilogramos": {
+      familia: "peso",
+      factorBase: 1000,
+      simbolo: "kg",
+      unidadBase: "g"
+    },
+    "g": {
+      familia: "peso",
+      factorBase: 1,
+      simbolo: "g",
+      unidadBase: "g"
+    },
+    "gr": {
+      familia: "peso",
+      factorBase: 1,
+      simbolo: "g",
+      unidadBase: "g"
+    },
+    "gramo": {
+      familia: "peso",
+      factorBase: 1,
+      simbolo: "g",
+      unidadBase: "g"
+    },
+    "gramos": {
+      familia: "peso",
+      factorBase: 1,
+      simbolo: "g",
+      unidadBase: "g"
+    },
+    "lb": {
+      familia: "peso",
+      factorBase: 453.59237,
+      simbolo: "lb",
+      unidadBase: "g"
+    },
+    "libra": {
+      familia: "peso",
+      factorBase: 453.59237,
+      simbolo: "lb",
+      unidadBase: "g"
+    },
+    "libras": {
+      familia: "peso",
+      factorBase: 453.59237,
+      simbolo: "lb",
+      unidadBase: "g"
+    },
+    "oz": {
+      familia: "peso",
+      factorBase: 28.349523125,
+      simbolo: "oz",
+      unidadBase: "g"
+    },
+    "onza": {
+      familia: "peso",
+      factorBase: 28.349523125,
+      simbolo: "oz",
+      unidadBase: "g"
+    },
+    "onzas": {
+      familia: "peso",
+      factorBase: 28.349523125,
+      simbolo: "oz",
+      unidadBase: "g"
+    },
+
+    // VOLUMEN
+    "l": {
+      familia: "volumen",
+      factorBase: 1000,
+      simbolo: "l",
+      unidadBase: "ml"
+    },
+    "lt": {
+      familia: "volumen",
+      factorBase: 1000,
+      simbolo: "l",
+      unidadBase: "ml"
+    },
+    "lts": {
+      familia: "volumen",
+      factorBase: 1000,
+      simbolo: "l",
+      unidadBase: "ml"
+    },
+    "litro": {
+      familia: "volumen",
+      factorBase: 1000,
+      simbolo: "l",
+      unidadBase: "ml"
+    },
+    "litros": {
+      familia: "volumen",
+      factorBase: 1000,
+      simbolo: "l",
+      unidadBase: "ml"
+    },
+    "ml": {
+      familia: "volumen",
+      factorBase: 1,
+      simbolo: "ml",
+      unidadBase: "ml"
+    },
+    "cc": {
+      familia: "volumen",
+      factorBase: 1,
+      simbolo: "ml",
+      unidadBase: "ml"
+    },
+    "mililitro": {
+      familia: "volumen",
+      factorBase: 1,
+      simbolo: "ml",
+      unidadBase: "ml"
+    },
+    "mililitros": {
+      familia: "volumen",
+      factorBase: 1,
+      simbolo: "ml",
+      unidadBase: "ml"
+    },
+    "cl": {
+      familia: "volumen",
+      factorBase: 10,
+      simbolo: "cl",
+      unidadBase: "ml"
+    },
+    "centilitro": {
+      familia: "volumen",
+      factorBase: 10,
+      simbolo: "cl",
+      unidadBase: "ml"
+    },
+    "centilitros": {
+      familia: "volumen",
+      factorBase: 10,
+      simbolo: "cl",
+      unidadBase: "ml"
+    },
+    "fl oz": {
+      familia: "volumen",
+      factorBase: 29.5735295625,
+      simbolo: "fl oz",
+      unidadBase: "ml"
+    },
+    "floz": {
+      familia: "volumen",
+      factorBase: 29.5735295625,
+      simbolo: "fl oz",
+      unidadBase: "ml"
+    },
+    "onza liquida": {
+      familia: "volumen",
+      factorBase: 29.5735295625,
+      simbolo: "fl oz",
+      unidadBase: "ml"
+    },
+    "onzas liquidas": {
+      familia: "volumen",
+      factorBase: 29.5735295625,
+      simbolo: "fl oz",
+      unidadBase: "ml"
+    },
+
+    // CONTEO
+    "unidad": {
+      familia: "conteo",
+      factorBase: 1,
+      simbolo: "unidad",
+      unidadBase: "unidad"
+    },
+    "unidades": {
+      familia: "conteo",
+      factorBase: 1,
+      simbolo: "unidad",
+      unidadBase: "unidad"
+    },
+    "un": {
+      familia: "conteo",
+      factorBase: 1,
+      simbolo: "unidad",
+      unidadBase: "unidad"
+    },
+    "und": {
+      familia: "conteo",
+      factorBase: 1,
+      simbolo: "unidad",
+      unidadBase: "unidad"
+    },
+    "u": {
+      familia: "conteo",
+      factorBase: 1,
+      simbolo: "unidad",
+      unidadBase: "unidad"
+    },
+    "docena": {
+      familia: "conteo",
+      factorBase: 12,
+      simbolo: "docena",
+      unidadBase: "unidad"
+    },
+    "docenas": {
+      familia: "conteo",
+      factorBase: 12,
+      simbolo: "docena",
+      unidadBase: "unidad"
+    }
+
+  };
+
+
+  return unidades[clave] || null;
+
+}
+
+
+function extraerCantidadUnidadCocina(
+  texto,
+  unidadBodega
+) {
+
+  const limpio =
+    String(texto || "")
+      .trim();
+
+
+  const coincidencia =
+    limpio.match(
+      /^([0-9]+(?:[.,][0-9]+)?)\s*(.*)$/
+    );
+
+
+  if (!coincidencia) {
+
+    return null;
+
+  }
+
+
+  const cantidad =
+    Number(
+      coincidencia[1]
+        .replace(
+          ",",
+          "."
+        )
+    );
+
+
+  if (
+    !Number.isFinite(cantidad) ||
+    cantidad <= 0
+  ) {
+
+    return null;
+
+  }
+
+
+  const unidadEscrita =
+    coincidencia[2]
+      .trim();
+
+
+  let unidadPorcion = null;
+
+
+  if (unidadEscrita) {
+
+    unidadPorcion =
+      obtenerUnidadMedida(
+        unidadEscrita
+      );
+
+  } else {
+
+    // Mantiene compatibilidad con el uso anterior:
+    // si el usuario escribe solo el número, se usa
+    // g para peso, ml para volumen y unidad para conteo.
+    unidadPorcion =
+      obtenerUnidadMedida(
+        unidadBodega.unidadBase
+      );
+
+  }
+
+
+  if (!unidadPorcion) {
+
+    return {
+      error:
+        "Unidad de porción no reconocida"
+    };
+
+  }
+
+
+  if (
+    unidadPorcion.familia !==
+    unidadBodega.familia
+  ) {
+
+    return {
+      error:
+        "La unidad de la porción no corresponde al tipo de unidad de bodega"
+    };
+
+  }
+
+
+  return {
+    cantidad,
+    unidadPorcion
+  };
+
+}
+
+
 async function agregarCocina() {
 
   const bodegaId =
@@ -3750,28 +4124,10 @@ async function agregarCocina() {
     );
 
 
-  const textoGramos =
+  const textoPorcion =
     $("cocinaUnidad")
       .value
       .trim();
-
-
-  const gramosPorPorcion =
-    Number(
-
-      textoGramos
-
-        .replace(
-          /[^0-9.,]/g,
-          ""
-        )
-
-        .replace(
-          ",",
-          "."
-        )
-
-    );
 
 
   const bodega =
@@ -3796,13 +4152,16 @@ async function agregarCocina() {
   }
 
 
+  const unidadBodega =
+    obtenerUnidadMedida(
+      bodega.unidad
+    );
 
-  if (
-    gramosPorPorcion <= 0
-  ) {
+
+  if (!unidadBodega) {
 
     alert(
-      "Ingresa los gramos por porción"
+      "Unidad de bodega no reconocida. Usa kg, g, lb, oz, l, ml, cl, fl oz, unidad o docena."
     );
 
 
@@ -3811,55 +4170,17 @@ async function agregarCocina() {
   }
 
 
-
-  const unidad =
-    bodega.unidad
-      .toLowerCase()
-      .trim();
-
-
-  let gramosDisponibles = 0;
+  const porcion =
+    extraerCantidadUnidadCocina(
+      textoPorcion,
+      unidadBodega
+    );
 
 
-
-  if (
-
-    unidad === "kg" ||
-
-    unidad === "kilo" ||
-
-    unidad === "kilos" ||
-
-    unidad === "kilogramo" ||
-
-    unidad === "kilogramos"
-
-  ) {
-
-    gramosDisponibles =
-      bodega.cantidad * 1000;
-
-
-  } else if (
-
-    unidad === "g" ||
-
-    unidad === "gr" ||
-
-    unidad === "gramo" ||
-
-    unidad === "gramos"
-
-  ) {
-
-    gramosDisponibles =
-      bodega.cantidad;
-
-
-  } else {
+  if (!porcion) {
 
     alert(
-      "La unidad de bodega debe ser kg o g"
+      "Ingresa una cantidad válida por porción. Ej: 200 g, 50 ml o 1 unidad"
     );
 
 
@@ -3867,17 +4188,40 @@ async function agregarCocina() {
 
   }
 
+
+  if (porcion.error) {
+
+    alert(
+      porcion.error
+    );
+
+
+    return;
+
+  }
+
+
+  const cantidadDisponibleBase =
+    bodega.cantidad *
+    unidadBodega.factorBase;
+
+
+  const cantidadPorcionBase =
+    porcion.cantidad *
+    porcion.unidadPorcion.factorBase;
 
 
   const cantidadPorciones =
     Math.floor(
 
-      gramosDisponibles /
+      (
+        cantidadDisponibleBase +
+        Number.EPSILON
+      ) /
 
-      gramosPorPorcion
+      cantidadPorcionBase
 
     );
-
 
 
   if (
@@ -3894,47 +4238,26 @@ async function agregarCocina() {
   }
 
 
-
-  const gramosUtilizados =
-
+  const cantidadUtilizadaBase =
     cantidadPorciones *
-
-    gramosPorPorcion;
-
-
-
-  const usaKilogramos =
-
-    unidad === "kg" ||
-
-    unidad === "kilo" ||
-
-    unidad === "kilos" ||
-
-    unidad === "kilogramo" ||
-
-    unidad === "kilogramos";
-
+    cantidadPorcionBase;
 
 
   const cantidadBodegaUtilizada =
+    redondear(
 
-    usaKilogramos
+      cantidadUtilizadaBase /
+      unidadBodega.factorBase
 
-      ? gramosUtilizados / 1000
-
-      : gramosUtilizados;
-
+    );
 
 
   const nombreCocina =
     bodega.producto;
 
 
-
   const unidadCocina =
-    `${gramosPorPorcion} g`;
-
+    `${porcion.cantidad} ${porcion.unidadPorcion.simbolo}`;
 
 
   const existente =
@@ -3955,7 +4278,6 @@ async function agregarCocina() {
           .toLowerCase()
 
     );
-
 
 
   try {
