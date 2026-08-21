@@ -1,5 +1,6 @@
-//const API_BASE = "http://localhost:3000/api";
-const API_BASE = "/api";
+const API_BASE = "http://localhost:3000/api";
+//const API_BASE = "/api";
+
 let token =
   sessionStorage.getItem("ccc_token") || "";
 
@@ -1953,7 +1954,19 @@ function iniciarBotones() {
 
         actualizarPreviewProveedorVisual();
 
+        actualizarComparacionPrecioProveedor();
+
       }
+
+    );
+
+
+  $("proveedorPrecio")
+    ?.addEventListener(
+
+      "input",
+
+      actualizarComparacionPrecioProveedor
 
     );
 
@@ -2005,6 +2018,8 @@ function iniciarBotones() {
   renderAliasesProveedorVisual();
 
   actualizarPreviewProveedorVisual();
+
+  actualizarComparacionPrecioProveedor();
 
 }
 
@@ -2614,6 +2629,260 @@ function existeConflictoNombreProveedor(
 
 
 
+function obtenerCostoActualBodegaProveedor(productoMaestroId) {
+
+  const item =
+    data.bodega.find(
+      producto =>
+        Number(producto.id) ===
+        Number(productoMaestroId)
+    );
+
+  if (!item) {
+    return 0;
+  }
+
+  const cantidad =
+    numero(item.cantidad);
+
+  const costoTotal =
+    numero(item.costo_total);
+
+  if (cantidad <= 0) {
+    return 0;
+  }
+
+  return redondear(
+    costoTotal / cantidad
+  );
+
+}
+
+
+function obtenerMejorProveedorRegistrado(
+  productoMaestroId,
+  ignorarId = null
+) {
+
+  const candidatos =
+    proveedoresVisual
+      .filter(
+        item =>
+          Number(item.productoMaestroId) ===
+            Number(productoMaestroId) &&
+          numero(item.precio) > 0 &&
+          (
+            ignorarId === null ||
+            Number(item.id) !== Number(ignorarId)
+          )
+      )
+      .sort(
+        (a, b) =>
+          numero(a.precio) -
+          numero(b.precio)
+      );
+
+  return candidatos[0] || null;
+
+}
+
+
+function calcularComparacionPrecioProveedor(
+  productoMaestroId,
+  precio,
+  ignorarId = null
+) {
+
+  const precioNuevo =
+    numero(precio);
+
+  const costoActual =
+    obtenerCostoActualBodegaProveedor(
+      productoMaestroId
+    );
+
+  const mejorProveedor =
+    obtenerMejorProveedorRegistrado(
+      productoMaestroId,
+      ignorarId
+    );
+
+  let referencia =
+    costoActual;
+
+  let referenciaTexto =
+    "costo actual de bodega";
+
+  if (
+    referencia <= 0 &&
+    mejorProveedor
+  ) {
+    referencia =
+      numero(mejorProveedor.precio);
+
+    referenciaTexto =
+      `precio registrado de ${mejorProveedor.proveedor}`;
+  }
+
+  if (
+    precioNuevo <= 0 ||
+    referencia <= 0
+  ) {
+    return {
+      estado: "neutral",
+      porcentaje: 0,
+      referencia,
+      referenciaTexto,
+      mejorProveedor,
+      texto:
+        "Sin referencia suficiente para comparar este precio."
+    };
+  }
+
+  const variacion =
+    redondear(
+      (
+        (precioNuevo - referencia) /
+        referencia
+      ) * 100
+    );
+
+  if (variacion < 0) {
+    return {
+      estado: "barato",
+      porcentaje: variacion,
+      referencia,
+      referenciaTexto,
+      mejorProveedor,
+      texto:
+        `↓ ${Math.abs(variacion).toFixed(1)}% más barato`
+    };
+  }
+
+  if (variacion > 0) {
+    return {
+      estado: "caro",
+      porcentaje: variacion,
+      referencia,
+      referenciaTexto,
+      mejorProveedor,
+      texto:
+        `↑ ${Math.abs(variacion).toFixed(1)}% más caro`
+    };
+  }
+
+  return {
+    estado: "neutral",
+    porcentaje: 0,
+    referencia,
+    referenciaTexto,
+    mejorProveedor,
+    texto: "Mismo precio que la referencia"
+  };
+
+}
+
+
+function actualizarComparacionPrecioProveedor() {
+
+  const caja =
+    $("proveedorComparacionPrecio");
+
+  if (!caja) {
+    return;
+  }
+
+  const productoMaestro =
+    obtenerProductoMaestroProveedor();
+
+  const precio =
+    numero(
+      $("proveedorPrecio")?.value
+    );
+
+  if (!productoMaestro || precio <= 0) {
+    caja.className =
+      "ccc-comparacion-precio neutral";
+
+    caja.textContent =
+      "Ingresa un precio para comparar con el costo actual y otros proveedores.";
+
+    return;
+  }
+
+  const comparacion =
+    calcularComparacionPrecioProveedor(
+      productoMaestro.id,
+      precio,
+      proveedorEditandoId
+    );
+
+  caja.className =
+    `ccc-comparacion-precio ${comparacion.estado}`;
+
+  let detalleMejor = "";
+
+  if (
+    comparacion.mejorProveedor &&
+    numero(comparacion.mejorProveedor.precio) < precio
+  ) {
+    const diferenciaMejor =
+      redondear(
+        (
+          (precio - numero(comparacion.mejorProveedor.precio)) /
+          precio
+        ) * 100
+      );
+
+    detalleMejor =
+      ` · Mejor registrado: ${comparacion.mejorProveedor.proveedor} ` +
+      `${moneda(comparacion.mejorProveedor.precio)} ` +
+      `(↓ ${diferenciaMejor.toFixed(1)}%)`;
+  }
+
+  caja.innerHTML =
+    `<strong>${comparacion.texto}</strong>` +
+    ` · Referencia: ${moneda(comparacion.referencia)} ` +
+    `(${escaparHTML(comparacion.referenciaTexto)})` +
+    detalleMejor;
+
+}
+
+
+function comparacionPrecioProveedorTabla(item) {
+
+  const comparacion =
+    calcularComparacionPrecioProveedor(
+      item.productoMaestroId,
+      item.precio,
+      item.id
+    );
+
+  if (comparacion.estado === "barato") {
+    return `
+      <span class="ccc-precio-indicador barato">
+        ↓ ${Math.abs(comparacion.porcentaje).toFixed(1)}%
+      </span>
+    `;
+  }
+
+  if (comparacion.estado === "caro") {
+    return `
+      <span class="ccc-precio-indicador caro">
+        ↑ ${Math.abs(comparacion.porcentaje).toFixed(1)}%
+      </span>
+    `;
+  }
+
+  return `
+    <span class="ccc-precio-indicador neutral">
+      — 0.0%
+    </span>
+  `;
+
+}
+
+
 async function guardarProveedorVisual() {
 
   const proveedor =
@@ -3013,6 +3282,8 @@ function limpiarFormularioProveedorVisual(
 
   actualizarPreviewProveedorVisual();
 
+  actualizarComparacionPrecioProveedor();
+
 }
 
 
@@ -3158,6 +3429,8 @@ function editarProveedorVisual(id) {
 
   actualizarPreviewProveedorVisual();
 
+  actualizarComparacionPrecioProveedor();
+
 
   const botonGuardar =
     $("btnGuardarProveedorVisual");
@@ -3183,11 +3456,11 @@ function editarProveedorVisual(id) {
 
 function renderProveedoresVisual() {
 
-  const tbody =
+  const contenedor =
     $("tablaProveedoresVisual");
 
 
-  if (!tbody) {
+  if (!contenedor) {
 
     return;
 
@@ -3198,21 +3471,14 @@ function renderProveedoresVisual() {
     proveedoresVisual.length === 0
   ) {
 
-    tbody.innerHTML = `
+    contenedor.innerHTML = `
 
-      <tr>
+      <div class="proveedores-tabla-vacia">
 
-        <td
-          colspan="8"
-          class="proveedores-tabla-vacia"
-        >
+        Sin proveedores agregados
+        en esta vista.
 
-          Sin proveedores agregados
-          en esta vista.
-
-        </td>
-
-      </tr>
+      </div>
 
     `;
 
@@ -3222,155 +3488,183 @@ function renderProveedoresVisual() {
   }
 
 
+  /*
+    Agrupa todos los proveedores por producto maestro CCC.
+    Así Filete queda junto con Filete, Lechuga con Lechuga, etc.
+  */
+  const grupos =
+    proveedoresVisual.reduce(
 
-  tbody.innerHTML =
-    proveedoresVisual
+      (acumulador, item) => {
+
+        const clave =
+          String(
+            item.productoMaestro ||
+            "Sin producto"
+          ).trim();
+
+        if (!acumulador[clave]) {
+          acumulador[clave] = [];
+        }
+
+        acumulador[clave].push(item);
+
+        return acumulador;
+
+      },
+
+      {}
+
+    );
+
+
+  contenedor.innerHTML =
+    Object.entries(grupos)
+
+      .sort(
+        ([productoA], [productoB]) =>
+          productoA.localeCompare(
+            productoB,
+            "es",
+            { sensitivity: "base" }
+          )
+      )
 
       .map(
 
-        item => `
+        ([producto, items]) => {
 
-          <tr>
+          const filas =
+            [...items]
 
+              .sort(
+                (a, b) =>
+                  numero(a.precio) -
+                  numero(b.precio)
+              )
 
-            <td>
+              .map(
 
-              <strong>
+                item => `
 
-                ${escaparHTML(
-                  item.proveedor
-                )}
+                  <tr>
 
-              </strong>
+                    <td>
 
+                      <strong>
+                        ${escaparHTML(item.proveedor)}
+                      </strong>
 
-              ${
-                item.rut
-
-                  ? `
-                    <div>
-
-                      ${escaparHTML(
+                      ${
                         item.rut
-                      )}
+                          ? `<div class="proveedores-dato-secundario">${escaparHTML(item.rut)}</div>`
+                          : ""
+                      }
 
-                    </div>
-                  `
+                    </td>
 
-                  : ""
-              }
+                    <td>
+                      ${escaparHTML(item.nombreBoleta)}
+                    </td>
 
-            </td>
+                    <td>
+                      ${
+                        item.aliases.length
+                          ? item.aliases.map(escaparHTML).join(", ")
+                          : "—"
+                      }
+                    </td>
 
+                    <td>
+                      ${escaparHTML(item.unidad)}
+                    </td>
 
+                    <td class="proveedores-precio">
+                      ${moneda(item.precio)}
+                    </td>
 
-            <td>
+                    <td>
+                      ${comparacionPrecioProveedorTabla(item)}
+                    </td>
 
-              ${escaparHTML(
-                item.nombreBoleta
-              )}
+                    <td>
+                      ${escaparHTML(item.estado)}
+                    </td>
 
-            </td>
+                    <td class="proveedores-acciones">
 
+                      <button
+                        type="button"
+                        data-action="editar"
+                        data-proveedor-id="${item.id}"
+                      >
+                        Modificar
+                      </button>
 
+                      <button
+                        type="button"
+                        class="eliminar proveedores-eliminar"
+                        data-action="eliminar"
+                        data-proveedor-id="${item.id}"
+                      >
+                        Eliminar
+                      </button>
 
-            <td>
+                    </td>
 
-              <strong>
+                  </tr>
 
-                ${escaparHTML(
-                  item.productoMaestro
-                )}
+                `
 
-              </strong>
+              )
 
-            </td>
-
-
-
-            <td>
-
-              ${
-                item.aliases.length
-
-                  ? item.aliases
-
-                      .map(
-                        escaparHTML
-                      )
-
-                      .join(", ")
-
-                  : "—"
-              }
-
-            </td>
-
-
-
-            <td>
-
-              ${escaparHTML(
-                item.unidad
-              )}
-
-            </td>
-
+              .join("");
 
 
-            <td>
+          return `
 
-              ${moneda(
-                item.precio
-              )}
+            <section class="proveedores-grupo">
 
-            </td>
+              <h3 class="proveedores-grupo-titulo">
+                ${escaparHTML(producto)}
+              </h3>
 
+              <div class="proveedores-grupo-box table-wrap">
 
+                <table class="proveedores-tabla-grupo">
 
-            <td>
+                  <thead>
+                    <tr>
+                      <th>PROVEEDOR</th>
+                      <th>NOMBRE BOLETA</th>
+                      <th>ALIAS</th>
+                      <th>UNIDAD</th>
+                      <th>ÚLTIMO PRECIO</th>
+                      <th>COMPARACIÓN</th>
+                      <th>ESTADO</th>
+                      <th>ACCIÓN</th>
+                    </tr>
+                  </thead>
 
-              ${escaparHTML(
-                item.estado
-              )}
+                  <tbody>
+                    ${filas}
+                  </tbody>
 
-            </td>
+                </table>
 
+              </div>
 
+            </section>
 
-            <td>
+          `;
 
-              <button
-                type="button"
-                data-action="editar"
-                data-proveedor-id="${item.id}"
-              >
-                Modificar
-              </button>
-
-
-              <button
-                type="button"
-                class="eliminar proveedores-eliminar"
-                data-action="eliminar"
-                data-proveedor-id="${item.id}"
-              >
-                Eliminar
-              </button>
-
-            </td>
-
-
-          </tr>
-
-        `
+        }
 
       )
 
       .join("");
 
 }
-
 
 
 /* =====================================================
@@ -3741,380 +4035,6 @@ async function eliminarBodega(id) {
 ===================================================== */
 
 
-function normalizarClaveUnidad(valor) {
-
-  return String(valor || "")
-    .normalize("NFD")
-    .replace(
-      /[\u0300-\u036f]/g,
-      ""
-    )
-    .toLowerCase()
-    .trim()
-    .replace(
-      /[_-]+/g,
-      " "
-    )
-    .replace(
-      /\s+/g,
-      " "
-    );
-
-}
-
-
-function obtenerUnidadMedida(valor) {
-
-  const clave =
-    normalizarClaveUnidad(valor);
-
-
-  const unidades = {
-
-    // PESO
-    "kg": {
-      familia: "peso",
-      factorBase: 1000,
-      simbolo: "kg",
-      unidadBase: "g"
-    },
-    "kilo": {
-      familia: "peso",
-      factorBase: 1000,
-      simbolo: "kg",
-      unidadBase: "g"
-    },
-    "kilos": {
-      familia: "peso",
-      factorBase: 1000,
-      simbolo: "kg",
-      unidadBase: "g"
-    },
-    "kilogramo": {
-      familia: "peso",
-      factorBase: 1000,
-      simbolo: "kg",
-      unidadBase: "g"
-    },
-    "kilogramos": {
-      familia: "peso",
-      factorBase: 1000,
-      simbolo: "kg",
-      unidadBase: "g"
-    },
-    "g": {
-      familia: "peso",
-      factorBase: 1,
-      simbolo: "g",
-      unidadBase: "g"
-    },
-    "gr": {
-      familia: "peso",
-      factorBase: 1,
-      simbolo: "g",
-      unidadBase: "g"
-    },
-    "gramo": {
-      familia: "peso",
-      factorBase: 1,
-      simbolo: "g",
-      unidadBase: "g"
-    },
-    "gramos": {
-      familia: "peso",
-      factorBase: 1,
-      simbolo: "g",
-      unidadBase: "g"
-    },
-    "lb": {
-      familia: "peso",
-      factorBase: 453.59237,
-      simbolo: "lb",
-      unidadBase: "g"
-    },
-    "libra": {
-      familia: "peso",
-      factorBase: 453.59237,
-      simbolo: "lb",
-      unidadBase: "g"
-    },
-    "libras": {
-      familia: "peso",
-      factorBase: 453.59237,
-      simbolo: "lb",
-      unidadBase: "g"
-    },
-    "oz": {
-      familia: "peso",
-      factorBase: 28.349523125,
-      simbolo: "oz",
-      unidadBase: "g"
-    },
-    "onza": {
-      familia: "peso",
-      factorBase: 28.349523125,
-      simbolo: "oz",
-      unidadBase: "g"
-    },
-    "onzas": {
-      familia: "peso",
-      factorBase: 28.349523125,
-      simbolo: "oz",
-      unidadBase: "g"
-    },
-
-    // VOLUMEN
-    "l": {
-      familia: "volumen",
-      factorBase: 1000,
-      simbolo: "l",
-      unidadBase: "ml"
-    },
-    "lt": {
-      familia: "volumen",
-      factorBase: 1000,
-      simbolo: "l",
-      unidadBase: "ml"
-    },
-    "lts": {
-      familia: "volumen",
-      factorBase: 1000,
-      simbolo: "l",
-      unidadBase: "ml"
-    },
-    "litro": {
-      familia: "volumen",
-      factorBase: 1000,
-      simbolo: "l",
-      unidadBase: "ml"
-    },
-    "litros": {
-      familia: "volumen",
-      factorBase: 1000,
-      simbolo: "l",
-      unidadBase: "ml"
-    },
-    "ml": {
-      familia: "volumen",
-      factorBase: 1,
-      simbolo: "ml",
-      unidadBase: "ml"
-    },
-    "cc": {
-      familia: "volumen",
-      factorBase: 1,
-      simbolo: "ml",
-      unidadBase: "ml"
-    },
-    "mililitro": {
-      familia: "volumen",
-      factorBase: 1,
-      simbolo: "ml",
-      unidadBase: "ml"
-    },
-    "mililitros": {
-      familia: "volumen",
-      factorBase: 1,
-      simbolo: "ml",
-      unidadBase: "ml"
-    },
-    "cl": {
-      familia: "volumen",
-      factorBase: 10,
-      simbolo: "cl",
-      unidadBase: "ml"
-    },
-    "centilitro": {
-      familia: "volumen",
-      factorBase: 10,
-      simbolo: "cl",
-      unidadBase: "ml"
-    },
-    "centilitros": {
-      familia: "volumen",
-      factorBase: 10,
-      simbolo: "cl",
-      unidadBase: "ml"
-    },
-    "fl oz": {
-      familia: "volumen",
-      factorBase: 29.5735295625,
-      simbolo: "fl oz",
-      unidadBase: "ml"
-    },
-    "floz": {
-      familia: "volumen",
-      factorBase: 29.5735295625,
-      simbolo: "fl oz",
-      unidadBase: "ml"
-    },
-    "onza liquida": {
-      familia: "volumen",
-      factorBase: 29.5735295625,
-      simbolo: "fl oz",
-      unidadBase: "ml"
-    },
-    "onzas liquidas": {
-      familia: "volumen",
-      factorBase: 29.5735295625,
-      simbolo: "fl oz",
-      unidadBase: "ml"
-    },
-
-    // CONTEO
-    "unidad": {
-      familia: "conteo",
-      factorBase: 1,
-      simbolo: "unidad",
-      unidadBase: "unidad"
-    },
-    "unidades": {
-      familia: "conteo",
-      factorBase: 1,
-      simbolo: "unidad",
-      unidadBase: "unidad"
-    },
-    "un": {
-      familia: "conteo",
-      factorBase: 1,
-      simbolo: "unidad",
-      unidadBase: "unidad"
-    },
-    "und": {
-      familia: "conteo",
-      factorBase: 1,
-      simbolo: "unidad",
-      unidadBase: "unidad"
-    },
-    "u": {
-      familia: "conteo",
-      factorBase: 1,
-      simbolo: "unidad",
-      unidadBase: "unidad"
-    },
-    "docena": {
-      familia: "conteo",
-      factorBase: 12,
-      simbolo: "docena",
-      unidadBase: "unidad"
-    },
-    "docenas": {
-      familia: "conteo",
-      factorBase: 12,
-      simbolo: "docena",
-      unidadBase: "unidad"
-    }
-
-  };
-
-
-  return unidades[clave] || null;
-
-}
-
-
-function extraerCantidadUnidadCocina(
-  texto,
-  unidadBodega
-) {
-
-  const limpio =
-    String(texto || "")
-      .trim();
-
-
-  const coincidencia =
-    limpio.match(
-      /^([0-9]+(?:[.,][0-9]+)?)\s*(.*)$/
-    );
-
-
-  if (!coincidencia) {
-
-    return null;
-
-  }
-
-
-  const cantidad =
-    Number(
-      coincidencia[1]
-        .replace(
-          ",",
-          "."
-        )
-    );
-
-
-  if (
-    !Number.isFinite(cantidad) ||
-    cantidad <= 0
-  ) {
-
-    return null;
-
-  }
-
-
-  const unidadEscrita =
-    coincidencia[2]
-      .trim();
-
-
-  let unidadPorcion = null;
-
-
-  if (unidadEscrita) {
-
-    unidadPorcion =
-      obtenerUnidadMedida(
-        unidadEscrita
-      );
-
-  } else {
-
-    // Mantiene compatibilidad con el uso anterior:
-    // si el usuario escribe solo el número, se usa
-    // g para peso, ml para volumen y unidad para conteo.
-    unidadPorcion =
-      obtenerUnidadMedida(
-        unidadBodega.unidadBase
-      );
-
-  }
-
-
-  if (!unidadPorcion) {
-
-    return {
-      error:
-        "Unidad de porción no reconocida"
-    };
-
-  }
-
-
-  if (
-    unidadPorcion.familia !==
-    unidadBodega.familia
-  ) {
-
-    return {
-      error:
-        "La unidad de la porción no corresponde al tipo de unidad de bodega"
-    };
-
-  }
-
-
-  return {
-    cantidad,
-    unidadPorcion
-  };
-
-}
-
-
 async function agregarCocina() {
 
   const bodegaId =
@@ -4124,10 +4044,28 @@ async function agregarCocina() {
     );
 
 
-  const textoPorcion =
+  const textoGramos =
     $("cocinaUnidad")
       .value
       .trim();
+
+
+  const gramosPorPorcion =
+    Number(
+
+      textoGramos
+
+        .replace(
+          /[^0-9.,]/g,
+          ""
+        )
+
+        .replace(
+          ",",
+          "."
+        )
+
+    );
 
 
   const bodega =
@@ -4152,16 +4090,13 @@ async function agregarCocina() {
   }
 
 
-  const unidadBodega =
-    obtenerUnidadMedida(
-      bodega.unidad
-    );
 
-
-  if (!unidadBodega) {
+  if (
+    gramosPorPorcion <= 0
+  ) {
 
     alert(
-      "Unidad de bodega no reconocida. Usa kg, g, lb, oz, l, ml, cl, fl oz, unidad o docena."
+      "Ingresa los gramos por porción"
     );
 
 
@@ -4170,17 +4105,55 @@ async function agregarCocina() {
   }
 
 
-  const porcion =
-    extraerCantidadUnidadCocina(
-      textoPorcion,
-      unidadBodega
-    );
+
+  const unidad =
+    bodega.unidad
+      .toLowerCase()
+      .trim();
 
 
-  if (!porcion) {
+  let gramosDisponibles = 0;
+
+
+
+  if (
+
+    unidad === "kg" ||
+
+    unidad === "kilo" ||
+
+    unidad === "kilos" ||
+
+    unidad === "kilogramo" ||
+
+    unidad === "kilogramos"
+
+  ) {
+
+    gramosDisponibles =
+      bodega.cantidad * 1000;
+
+
+  } else if (
+
+    unidad === "g" ||
+
+    unidad === "gr" ||
+
+    unidad === "gramo" ||
+
+    unidad === "gramos"
+
+  ) {
+
+    gramosDisponibles =
+      bodega.cantidad;
+
+
+  } else {
 
     alert(
-      "Ingresa una cantidad válida por porción. Ej: 200 g, 50 ml o 1 unidad"
+      "La unidad de bodega debe ser kg o g"
     );
 
 
@@ -4188,40 +4161,17 @@ async function agregarCocina() {
 
   }
 
-
-  if (porcion.error) {
-
-    alert(
-      porcion.error
-    );
-
-
-    return;
-
-  }
-
-
-  const cantidadDisponibleBase =
-    bodega.cantidad *
-    unidadBodega.factorBase;
-
-
-  const cantidadPorcionBase =
-    porcion.cantidad *
-    porcion.unidadPorcion.factorBase;
 
 
   const cantidadPorciones =
     Math.floor(
 
-      (
-        cantidadDisponibleBase +
-        Number.EPSILON
-      ) /
+      gramosDisponibles /
 
-      cantidadPorcionBase
+      gramosPorPorcion
 
     );
+
 
 
   if (
@@ -4238,26 +4188,47 @@ async function agregarCocina() {
   }
 
 
-  const cantidadUtilizadaBase =
+
+  const gramosUtilizados =
+
     cantidadPorciones *
-    cantidadPorcionBase;
+
+    gramosPorPorcion;
+
+
+
+  const usaKilogramos =
+
+    unidad === "kg" ||
+
+    unidad === "kilo" ||
+
+    unidad === "kilos" ||
+
+    unidad === "kilogramo" ||
+
+    unidad === "kilogramos";
+
 
 
   const cantidadBodegaUtilizada =
-    redondear(
 
-      cantidadUtilizadaBase /
-      unidadBodega.factorBase
+    usaKilogramos
 
-    );
+      ? gramosUtilizados / 1000
+
+      : gramosUtilizados;
+
 
 
   const nombreCocina =
     bodega.producto;
 
 
+
   const unidadCocina =
-    `${porcion.cantidad} ${porcion.unidadPorcion.simbolo}`;
+    `${gramosPorPorcion} g`;
+
 
 
   const existente =
@@ -4278,6 +4249,7 @@ async function agregarCocina() {
           .toLowerCase()
 
     );
+
 
 
   try {
@@ -4749,6 +4721,65 @@ function obtenerCostoUnitarioCocina(
 
 
 
+function obtenerIconoProducto(nombre = "") {
+
+  const texto =
+    String(nombre)
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+  const iconos = [
+    [["leche"], "🥛"],
+    [["lechuga"], "🥬"],
+    [["tomate"], "🍅"],
+    [["cebolla"], "🧅"],
+    [["palta", "aguacate"], "🥑"],
+    [["vienesa", "salchicha", "hot dog"], "🌭"],
+    [["pan"], "🥖"],
+    [["huevo"], "🥚"],
+    [["queso"], "🧀"],
+    [["pollo"], "🍗"],
+    [["carne", "filete", "vacuno", "lomo"], "🥩"],
+    [["cerdo", "chuleta"], "🥩"],
+    [["pescado", "salmon", "atun"], "🐟"],
+    [["arroz"], "🍚"],
+    [["papa", "papas"], "🥔"],
+    [["zanahoria"], "🥕"],
+    [["ajo"], "🧄"],
+    [["limon"], "🍋"],
+    [["manzana"], "🍎"],
+    [["platano", "banana"], "🍌"],
+    [["naranja"], "🍊"],
+    [["frutilla", "fresa"], "🍓"],
+    [["harina"], "🌾"],
+    [["azucar"], "🍚"],
+    [["sal"], "🧂"],
+    [["aceite"], "🫗"],
+    [["mayonesa"], "🥄"],
+    [["ketchup", "catsup"], "🍅"],
+    [["mostaza"], "🟡"],
+    [["jamon"], "🥓"],
+    [["tocino", "bacon"], "🥓"],
+    [["fideo", "fideos", "pasta"], "🍝"]
+  ];
+
+  for (const [palabras, icono] of iconos) {
+
+    if (
+      palabras.some(
+        palabra => texto.includes(palabra)
+      )
+    ) {
+      return icono;
+    }
+  }
+
+  return "🧺";
+}
+
+
+
 function crearOpcionesIngredientesCocina(
   valorSeleccionado = ""
 ) {
@@ -4785,6 +4816,7 @@ function crearOpcionesIngredientesCocina(
           ${seleccionado}
         >
 
+          ${obtenerIconoProducto(item.producto)}
           ${item.producto} -
 
           ${item.cantidad}
@@ -6278,6 +6310,24 @@ function renderProductos() {
         );
 
 
+      const ganancia =
+        redondear(
+          numero(producto.precio) -
+          numero(costoPlato)
+        );
+
+
+      const margen =
+        numero(producto.precio) > 0
+          ? redondear(
+              (
+                ganancia /
+                numero(producto.precio)
+              ) * 100
+            )
+          : 0;
+
+
 
       tbody.innerHTML += `
 
@@ -6324,6 +6374,32 @@ function renderProductos() {
                 costoPlato
               )}
 
+            </strong>
+
+          </td>
+
+
+          <td>
+
+            <strong>
+              ${moneda(ganancia)}
+            </strong>
+
+          </td>
+
+
+          <td>
+
+            <strong
+              class="${
+                margen >= 50
+                  ? "ccc-margen-bueno"
+                  : margen >= 30
+                    ? "ccc-margen-medio"
+                    : "ccc-margen-bajo"
+              }"
+            >
+              ${margen.toFixed(1)}%
             </strong>
 
           </td>

@@ -527,7 +527,7 @@
 
         <div class="form-row">
 
-
+         
           <input
             id="bodegaProducto"
             type="text"
@@ -1176,91 +1176,17 @@
 
 
 
-        <div class="table-wrap">
-
-
-          <table>
-
-
-            <thead>
-
-
-              <tr>
-
-
-                <th>
-                  PROVEEDOR
-                </th>
-
-
-                <th>
-                  NOMBRE BOLETA
-                </th>
-
-
-                <th>
-                  PRODUCTO CCC
-                </th>
-
-
-                <th>
-                  ALIAS
-                </th>
-
-
-                <th>
-                  UNIDAD
-                </th>
-
-
-                <th>
-                  ÚLTIMO PRECIO
-                </th>
-
-
-                <th>
-                  ESTADO
-                </th>
-
-
-                <th>
-                  ACCIÓN
-                </th>
-
-
-              </tr>
-
-
-            </thead>
-
-
-
-            <tbody id="tablaProveedoresVisual">
-
-
-              <tr>
-
-
-                <td
-                  colspan="8"
-                  class="proveedores-tabla-vacia"
-                >
-
-                  Sin proveedores agregados
-                  en esta vista.
-
-                </td>
-
-
-              </tr>
-
-
-            </tbody>
-
-
-          </table>
-
-
+        <!--
+          Los proveedores se renderizan agrupados por producto.
+          Cada producto muestra su nombre ARRIBA de su propia caja.
+        -->
+        <div
+          id="tablaProveedoresVisual"
+          class="proveedores-grupos"
+        >
+          <div class="proveedores-tabla-vacia">
+            Sin proveedores agregados en esta vista.
+          </div>
         </div>
 
 

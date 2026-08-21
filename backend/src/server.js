@@ -19,6 +19,29 @@ const app = express();
 
 const PORT = Number(process.env.PORT || 3000);
 
+/* =========================================================
+   RUTAS ABSOLUTAS DEL FRONTEND
+========================================================= */
+
+const FRONTEND_DIR =
+  path.resolve(
+    __dirname,
+    '../../frontend'
+  );
+
+const FRONTEND_INDEX =
+  path.join(
+    FRONTEND_DIR,
+    'index.html'
+  );
+
+const FRONTEND_CSS =
+  path.join(
+    FRONTEND_DIR,
+    'styles.css'
+  );
+
+
 
 /* =========================================================
    POSTGRESQL
@@ -557,12 +580,65 @@ async function crearAdminSiNoExiste() {
    Por eso debemos retroceder dos carpetas.
 */
 
+/*
+   Servimos styles.css de forma explícita.
+   Así sabemos exactamente qué archivo está usando localhost:3000.
+*/
+app.get(
+  '/styles.css',
+  (req, res) => {
+
+    res.setHeader(
+      'Cache-Control',
+      'no-store, no-cache, must-revalidate, proxy-revalidate'
+    );
+
+    res.setHeader(
+      'Pragma',
+      'no-cache'
+    );
+
+    res.setHeader(
+      'Expires',
+      '0'
+    );
+
+    res.sendFile(
+      FRONTEND_CSS
+    );
+
+  }
+);
+
+
+/*
+   Luego servimos normalmente el resto del frontend.
+*/
 app.use(
   express.static(
-    path.join(
-      __dirname,
-      '../../frontend'
-    )
+    FRONTEND_DIR,
+    {
+      etag: false,
+      lastModified: false,
+
+      setHeaders:
+        (res, filePath) => {
+
+          if (
+            filePath.endsWith('.html') ||
+            filePath.endsWith('.css') ||
+            filePath.endsWith('.js')
+          ) {
+
+            res.setHeader(
+              'Cache-Control',
+              'no-store, no-cache, must-revalidate, proxy-revalidate'
+            );
+
+          }
+
+        }
+    }
   )
 );
 
@@ -618,10 +694,7 @@ app.get(
   (req, res) => {
 
     res.sendFile(
-      path.join(
-        __dirname,
-        '../../frontend/index.html'
-      )
+      FRONTEND_INDEX
     );
 
   }
@@ -686,6 +759,16 @@ async function iniciarServidor() {
 
         console.log(
           `Servidor CCC Básico en http://localhost:${PORT}`
+        );
+
+        console.log(
+          'FRONTEND REAL:',
+          FRONTEND_DIR
+        );
+
+        console.log(
+          'CSS REAL:',
+          FRONTEND_CSS
         );
 
         console.log(
