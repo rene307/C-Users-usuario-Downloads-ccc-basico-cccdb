@@ -334,14 +334,6 @@
 
         <button
           type="button"
-          id="btnProveedores"
-        >
-          Proveedores
-        </button>
-
-
-        <button
-          type="button"
           id="btnCocina"
         >
           Cocina
@@ -361,6 +353,14 @@
           id="btnVentas"
         >
           Ventas del día
+        </button>
+
+
+        <button
+          type="button"
+          id="btnProveedores"
+        >
+          Proveedores
         </button>
 
 
@@ -427,84 +427,320 @@
         class="card"
       >
 
-
         <h2>
           Resumen
         </h2>
 
-
-        <div class="resumen-grid">
-
-
-          <article class="resumen-card">
-
-
-            <h3>
-              Productos en bodega
-            </h3>
+        <p class="resumen-explicacion">
+          Estadísticas calculadas con las ventas, recetas e inventario registrados en CCC Básico.
+          Las compras sugeridas usan el ritmo promedio de venta del mes actual y proyectan 7 días.
+        </p>
 
 
-            <strong id="totalBodega">
-              0
-            </strong>
+        <div class="resumen-seccion">
 
+          <h3>
+            Ventas
+          </h3>
 
-          </article>
+          <div class="resumen-grid">
 
+            <article class="resumen-card">
+              <h3>Ventas hoy</h3>
+              <strong id="totalVentas">$0</strong>
+            </article>
 
+            <article class="resumen-card">
+              <h3>Ventas semana</h3>
+              <strong id="totalVentasSemana">$0</strong>
+            </article>
 
-          <article class="resumen-card">
+            <article class="resumen-card">
+              <h3>Ventas mes</h3>
+              <strong id="totalVentasMes">$0</strong>
+            </article>
 
+            <article class="resumen-card">
+              <h3>Ventas año</h3>
+              <strong id="totalVentasAnio">$0</strong>
+            </article>
 
-            <h3>
-              Productos en cocina
-            </h3>
-
-
-            <strong id="totalCocina">
-              0
-            </strong>
-
-
-          </article>
-
-
-
-          <article class="resumen-card">
-
-
-            <h3>
-              Productos / recetas
-            </h3>
-
-
-            <strong id="totalProductos">
-              0
-            </strong>
-
-
-          </article>
-
-
-
-          <article class="resumen-card">
-
-
-            <h3>
-              Ventas del día
-            </h3>
-
-
-            <strong id="totalVentas">
-              $0
-            </strong>
-
-
-          </article>
-
+          </div>
 
         </div>
 
+
+        <div class="resumen-seccion">
+
+          <h3>
+            Cantidades vendidas
+          </h3>
+
+          <div class="resumen-grid">
+
+            <article class="resumen-card">
+              <h3>Unidades hoy</h3>
+              <strong id="cantidadVentasDia">0</strong>
+            </article>
+
+            <article class="resumen-card">
+              <h3>Unidades semana</h3>
+              <strong id="cantidadVentasSemana">0</strong>
+            </article>
+
+            <article class="resumen-card">
+              <h3>Unidades mes</h3>
+              <strong id="cantidadVentasMes">0</strong>
+            </article>
+
+            <article class="resumen-card">
+              <h3>Unidades año</h3>
+              <strong id="cantidadVentasAnio">0</strong>
+            </article>
+
+          </div>
+
+        </div>
+
+
+        <div class="resumen-seccion">
+
+          <h3>
+            Rentabilidad estimada del mes
+          </h3>
+
+          <div class="resumen-grid gestion-grid">
+
+            <article class="resumen-card">
+              <h3>Costo de ventas</h3>
+              <strong id="costoVentasMes">$0</strong>
+            </article>
+
+            <article class="resumen-card">
+              <h3>Ganancia bruta</h3>
+              <strong id="resultadoBrutoMes">$0</strong>
+            </article>
+
+            <article class="resumen-card">
+              <h3>Margen bruto</h3>
+              <strong id="margenBrutoMes">0%</strong>
+            </article>
+
+            <article class="resumen-card">
+              <h3>IVA estimado</h3>
+              <strong id="ivaEstimadoMes">$0</strong>
+              <small>IVA contenido en ventas con precio final.</small>
+            </article>
+
+            <article class="resumen-card">
+              <h3>Venta neta estimada</h3>
+              <strong id="netoEstimadoMes">$0</strong>
+              <small>No corresponde al IVA final a pagar.</small>
+            </article>
+
+            <article class="resumen-card">
+              <h3>Costo promedio diario</h3>
+              <strong id="costoDiarioPromedio">$0</strong>
+            </article>
+
+          </div>
+
+        </div>
+
+
+        <div class="resumen-seccion">
+
+          <h3>
+            Gestión rápida
+          </h3>
+
+          <div class="resumen-grid gestion-grid">
+
+            <article class="resumen-card">
+              <h3>Más vendido del mes</h3>
+              <strong
+                id="productoMasVendido"
+                class="resumen-texto"
+              >
+                Sin datos
+              </strong>
+            </article>
+
+            <article class="resumen-card">
+              <h3>Menos vendido del mes</h3>
+              <strong
+                id="productoMenosVendido"
+                class="resumen-texto"
+              >
+                Sin datos
+              </strong>
+            </article>
+
+            <article class="resumen-card">
+              <h3>Venta potencial por Cocina</h3>
+              <strong id="ventaPotencial">$0</strong>
+            </article>
+
+            <article class="resumen-card">
+              <h3>Insumos críticos</h3>
+              <strong id="stockCritico">0</strong>
+              <small>Menos de 3 días de cobertura.</small>
+            </article>
+
+          </div>
+
+        </div>
+
+
+        <div class="resumen-seccion">
+
+          <h3>
+            Productos más vendidos · mes actual
+          </h3>
+
+          <div class="table-wrap">
+
+            <table>
+
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>PRODUCTO</th>
+                  <th>CANTIDAD</th>
+                  <th>VENTAS</th>
+                  <th>COSTO</th>
+                  <th>GANANCIA</th>
+                  <th>MARGEN</th>
+                </tr>
+              </thead>
+
+              <tbody id="tablaRankingVentas">
+                <tr>
+                  <td colspan="7">
+                    Sin ventas registradas este mes.
+                  </td>
+                </tr>
+              </tbody>
+
+            </table>
+
+          </div>
+
+        </div>
+
+
+        <div class="resumen-seccion">
+
+          <h3>
+            Capacidad de venta según inventario de Cocina
+          </h3>
+
+          <p class="resumen-explicacion">
+            Indica cuántas unidades de cada producto se pueden preparar ahora.
+            El ingrediente limitante es el primero que se agotaría.
+          </p>
+
+          <div class="table-wrap">
+
+            <table>
+
+              <thead>
+                <tr>
+                  <th>PRODUCTO</th>
+                  <th>UNIDADES POSIBLES</th>
+                  <th>VENTA POTENCIAL</th>
+                  <th>INGREDIENTE LIMITANTE</th>
+                </tr>
+              </thead>
+
+              <tbody id="tablaCapacidadVentas">
+                <tr>
+                  <td colspan="4">
+                    Sin información suficiente.
+                  </td>
+                </tr>
+              </tbody>
+
+            </table>
+
+          </div>
+
+        </div>
+
+
+        <div class="resumen-seccion">
+
+          <h3>
+            Rotación, cobertura y compra sugerida
+          </h3>
+
+          <p class="resumen-explicacion">
+            La cobertura estima cuántos días alcanzará el stock al ritmo promedio del mes.
+            La compra sugerida intenta dejar aproximadamente 7 días de disponibilidad,
+            considerando Cocina y Bodega cuando la unidad puede convertirse a gramos.
+          </p>
+
+          <div class="table-wrap">
+
+            <table>
+
+              <thead>
+                <tr>
+                  <th>MATERIA PRIMA</th>
+                  <th>STOCK COCINA</th>
+                  <th>BODEGA EQ.</th>
+                  <th>CONSUMO / DÍA</th>
+                  <th>COBERTURA</th>
+                  <th>COMPRA SUGERIDA</th>
+                </tr>
+              </thead>
+
+              <tbody id="tablaCoberturaInventario">
+                <tr>
+                  <td colspan="6">
+                    Sin información suficiente.
+                  </td>
+                </tr>
+              </tbody>
+
+            </table>
+
+          </div>
+
+        </div>
+
+
+        <div class="resumen-seccion">
+
+          <h3>
+            Inventario actual
+          </h3>
+
+          <div class="resumen-grid">
+
+            <article class="resumen-card">
+              <h3>Productos en bodega</h3>
+              <strong id="totalBodega">0</strong>
+            </article>
+
+            <article class="resumen-card">
+              <h3>Productos en cocina</h3>
+              <strong id="totalCocina">0</strong>
+            </article>
+
+            <article class="resumen-card">
+              <h3>Productos / recetas</h3>
+              <strong id="totalProductos">0</strong>
+            </article>
+
+            <article class="resumen-card">
+              <h3>Costo ventas hoy</h3>
+              <strong id="costoVentasDia">$0</strong>
+            </article>
+
+          </div>
+
+        </div>
 
       </section>
 
@@ -1335,23 +1571,32 @@
 
         <div class="form-row">
 
+          <div>
+            <label for="nombreProductoVenta">
+              Nombre del producto
+            </label>
 
-          <input
-            id="nombreProductoVenta"
-            type="text"
-            placeholder="Producto venta"
-            title="Nombre producto venta"
-          />
+            <input
+              id="nombreProductoVenta"
+              type="text"
+              placeholder="Producto venta"
+              title="Nombre producto venta"
+            />
+          </div>
 
 
+          <div>
+            <label for="precioProductoVenta">
+              Precio
+            </label>
 
-          <input
-            id="precioProductoVenta"
-            type="number"
-            placeholder="Precio venta"
-            title="Precio producto venta"
-          />
-
+            <input
+              id="precioProductoVenta"
+              type="number"
+              placeholder="Precio venta"
+              title="Precio producto venta"
+            />
+          </div>
 
 
           <button

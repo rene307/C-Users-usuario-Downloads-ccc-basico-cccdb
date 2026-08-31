@@ -319,7 +319,139 @@ async function ventasHoy(req, res) {
 
 
     /* =====================================================
-       4. COSTO DE VENTA
+       4. CANTIDADES VENDIDAS:
+          DÍA, SEMANA, MES Y AÑO
+    ===================================================== */
+
+    const cantidadesResult = await pool.query(
+      `
+        SELECT
+
+          COALESCE(
+            SUM(d.cantidad) FILTER (
+              WHERE COALESCE(
+                      p.cerrado_en,
+                      p.creado_en
+                    )::date =
+                    (
+                      CURRENT_TIMESTAMP
+                      AT TIME ZONE 'America/Santiago'
+                    )::date
+            ),
+            0
+          ) AS cantidad_dia,
+
+          COALESCE(
+            SUM(d.cantidad) FILTER (
+              WHERE COALESCE(
+                      p.cerrado_en,
+                      p.creado_en
+                    )::date >=
+                    DATE_TRUNC(
+                      'week',
+                      CURRENT_TIMESTAMP
+                      AT TIME ZONE 'America/Santiago'
+                    )::date
+
+                AND COALESCE(
+                      p.cerrado_en,
+                      p.creado_en
+                    )::date <
+                    (
+                      DATE_TRUNC(
+                        'week',
+                        CURRENT_TIMESTAMP
+                        AT TIME ZONE 'America/Santiago'
+                      )
+                      + INTERVAL '1 week'
+                    )::date
+            ),
+            0
+          ) AS cantidad_semana,
+
+          COALESCE(
+            SUM(d.cantidad) FILTER (
+              WHERE COALESCE(
+                      p.cerrado_en,
+                      p.creado_en
+                    )::date >=
+                    DATE_TRUNC(
+                      'month',
+                      CURRENT_TIMESTAMP
+                      AT TIME ZONE 'America/Santiago'
+                    )::date
+
+                AND COALESCE(
+                      p.cerrado_en,
+                      p.creado_en
+                    )::date <
+                    (
+                      DATE_TRUNC(
+                        'month',
+                        CURRENT_TIMESTAMP
+                        AT TIME ZONE 'America/Santiago'
+                      )
+                      + INTERVAL '1 month'
+                    )::date
+            ),
+            0
+          ) AS cantidad_mes,
+
+          COALESCE(
+            SUM(d.cantidad) FILTER (
+              WHERE COALESCE(
+                      p.cerrado_en,
+                      p.creado_en
+                    )::date >=
+                    DATE_TRUNC(
+                      'year',
+                      CURRENT_TIMESTAMP
+                      AT TIME ZONE 'America/Santiago'
+                    )::date
+
+                AND COALESCE(
+                      p.cerrado_en,
+                      p.creado_en
+                    )::date <
+                    (
+                      DATE_TRUNC(
+                        'year',
+                        CURRENT_TIMESTAMP
+                        AT TIME ZONE 'America/Santiago'
+                      )
+                      + INTERVAL '1 year'
+                    )::date
+            ),
+            0
+          ) AS cantidad_anio
+
+        FROM public.detalle_pedido d
+
+        INNER JOIN public.pedidos p
+          ON p.id = d.pedido_id
+
+        INNER JOIN public.menu m
+          ON m.id = d.menu_id
+         AND m.empresa_id = $1
+
+        WHERE p.empresa_id = $1
+
+          AND (
+            p.cerrado_en IS NOT NULL
+            OR UPPER(COALESCE(p.estado, '')) IN (
+              'CERRADO',
+              'PAGADO',
+              'COMPLETADO',
+              'FINALIZADO'
+            )
+          )
+      `,
+      [empresaId]
+    );
+
+
+    /* =====================================================
+       5. COSTO DE VENTA
 
        Se obtiene el costo de cada producto desde su receta:
 
@@ -670,6 +802,10 @@ async function ventasHoy(req, res) {
       costosResult.rows[0] || {};
 
 
+    const cantidades =
+      cantidadesResult.rows[0] || {};
+
+
     const totalDia =
       Number(
         totales.total_dia || 0
@@ -703,6 +839,30 @@ async function ventasHoy(req, res) {
     const costoMes =
       Number(
         costos.costo_mes || 0
+      );
+
+
+    const cantidadDia =
+      Number(
+        cantidades.cantidad_dia || 0
+      );
+
+
+    const cantidadSemana =
+      Number(
+        cantidades.cantidad_semana || 0
+      );
+
+
+    const cantidadMes =
+      Number(
+        cantidades.cantidad_mes || 0
+      );
+
+
+    const cantidadAnio =
+      Number(
+        cantidades.cantidad_anio || 0
       );
 
 
@@ -766,6 +926,21 @@ async function ventasHoy(req, res) {
 
       total_anio:
         totalAnio,
+
+      cantidad_dia:
+        cantidadDia,
+
+      cantidad_semana:
+        cantidadSemana,
+
+      cantidad_mes:
+        cantidadMes,
+
+      cantidad_anio:
+        cantidadAnio,
+
+      dias_transcurridos_mes:
+        diasTranscurridosMes,
 
       costo_dia:
         costoDia,

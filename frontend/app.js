@@ -35,6 +35,11 @@ let data = {
   costoVentasMes: 0,
   costoDiarioPromedio: 0,
   resultadoBrutoMes: 0,
+  cantidadVentasDia: 0,
+  cantidadVentasSemana: 0,
+  cantidadVentasMes: 0,
+  cantidadVentasAnio: 0,
+  diasTranscurridosMes: 1,
   rankingVentas: []
 };
 
@@ -706,6 +711,39 @@ async function cargarTodoDesdeBD() {
   data.resultadoBrutoMes =
     numero(
       ventasHoy.resultado_bruto_mes
+    );
+
+
+  data.cantidadVentasDia =
+    numero(
+      ventasHoy.cantidad_dia
+    );
+
+
+  data.cantidadVentasSemana =
+    numero(
+      ventasHoy.cantidad_semana
+    );
+
+
+  data.cantidadVentasMes =
+    numero(
+      ventasHoy.cantidad_mes
+    );
+
+
+  data.cantidadVentasAnio =
+    numero(
+      ventasHoy.cantidad_anio
+    );
+
+
+  data.diasTranscurridosMes =
+    Math.max(
+      numero(
+        ventasHoy.dias_transcurridos_mes
+      ),
+      1
     );
 
 
@@ -1500,6 +1538,16 @@ function cerrarSesion() {
     costoDiarioPromedio: 0,
 
     resultadoBrutoMes: 0,
+
+    cantidadVentasDia: 0,
+
+    cantidadVentasSemana: 0,
+
+    cantidadVentasMes: 0,
+
+    cantidadVentasAnio: 0,
+
+    diasTranscurridosMes: 1,
 
     rankingVentas: []
 
@@ -5796,7 +5844,654 @@ function renderizarTodo() {
 
 
 
+function porcentaje(valor) {
+
+  return `${redondear(valor).toLocaleString(
+    "es-CL",
+    {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1
+    }
+  )}%`;
+
+}
+
+
+function normalizarNombreGestion(valor) {
+
+  return String(valor || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+
+}
+
+
+function obtenerNumeroUnidad(valor) {
+
+  const resultado =
+    String(valor || "")
+      .replace(",", ".")
+      .match(/[0-9]+(?:\.[0-9]+)?/);
+
+  return resultado
+    ? Number(resultado[0])
+    : 0;
+
+}
+
+
+function stockBodegaEnGramos(item) {
+
+  if (!item) {
+    return null;
+  }
+
+
+  const unidad =
+    normalizarNombreGestion(
+      item.unidad
+    );
+
+
+  const cantidad =
+    numero(
+      item.cantidad
+    );
+
+
+  if (
+    unidad === "kg" ||
+    unidad === "kilo" ||
+    unidad === "kilos" ||
+    unidad.includes("kilogram")
+  ) {
+
+    return cantidad * 1000;
+
+  }
+
+
+  if (
+    unidad === "g" ||
+    unidad === "gr" ||
+    unidad === "gramo" ||
+    unidad === "gramos"
+  ) {
+
+    return cantidad;
+
+  }
+
+
+  return null;
+
+}
+
+
+function obtenerStockBodegaEquivalente(
+  itemCocina
+) {
+
+  const itemBodega =
+    data.bodega.find(
+      item =>
+        normalizarNombreGestion(
+          item.producto
+        ) ===
+        normalizarNombreGestion(
+          itemCocina.producto
+        )
+    );
+
+
+  if (!itemBodega) {
+
+    return {
+      porciones: 0,
+      convertible: true
+    };
+
+  }
+
+
+  const gramosBodega =
+    stockBodegaEnGramos(
+      itemBodega
+    );
+
+
+  const gramosPorPorcion =
+    obtenerNumeroUnidad(
+      itemCocina.unidad
+    );
+
+
+  if (
+    gramosBodega === null ||
+    gramosPorPorcion <= 0
+  ) {
+
+    return {
+      porciones: 0,
+      convertible: false
+    };
+
+  }
+
+
+  return {
+    porciones:
+      gramosBodega /
+      gramosPorPorcion,
+    convertible: true
+  };
+
+}
+
+
+function formatearCompraSugerida(
+  itemCocina,
+  porciones
+) {
+
+  const cantidadPorciones =
+    Math.max(
+      0,
+      numero(porciones)
+    );
+
+
+  if (cantidadPorciones <= 0) {
+
+    return "Sin compra";
+
+  }
+
+
+  const gramosPorPorcion =
+    obtenerNumeroUnidad(
+      itemCocina.unidad
+    );
+
+
+  if (gramosPorPorcion > 0) {
+
+    const gramos =
+      cantidadPorciones *
+      gramosPorPorcion;
+
+
+    if (gramos >= 1000) {
+
+      return `${
+        redondear(
+          gramos / 1000
+        ).toLocaleString("es-CL")
+      } kg`;
+
+    }
+
+
+    return `${
+      Math.ceil(gramos)
+        .toLocaleString("es-CL")
+    } g`;
+
+  }
+
+
+  return `${
+    Math.ceil(
+      cantidadPorciones
+    ).toLocaleString("es-CL")
+  } porciones`;
+
+}
+
+
+function calcularCapacidadProductos() {
+
+  return data.productos
+
+    .map(
+      producto => {
+
+        const ingredientes =
+          data.recetas.filter(
+            item =>
+              item.producto_venta_id ===
+              producto.id
+          );
+
+
+        if (
+          ingredientes.length === 0
+        ) {
+
+          return {
+            producto_id:
+              producto.id,
+            producto:
+              producto.nombre,
+            capacidad:
+              0,
+            venta_potencial:
+              0,
+            limitante:
+              "Sin receta"
+          };
+
+        }
+
+
+        let capacidad =
+          Number.POSITIVE_INFINITY;
+
+        let limitante =
+          "";
+
+
+        ingredientes.forEach(
+          receta => {
+
+            const cocina =
+              data.cocina.find(
+                item =>
+                  item.id ===
+                  receta.inventario_cocina_id
+              );
+
+
+            const necesario =
+              numero(
+                receta.cantidad_necesaria
+              );
+
+
+            const disponible =
+              numero(
+                cocina?.cantidad
+              );
+
+
+            const posibles =
+              necesario > 0
+                ? Math.floor(
+                    disponible /
+                    necesario
+                  )
+                : 0;
+
+
+            if (
+              posibles <
+              capacidad
+            ) {
+
+              capacidad =
+                posibles;
+
+              limitante =
+                cocina?.producto ||
+                receta.ingrediente ||
+                "Ingrediente";
+
+            }
+
+          }
+        );
+
+
+        if (
+          !Number.isFinite(
+            capacidad
+          )
+        ) {
+
+          capacidad = 0;
+
+        }
+
+
+        capacidad =
+          Math.max(
+            capacidad,
+            0
+          );
+
+
+        return {
+          producto_id:
+            producto.id,
+          producto:
+            producto.nombre,
+          capacidad,
+          venta_potencial:
+            capacidad *
+            numero(
+              producto.precio
+            ),
+          limitante
+        };
+
+      }
+    )
+
+    .sort(
+      (a, b) =>
+        b.venta_potencial -
+        a.venta_potencial
+    );
+
+}
+
+
+function calcularCoberturaInventario() {
+
+  const ventasPorProducto =
+    new Map(
+      data.rankingVentas.map(
+        item => [
+          Number(
+            item.producto_id
+          ),
+          numero(
+            item.cantidad
+          )
+        ]
+      )
+    );
+
+
+  const diasMes =
+    Math.max(
+      numero(
+        data.diasTranscurridosMes
+      ),
+      1
+    );
+
+
+  return data.cocina
+
+    .map(
+      itemCocina => {
+
+        let consumoMes = 0;
+
+
+        data.recetas
+          .filter(
+            receta =>
+              receta.inventario_cocina_id ===
+              itemCocina.id
+          )
+          .forEach(
+            receta => {
+
+              const cantidadVendida =
+                numero(
+                  ventasPorProducto.get(
+                    receta.producto_venta_id
+                  )
+                );
+
+
+              consumoMes +=
+                cantidadVendida *
+                numero(
+                  receta.cantidad_necesaria
+                );
+
+            }
+          );
+
+
+        const consumoDia =
+          consumoMes /
+          diasMes;
+
+
+        const stockCocina =
+          numero(
+            itemCocina.cantidad
+          );
+
+
+        const bodegaEquivalente =
+          obtenerStockBodegaEquivalente(
+            itemCocina
+          );
+
+
+        const stockTotalEquivalente =
+          stockCocina +
+          numero(
+            bodegaEquivalente.porciones
+          );
+
+
+        const coberturaDias =
+          consumoDia > 0
+            ? stockTotalEquivalente /
+              consumoDia
+            : null;
+
+
+        const necesidad7Dias =
+          consumoDia * 7;
+
+
+        const faltantePorciones =
+          Math.max(
+            0,
+            necesidad7Dias -
+            stockTotalEquivalente
+          );
+
+
+        const compraSugerida =
+          consumoDia <= 0
+
+            ? "Sin historial"
+
+            : !bodegaEquivalente.convertible
+
+              ? "Revisar unidad"
+
+              : formatearCompraSugerida(
+                  itemCocina,
+                  faltantePorciones
+                );
+
+
+        return {
+          producto:
+            itemCocina.producto,
+          unidad:
+            itemCocina.unidad,
+          stock_cocina:
+            stockCocina,
+          stock_bodega_equivalente:
+            numero(
+              bodegaEquivalente.porciones
+            ),
+          bodega_convertible:
+            bodegaEquivalente.convertible,
+          consumo_mes:
+            consumoMes,
+          consumo_dia:
+            consumoDia,
+          cobertura_dias:
+            coberturaDias,
+          compra_sugerida:
+            compraSugerida
+        };
+
+      }
+    )
+
+    .sort(
+      (a, b) => {
+
+        if (
+          a.cobertura_dias === null &&
+          b.cobertura_dias === null
+        ) {
+          return 0;
+        }
+
+
+        if (
+          a.cobertura_dias === null
+        ) {
+          return 1;
+        }
+
+
+        if (
+          b.cobertura_dias === null
+        ) {
+          return -1;
+        }
+
+
+        return (
+          a.cobertura_dias -
+          b.cobertura_dias
+        );
+
+      }
+    );
+
+}
+
+
 function renderResumen() {
+
+  const ivaEstimadoMes =
+    data.totalVentasMes *
+    19 /
+    119;
+
+
+  const netoEstimadoMes =
+    data.totalVentasMes -
+    ivaEstimadoMes;
+
+
+  const margenMes =
+    data.totalVentasMes > 0
+      ? (
+          data.resultadoBrutoMes /
+          data.totalVentasMes
+        ) * 100
+      : 0;
+
+
+  const cantidadesPorProducto =
+    new Map(
+      data.rankingVentas.map(
+        item => [
+          Number(
+            item.producto_id
+          ),
+          numero(
+            item.cantidad
+          )
+        ]
+      )
+    );
+
+
+  const productosConCantidad =
+    data.productos
+      .map(
+        producto => ({
+          producto:
+            producto.nombre,
+          cantidad:
+            numero(
+              cantidadesPorProducto.get(
+                producto.id
+              )
+            )
+        })
+      )
+      .sort(
+        (a, b) =>
+          b.cantidad -
+          a.cantidad
+      );
+
+
+  const hayVentasMes =
+    data.rankingVentas.length > 0;
+
+
+  const masVendido =
+    hayVentasMes
+
+      ? (
+          productosConCantidad[0] ||
+          {
+            producto: "Sin datos",
+            cantidad: 0
+          }
+        )
+
+      : {
+          producto: "Sin ventas",
+          cantidad: 0
+        };
+
+
+  const menosVendido =
+    hayVentasMes &&
+    productosConCantidad.length > 0
+
+      ? productosConCantidad[
+          productosConCantidad.length -
+          1
+        ]
+
+      : {
+          producto: "Sin ventas",
+          cantidad: 0
+        };
+
+
+  const capacidades =
+    calcularCapacidadProductos();
+
+
+  const ventaPotencialTotal =
+    capacidades.reduce(
+      (
+        total,
+        item
+      ) =>
+        total +
+        numero(
+          item.venta_potencial
+        ),
+      0
+    );
+
+
+  const coberturas =
+    calcularCoberturaInventario();
+
+
+  const stockCritico =
+    coberturas.filter(
+      item =>
+        item.cobertura_dias !== null &&
+        item.cobertura_dias < 3
+    ).length;
+
 
   const valores = {
 
@@ -5829,6 +6524,26 @@ function renderResumen() {
         data.totalVentasAnio
       ),
 
+    cantidadVentasDia:
+      Math.round(
+        data.cantidadVentasDia
+      ).toLocaleString("es-CL"),
+
+    cantidadVentasSemana:
+      Math.round(
+        data.cantidadVentasSemana
+      ).toLocaleString("es-CL"),
+
+    cantidadVentasMes:
+      Math.round(
+        data.cantidadVentasMes
+      ).toLocaleString("es-CL"),
+
+    cantidadVentasAnio:
+      Math.round(
+        data.cantidadVentasAnio
+      ).toLocaleString("es-CL"),
+
     costoVentasDia:
       moneda(
         data.costoVentasDia
@@ -5847,7 +6562,47 @@ function renderResumen() {
     resultadoBrutoMes:
       moneda(
         data.resultadoBrutoMes
-      )
+      ),
+
+    margenBrutoMes:
+      porcentaje(
+        margenMes
+      ),
+
+    ivaEstimadoMes:
+      moneda(
+        ivaEstimadoMes
+      ),
+
+    netoEstimadoMes:
+      moneda(
+        netoEstimadoMes
+      ),
+
+    productoMasVendido:
+      `${
+        masVendido.producto
+      } · ${
+        masVendido.cantidad
+          .toLocaleString("es-CL")
+      }`,
+
+    productoMenosVendido:
+      `${
+        menosVendido.producto
+      } · ${
+        menosVendido.cantidad
+          .toLocaleString("es-CL")
+      }`,
+
+    ventaPotencial:
+      moneda(
+        ventaPotencialTotal
+      ),
+
+    stockCritico:
+      stockCritico
+        .toLocaleString("es-CL")
 
   };
 
@@ -5876,6 +6631,14 @@ function renderResumen() {
 
   renderRankingVentas();
 
+  renderCapacidadVentas(
+    capacidades
+  );
+
+  renderCoberturaInventario(
+    coberturas
+  );
+
 }
 
 
@@ -5901,7 +6664,7 @@ function renderRankingVentas() {
 
       <tr>
 
-        <td colspan="6">
+        <td colspan="7">
           Sin ventas registradas este mes.
         </td>
 
@@ -5920,13 +6683,130 @@ function renderRankingVentas() {
 
       .map(
 
-        (item, indice) => `
+        (item, indice) => {
+
+          const margen =
+            numero(
+              item.total_venta
+            ) > 0
+
+              ? (
+                  numero(
+                    item.resultado_bruto
+                  ) /
+                  numero(
+                    item.total_venta
+                  )
+                ) * 100
+
+              : 0;
+
+
+          return `
+
+            <tr>
+
+              <td>
+                ${indice + 1}
+              </td>
+
+              <td>
+                ${escaparHTML(
+                  item.producto
+                )}
+              </td>
+
+              <td>
+                ${numero(
+                  item.cantidad
+                ).toLocaleString("es-CL")}
+              </td>
+
+              <td>
+                ${moneda(
+                  item.total_venta
+                )}
+              </td>
+
+              <td>
+                ${moneda(
+                  item.costo
+                )}
+              </td>
+
+              <td>
+                ${moneda(
+                  item.resultado_bruto
+                )}
+              </td>
+
+              <td>
+                ${porcentaje(
+                  margen
+                )}
+              </td>
+
+            </tr>
+
+          `;
+
+        }
+
+      )
+
+      .join("");
+
+}
+
+
+
+function renderCapacidadVentas(
+  capacidades
+) {
+
+  const tbody =
+    $("tablaCapacidadVentas");
+
+
+  if (!tbody) {
+    return;
+  }
+
+
+  const filas =
+    capacidades.filter(
+      item =>
+        item.limitante !==
+        "Sin receta"
+    );
+
+
+  if (
+    filas.length === 0
+  ) {
+
+    tbody.innerHTML = `
+
+      <tr>
+        <td colspan="4">
+          Crea recetas para estimar la capacidad de venta.
+        </td>
+      </tr>
+
+    `;
+
+    return;
+
+  }
+
+
+  tbody.innerHTML =
+    filas
+
+      .map(
+        item => `
 
           <tr>
-
-            <td>
-              ${indice + 1}
-            </td>
 
             <td>
               ${escaparHTML(
@@ -5935,31 +6815,143 @@ function renderRankingVentas() {
             </td>
 
             <td>
-              ${item.cantidad}
+              ${item.capacidad
+                .toLocaleString("es-CL")}
             </td>
 
             <td>
               ${moneda(
-                item.total_venta
+                item.venta_potencial
               )}
             </td>
 
             <td>
-              ${moneda(
-                item.costo
-              )}
-            </td>
-
-            <td>
-              ${moneda(
-                item.resultado_bruto
+              ${escaparHTML(
+                item.limitante
               )}
             </td>
 
           </tr>
 
         `
+      )
 
+      .join("");
+
+}
+
+
+
+function renderCoberturaInventario(
+  coberturas
+) {
+
+  const tbody =
+    $("tablaCoberturaInventario");
+
+
+  if (!tbody) {
+    return;
+  }
+
+
+  if (
+    coberturas.length === 0
+  ) {
+
+    tbody.innerHTML = `
+
+      <tr>
+        <td colspan="6">
+          Sin productos en Cocina.
+        </td>
+      </tr>
+
+    `;
+
+    return;
+
+  }
+
+
+  tbody.innerHTML =
+    coberturas
+
+      .map(
+        item => {
+
+          const coberturaTexto =
+            item.cobertura_dias === null
+
+              ? "Sin consumo"
+
+              : `${
+                  redondear(
+                    item.cobertura_dias
+                  ).toLocaleString("es-CL")
+                } días`;
+
+
+          const claseCobertura =
+            item.cobertura_dias !== null &&
+            item.cobertura_dias < 3
+
+              ? "gestion-alerta"
+
+              : "";
+
+
+          const stockBodegaTexto =
+            item.bodega_convertible
+
+              ? redondear(
+                  item.stock_bodega_equivalente
+                ).toLocaleString("es-CL")
+
+              : "N/D";
+
+
+          return `
+
+            <tr>
+
+              <td>
+                ${escaparHTML(
+                  item.producto
+                )}
+              </td>
+
+              <td>
+                ${redondear(
+                  item.stock_cocina
+                ).toLocaleString("es-CL")}
+              </td>
+
+              <td>
+                ${stockBodegaTexto}
+              </td>
+
+              <td>
+                ${redondear(
+                  item.consumo_dia
+                ).toLocaleString("es-CL")}
+              </td>
+
+              <td class="${claseCobertura}">
+                ${coberturaTexto}
+              </td>
+
+              <td>
+                ${escaparHTML(
+                  item.compra_sugerida
+                )}
+              </td>
+
+            </tr>
+
+          `;
+
+        }
       )
 
       .join("");
