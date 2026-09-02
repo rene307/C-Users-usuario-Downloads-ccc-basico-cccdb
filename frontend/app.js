@@ -1382,7 +1382,7 @@ function mostrarAplicacion() {
     $("appView")
       .style
       .display =
-        "flex";
+        "";
 
   }
 
@@ -1572,6 +1572,54 @@ function cerrarSesion() {
 
 function iniciarNavegacion() {
 
+  const botonMenuMovil =
+    $("btnMenuMovil");
+
+  const sidebar =
+    document.querySelector(".sidebar");
+
+
+  botonMenuMovil
+    ?.addEventListener(
+      "click",
+      () => {
+
+        const abierto =
+          sidebar
+            ?.classList
+            .toggle("menu-abierto") || false;
+
+        botonMenuMovil
+          .setAttribute(
+            "aria-expanded",
+            String(abierto)
+          );
+
+      }
+    );
+
+
+  const cerrarMenuMovil = () => {
+
+    if (
+      window.innerWidth <= 800
+    ) {
+
+      sidebar
+        ?.classList
+        .remove("menu-abierto");
+
+      botonMenuMovil
+        ?.setAttribute(
+          "aria-expanded",
+          "false"
+        );
+
+    }
+
+  };
+
+
   const botones = [
 
     {
@@ -1651,6 +1699,9 @@ function iniciarNavegacion() {
               );
 
 
+              cerrarMenuMovil();
+
+
             } catch (error) {
 
               console.error(error);
@@ -1675,7 +1726,13 @@ function iniciarNavegacion() {
 
       "click",
 
-      cerrarSesion
+      () => {
+
+        cerrarMenuMovil();
+
+        cerrarSesion();
+
+      }
 
     );
 

@@ -1611,4 +1611,66 @@ td:last-child button {
   }
 }
 
+/* =========================================================
+   MENÚ MÓVIL RESPONSIVE
+   Solo afecta pantallas de 800px o menos.
+   En escritorio no cambia el menú lateral.
+   ========================================================= */
+
+.menu-movil-boton {
+  display: none;
+}
+
+@media (max-width: 800px) {
+
+  .app {
+    display: block;
+  }
+
+  .menu-movil-boton {
+    display: flex;
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 1300;
+    width: 46px;
+    height: 46px;
+    min-height: 46px;
+    padding: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: #111827;
+    color: #ffffff;
+    font-size: 24px;
+    line-height: 1;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1200;
+    width: min(82vw, 300px);
+    height: 100dvh;
+    min-height: 100vh;
+    padding: 70px 24px 24px;
+    overflow-y: auto;
+    transform: translateX(-105%);
+    transition: transform 0.22s ease;
+    box-shadow: 12px 0 28px rgba(0, 0, 0, 0.22);
+  }
+
+  .sidebar.menu-abierto {
+    transform: translateX(0);
+  }
+
+  .main,
+  .content,
+  .contenido {
+    width: 100%;
+    margin-left: 0;
+    padding: 72px 16px 16px;
+  }
+}
 
