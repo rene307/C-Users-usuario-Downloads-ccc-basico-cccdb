@@ -1,7 +1,7 @@
 {
   "name": "ccc-basico-backend",
   "version": "1.0.0",
-  "description": "CCC Basico conectado a la base de datos principal ccc usando schema ccc_basico",
+  "description": "CCC Basico conectado a la base de datos principal CCC usando PostgreSQL y schema public",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
@@ -12,6 +12,7 @@
     "cors": "^2.8.6",
     "dotenv": "^16.6.1",
     "express": "^4.22.2",
+    "express-rate-limit": "^8.7.0",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.22.0"
   },

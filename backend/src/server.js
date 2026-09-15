@@ -4,6 +4,7 @@ const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
+const { rateLimit } = require('express-rate-limit');
 
 const pool = require('./config/db');
 
@@ -224,6 +225,28 @@ app.get('/api/test-db', async (req, res) => {
    POST /api/auth/login
    POST /api/auth/register
 --------------------------------------------------------- */
+
+/* =========================================================
+   SEGURIDAD LOGIN - RATE LIMIT
+========================================================= */
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+  message: {
+    ok: false,
+    message: 'Demasiados intentos. Intenta nuevamente en 15 minutos.'
+  }
+});
+
+app.use(
+  '/api/auth/login',
+  loginLimiter
+);
+
 
 app.use(
   '/api/auth',

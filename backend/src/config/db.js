@@ -1,6 +1,5 @@
 const { Pool } = require('pg');
 
-
 /* =========================================================
    MODO DE BASE DE DATOS
 
@@ -27,6 +26,41 @@ const schema =
   )
     .trim();
 
+
+/* =========================================================
+   CONFIGURACIÓN DEL POOL
+
+   Se deja configurable desde .env para poder comparar
+   pruebas de carga sin modificar el código.
+========================================================= */
+
+function numeroPositivo(valor, valorPorDefecto) {
+  const numero = Number(valor);
+
+  if (!Number.isFinite(numero) || numero <= 0) {
+    return valorPorDefecto;
+  }
+
+  return Math.trunc(numero);
+}
+
+const poolMax =
+  numeroPositivo(
+    process.env.DB_POOL_MAX,
+    30
+  );
+
+const connectionTimeoutMillis =
+  numeroPositivo(
+    process.env.DB_CONNECTION_TIMEOUT_MS,
+    5000
+  );
+
+const idleTimeoutMillis =
+  numeroPositivo(
+    process.env.DB_IDLE_TIMEOUT_MS,
+    30000
+  );
 
 
 /* =========================================================
@@ -119,7 +153,6 @@ else {
 }
 
 
-
 /* =========================================================
    VALIDAR CONNECTION STRING
 ========================================================= */
@@ -142,7 +175,6 @@ if (!connectionString) {
 }
 
 
-
 /* =========================================================
    SSL
 ========================================================= */
@@ -162,7 +194,6 @@ const usarSSL =
   String(
     process.env.DB_SSL || ''
   ).toLowerCase() === 'true';
-
 
 
 /* =========================================================
@@ -193,10 +224,26 @@ const pool =
             rejectUnauthorized: false
           }
 
-        : false
+        : false,
+
+    /*
+       Ajustes de rendimiento y control del pool.
+
+       max: máximo de conexiones PostgreSQL simultáneas.
+       connectionTimeoutMillis: cuánto esperar al abrir conexión.
+       idleTimeoutMillis: cuánto mantener una conexión ociosa.
+    */
+
+    max:
+      poolMax,
+
+    connectionTimeoutMillis:
+      connectionTimeoutMillis,
+
+    idleTimeoutMillis:
+      idleTimeoutMillis
 
   });
-
 
 
 /* =========================================================
@@ -216,7 +263,6 @@ pool.on(
 );
 
 
-
 /* =========================================================
    INFORMACIÓN DE CONEXIÓN
 
@@ -229,10 +275,11 @@ pool.on(
 pool.schema =
   schema;
 
-
 pool.dbMode =
   dbMode;
 
+pool.poolMax =
+  poolMax;
 
 
 /* =========================================================
