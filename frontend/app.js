@@ -279,6 +279,65 @@ function formatearFecha(valor) {
 }
 
 
+// =========================================================
+// FECHA VISIBLE EN LOS INDICADORES DEL DÍA
+// Muestra la fecha actual de Santiago en Ventas del día
+// y Unidades del día.
+// =========================================================
+function actualizarFechaResumenDia() {
+
+  const fechaTexto =
+    new Date()
+      .toLocaleDateString(
+        "es-CL",
+        {
+          timeZone: "America/Santiago",
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric"
+        }
+      )
+      .replace(/\//g, "-");
+
+
+  const totalVentasDia =
+    $("totalVentas");
+
+
+  const tituloVentasDia =
+    totalVentasDia
+      ?.closest(".resumen-card")
+      ?.querySelector("h3");
+
+
+  if (tituloVentasDia) {
+
+    tituloVentasDia.textContent =
+      `Ventas del día ${fechaTexto}`;
+
+  }
+
+
+  const totalUnidadesDia =
+    $("cantidadVentasDia");
+
+
+  const tituloUnidadesDia =
+    totalUnidadesDia
+      ?.closest(".resumen-card")
+      ?.querySelector("h3");
+
+
+  if (tituloUnidadesDia) {
+
+    tituloUnidadesDia.textContent =
+      `Unidades del día ${fechaTexto}`;
+
+  }
+
+}
+
+
 function nombreMedioPago(valor) {
 
   const nombres = {
@@ -1355,6 +1414,126 @@ function mostrarMensajeRegistro(
 
 
 
+// =========================================================
+// ⚠️ OJO - ACCESO LIMITADO POR ROL CCC-BÁSICO
+// SOLO PARA LA PRESENTACIÓN.
+//
+// Este bloque restringe visualmente al usuario temporal:
+//   chef@ccc.local
+//
+// SOLO puede entrar a:
+// - Bodega
+// - Cocina
+// - Productos / Recetas
+//
+// CUANDO TERMINE LA PRESENTACIÓN:
+// BORRAR desde "OJO - ACCESO LIMITADO POR ROL" hasta "FIN ACCESO LIMITADO POR ROL"
+// y quitar las llamadas a estas funciones marcadas abajo.
+// =========================================================
+
+function esAccesoLimitado() {
+
+  // =======================================================
+  // ⚠️ OJO - ACCESO LIMITADO POR ROL
+  // TEMPORAL PARA LA PRESENTACIÓN DE CCC-BÁSICO
+  //
+  // YA NO SE LIMITA POR CORREO.
+  // SE LIMITA POR EL ROL ASIGNADO AL USUARIO.
+  //
+  // Actualmente el rol limitado usa:
+  // rol = chef
+  // rol_id = 3
+  //
+  // También acepta "acceso_limitado" por si luego
+  // quieres dejar ese nombre directamente en public.roles.
+  // =======================================================
+
+  const rol = String(
+    usuario?.rol || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  const rolId = Number(
+    usuario?.rol_id || 0
+  );
+
+  return (
+    rol === "chef" ||
+    rol === "acceso_limitado" ||
+    rol === "acceso limitado" ||
+    rolId === 3
+  );
+
+}
+
+
+function aplicarMenuAccesoLimitado() {
+
+  const limitado =
+    esAccesoLimitado();
+
+
+  const botonesSoloAdministrador = [
+    "btnResumen",
+    "btnProveedores",
+    "btnVentas"
+  ];
+
+
+  botonesSoloAdministrador.forEach(
+    id => {
+
+      const boton =
+        $(id);
+
+
+      if (boton) {
+
+        boton.style.display =
+          limitado
+            ? "none"
+            : "";
+
+      }
+
+    }
+  );
+
+
+  // El botón/indicador de Rol mostrará "Acceso limitado".
+  if ($("rolUsuario")) {
+
+    $("rolUsuario")
+      .textContent =
+        limitado
+          ? "Acceso limitado"
+          : (usuario?.rol || "Administrador");
+
+  }
+
+
+  // Si el rol es limitado, la primera vista será Bodega.
+  if (limitado) {
+
+    mostrarVista(
+      "vistaBodega"
+    );
+
+
+    activarBoton(
+      "btnBodega"
+    );
+
+  }
+
+}
+
+// =========================================================
+// ⚠️ FIN ACCESO LIMITADO POR ROL
+// =========================================================
+
+
 function mostrarAplicacion() {
 
   if ($("loginView")) {
@@ -1403,6 +1582,13 @@ function mostrarAplicacion() {
         usuario?.nombre || "";
 
   }
+
+
+  // =======================================================
+  // ⚠️ OJO - ACCESO LIMITADO POR ROL
+  // Oculta Resumen, Proveedores y Ventas del día.
+  // =======================================================
+  aplicarMenuAccesoLimitado();
 
 }
 
@@ -1742,6 +1928,35 @@ function iniciarNavegacion() {
 
 function mostrarVista(idVista) {
 
+  // =======================================================
+  // ⚠️ OJO - ACCESO LIMITADO POR ROL
+  // Aunque otro código intente abrir Resumen, Proveedores
+  // o Ventas, el rol limitado vuelve a Bodega.
+  // =======================================================
+
+  if (esAccesoLimitado()) {
+
+    const vistasPermitidasAccesoLimitado = [
+      "vistaBodega",
+      "vistaCocina",
+      "vistaProductos"
+    ];
+
+
+    if (
+      !vistasPermitidasAccesoLimitado.includes(
+        idVista
+      )
+    ) {
+
+      idVista =
+        "vistaBodega";
+
+    }
+
+  }
+
+
   const vistas = [
 
     "vistaResumen",
@@ -1788,6 +2003,34 @@ function mostrarVista(idVista) {
 
 
 function activarBoton(idBoton) {
+
+  // =======================================================
+  // ⚠️ OJO - ACCESO LIMITADO POR ROL
+  // Mantiene activo solamente un botón permitido.
+  // =======================================================
+
+  if (esAccesoLimitado()) {
+
+    const botonesPermitidosAccesoLimitado = [
+      "btnBodega",
+      "btnCocina",
+      "btnProductos"
+    ];
+
+
+    if (
+      !botonesPermitidosAccesoLimitado.includes(
+        idBoton
+      )
+    ) {
+
+      idBoton =
+        "btnBodega";
+
+    }
+
+  }
+
 
   const botones = [
 
@@ -1928,6 +2171,17 @@ function iniciarBotones() {
 
 
   $("ingredientesReceta")
+    ?.addEventListener(
+
+      "change",
+
+      actualizarCostoConstructorReceta
+
+    );
+
+
+
+  $("selectProductoVenta")
     ?.addEventListener(
 
       "change",
@@ -4689,6 +4943,158 @@ async function eliminarCocina(id) {
 ===================================================== */
 
 
+const CLAVE_GANANCIAS_PRODUCTOS =
+  "ccc_porcentajes_ganancia";
+
+
+function cargarPorcentajesGanancia() {
+
+  try {
+
+    return JSON.parse(
+      localStorage.getItem(
+        CLAVE_GANANCIAS_PRODUCTOS
+      ) || "{}"
+    );
+
+  } catch (error) {
+
+    console.warn(
+      "No se pudieron leer los porcentajes de ganancia guardados",
+      error
+    );
+
+    return {};
+
+  }
+
+}
+
+
+function guardarPorcentajeGanancia(
+  productoId,
+  porcentaje
+) {
+
+  if (
+    !productoId ||
+    porcentaje <= 0 ||
+    porcentaje >= 100
+  ) {
+    return;
+  }
+
+  const porcentajes =
+    cargarPorcentajesGanancia();
+
+  porcentajes[String(productoId)] =
+    redondear(porcentaje);
+
+  localStorage.setItem(
+    CLAVE_GANANCIAS_PRODUCTOS,
+    JSON.stringify(porcentajes)
+  );
+
+}
+
+
+function obtenerPorcentajeGananciaProducto(
+  productoId
+) {
+
+  const porcentajes =
+    cargarPorcentajesGanancia();
+
+  const guardado =
+    numero(
+      porcentajes[String(productoId)]
+    );
+
+  if (
+    guardado > 0 &&
+    guardado < 100
+  ) {
+    return guardado;
+  }
+
+  /*
+    Si el producto ya tiene receta y precio, el porcentaje
+    se puede reconstruir desde los datos guardados en BD:
+
+    margen = (precio - costo) / precio * 100
+  */
+  const producto =
+    data.productos.find(
+      item => item.id === Number(productoId)
+    );
+
+  const costo =
+    calcularCostoPlato(
+      Number(productoId)
+    );
+
+  const precio =
+    numero(producto?.precio);
+
+  if (
+    costo > 0 &&
+    precio > costo
+  ) {
+
+    const porcentaje =
+      redondear(
+        (
+          (precio - costo) /
+          precio
+        ) * 100
+      );
+
+    guardarPorcentajeGanancia(
+      productoId,
+      porcentaje
+    );
+
+    return porcentaje;
+
+  }
+
+  return 0;
+
+}
+
+
+function calcularPrecioPorGanancia(
+  costo,
+  porcentaje
+) {
+
+  const costoNumero =
+    numero(costo);
+
+  const porcentajeNumero =
+    numero(porcentaje);
+
+  if (
+    costoNumero <= 0 ||
+    porcentajeNumero <= 0 ||
+    porcentajeNumero >= 100
+  ) {
+    return 0;
+  }
+
+  /*
+    El porcentaje corresponde al margen sobre el precio
+    de venta. Ejemplo: costo $972 y margen 35,2% =>
+    precio aproximado $1.500.
+  */
+  return Math.round(
+    costoNumero /
+    (1 - porcentajeNumero / 100)
+  );
+
+}
+
+
 async function crearProductoVenta() {
 
   const nombre =
@@ -4697,55 +5103,69 @@ async function crearProductoVenta() {
       .trim();
 
 
-  const precio =
+  const porcentajeGanancia =
     numero(
       $("precioProductoVenta")
         .value
     );
 
 
-  if (
-    !nombre ||
-    precio <= 0
-  ) {
+  if (!nombre) {
 
     alert(
-      "Completa producto y precio"
+      "Ingresa el nombre del producto"
     );
-
 
     return;
 
   }
 
 
+  if (
+    porcentajeGanancia <= 0 ||
+    porcentajeGanancia >= 100
+  ) {
+
+    alert(
+      "Ingresa un porcentaje de ganancia mayor que 0 y menor que 100"
+    );
+
+    return;
+
+  }
+
 
   try {
 
-    await api(
+    const resultado =
+      await api(
 
-      "/productos",
+        "/productos",
 
-      {
+        {
 
-        method:
-          "POST",
+          method:
+            "POST",
 
-        body:
-          JSON.stringify({
+          body:
+            JSON.stringify({
 
-            nombre,
+              nombre,
 
-            precio,
+              /*
+                El precio definitivo se calcula al guardar
+                la receta, cuando ya conocemos su costo.
+              */
+              precio: 0,
 
-            activo:
-              true
+              activo:
+                true
 
-          })
+            })
 
-      }
+        }
 
-    );
+      );
 
 
     $("nombreProductoVenta")
@@ -4757,6 +5177,63 @@ async function crearProductoVenta() {
 
 
     await cargarTodoDesdeBD();
+
+
+    let productoId =
+      Number(
+        resultado?.id ||
+        resultado?.producto?.id
+      );
+
+
+    if (!productoId) {
+
+      const candidatos =
+        data.productos
+          .filter(
+            item =>
+              item.nombre
+                .trim()
+                .toLowerCase() ===
+              nombre
+                .trim()
+                .toLowerCase()
+          )
+          .sort(
+            (a, b) => b.id - a.id
+          );
+
+      productoId =
+        candidatos[0]?.id || 0;
+
+    }
+
+
+    if (productoId) {
+
+      guardarPorcentajeGanancia(
+        productoId,
+        porcentajeGanancia
+      );
+
+      /*
+        Refresca los selectores y deja seleccionado automáticamente
+        el producto recién creado para comenzar su receta de inmediato.
+      */
+      renderSelects();
+
+      if ($("selectProductoVenta")) {
+        $("selectProductoVenta").value = String(productoId);
+      }
+
+      actualizarCostoConstructorReceta();
+
+    }
+
+
+    alert(
+      "Producto creado. Ya aparece en Crear receta y quedó seleccionado para que agregues sus ingredientes."
+    );
 
 
   } catch (error) {
@@ -5213,15 +5690,26 @@ function actualizarCostoConstructorReceta() {
     $("costoTotalReceta")
   ) {
 
+    const productoId =
+      Number(
+        $("selectProductoVenta")
+          ?.value
+      );
+
+    const porcentajeGanancia =
+      obtenerPorcentajeGananciaProducto(
+        productoId
+      );
+
+    const precioVenta =
+      calcularPrecioPorGanancia(
+        redondear(costoTotal),
+        porcentajeGanancia
+      );
+
     $("costoTotalReceta")
       .value =
-        moneda(
-
-          redondear(
-            costoTotal
-          )
-
-        );
+        moneda(precioVenta);
 
   }
 
@@ -5244,6 +5732,26 @@ async function agregarReceta() {
       "Selecciona el producto de venta"
     );
 
+
+    return;
+
+  }
+
+
+  const porcentajeGanancia =
+    obtenerPorcentajeGananciaProducto(
+      productoId
+    );
+
+
+  if (
+    porcentajeGanancia <= 0 ||
+    porcentajeGanancia >= 100
+  ) {
+
+    alert(
+      "Este producto no tiene un porcentaje de ganancia válido. Edítalo y define un porcentaje entre 0 y 100."
+    );
 
     return;
 
@@ -5452,6 +5960,52 @@ async function agregarReceta() {
     await cargarTodoDesdeBD();
 
 
+    const producto =
+      data.productos.find(
+        item => item.id === productoId
+      );
+
+
+    const costoPlato =
+      calcularCostoPlato(
+        productoId
+      );
+
+
+    const precioVenta =
+      calcularPrecioPorGanancia(
+        costoPlato,
+        porcentajeGanancia
+      );
+
+
+    if (
+      producto &&
+      precioVenta > 0
+    ) {
+
+      await api(
+        `/productos/${productoId}`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            nombre: producto.nombre,
+            precio: precioVenta,
+            activo: producto.activo
+          })
+        }
+      );
+
+      await cargarTodoDesdeBD();
+
+    }
+
+
+    guardarPorcentajeGanancia(
+      productoId,
+      porcentajeGanancia
+    );
+
 
     $("selectProductoVenta")
       .value = "";
@@ -5624,11 +6178,8 @@ async function editarProducto(id) {
 
 
   if (!item) {
-
     return;
-
   }
-
 
 
   const nombre =
@@ -5644,30 +6195,60 @@ async function editarProducto(id) {
   if (
     nombre === null
   ) {
-
     return;
-
   }
 
 
+  const porcentajeActual =
+    obtenerPorcentajeGananciaProducto(id);
 
-  const precio =
+
+  const porcentajeTexto =
     prompt(
 
-      "Precio",
+      "Porcentaje de ganancia deseado (ej: 35)",
 
-      item.precio
+      porcentajeActual > 0
+        ? porcentajeActual
+        : "35"
 
     );
 
 
   if (
-    precio === null
+    porcentajeTexto === null
   ) {
+    return;
+  }
+
+
+  const porcentajeGanancia =
+    numero(porcentajeTexto);
+
+
+  if (
+    porcentajeGanancia <= 0 ||
+    porcentajeGanancia >= 100
+  ) {
+
+    alert(
+      "El porcentaje debe ser mayor que 0 y menor que 100"
+    );
 
     return;
 
   }
+
+
+  const costoPlato =
+    calcularCostoPlato(id);
+
+
+  const precioCalculado =
+    calcularPrecioPorGanancia(
+      costoPlato,
+      porcentajeGanancia
+    );
 
 
   try {
@@ -5688,9 +6269,9 @@ async function editarProducto(id) {
               nombre.trim(),
 
             precio:
-              numero(
-                precio
-              ),
+              precioCalculado > 0
+                ? precioCalculado
+                : numero(item.precio),
 
             activo:
               item.activo
@@ -5699,6 +6280,12 @@ async function editarProducto(id) {
 
       }
 
+    );
+
+
+    guardarPorcentajeGanancia(
+      id,
+      porcentajeGanancia
     );
 
 
@@ -6686,6 +7273,10 @@ function renderResumen() {
   );
 
 
+  // Fecha actual visible en los indicadores del día.
+  actualizarFechaResumenDia();
+
+
   renderRankingVentas();
 
   renderCapacidadVentas(
@@ -7399,9 +7990,12 @@ function renderProductos() {
 
           <td>
 
-            ${moneda(
-              producto.precio
-            )}
+            ${
+              ingredientesReceta.length > 0 &&
+              numero(producto.precio) > 0
+                ? moneda(producto.precio)
+                : "Pendiente receta"
+            }
 
           </td>
 
@@ -7670,6 +8264,11 @@ function renderSelects() {
     `;
 
 
+    /*
+      En Crear receta deben aparecer TODOS los productos activos,
+      incluso los recién creados que todavía no tienen receta ni precio.
+      El precio se calcula después de guardar la receta.
+    */
     data.productos
 
       .filter(
@@ -7722,12 +8321,21 @@ function renderSelects() {
     `;
 
 
+    /*
+      En Ventas solo deben aparecer productos listos para vender:
+      activos, con receta guardada y con precio calculado.
+    */
     data.productos
 
       .filter(
 
         item =>
-          item.activo
+          item.activo &&
+          numero(item.precio) > 0 &&
+          data.recetas.some(
+            receta =>
+              receta.producto_venta_id === item.id
+          )
 
       )
 

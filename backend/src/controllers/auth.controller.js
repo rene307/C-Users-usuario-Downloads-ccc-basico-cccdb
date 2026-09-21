@@ -3,6 +3,29 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 
+// =========================================================
+// ⚠️ OJO - CHEF TEMPORAL
+// ARCHIVO TEMPORAL PARA LA PRESENTACIÓN
+//
+// Usa la configuración:
+// backend/src/config/acceso-chef-temporal.js
+//
+// CUANDO TERMINE LA PRESENTACIÓN:
+// 1) borrar este require
+// 2) borrar el bloque de login temporal
+// 3) borrar acceso-chef-temporal.js
+// =========================================================
+
+const {
+  CHEF_TEMPORAL,
+  validarChefTemporal
+} = require('../config/acceso-chef-temporal');
+
+// =========================================================
+// ⚠️ FIN OJO - CHEF TEMPORAL
+// =========================================================
+
+
 /* =========================================================
    CREAR TOKEN
 ========================================================= */
@@ -60,6 +83,76 @@ async function login(req, res) {
       });
 
     }
+
+
+    // =====================================================
+    // ⚠️ OJO - CHEF TEMPORAL
+    // ACCESO EXCLUSIVO PARA LA DEMOSTRACIÓN DE CCC-BÁSICO
+    //
+    // Usuario: chef@ccc.local
+    // Clave:   123456
+    //
+    // EL CHEF SOLO TIENE 3 ACCESOS:
+    // 1. Bodega
+    // 2. Cocina
+    // 3. Receta
+    //
+    // NO TIENE ACCESO A:
+    // - Resumen
+    // - Ventas
+    // - Proveedores
+    // - Administración
+    // - Otros módulos
+    //
+    // Este bloque se ejecuta ANTES de consultar PostgreSQL.
+    // Por eso el acceso temporal no depende de la contraseña
+    // guardada en la base de datos.
+    //
+    // BORRAR ESTE BLOQUE DESPUÉS DE LA PRESENTACIÓN.
+    // =====================================================
+
+    if (
+      validarChefTemporal(
+        email,
+        password
+      )
+    ) {
+
+      const token =
+        crearToken(
+          CHEF_TEMPORAL.usuario
+        );
+
+
+      return res.json({
+
+        ok: true,
+
+        message:
+          'Login Chef temporal correcto',
+
+        token,
+
+        usuario: {
+
+          ...CHEF_TEMPORAL.usuario,
+
+          // SOLO ESTOS 3 MÓDULOS.
+          modulosPermitidos: [
+            'bodega',
+            'cocina',
+            'receta'
+          ]
+
+        }
+
+      });
+
+    }
+
+    // =====================================================
+    // ⚠️ FIN OJO - CHEF TEMPORAL
+    // =====================================================
 
 
     const resultado = await pool.query(

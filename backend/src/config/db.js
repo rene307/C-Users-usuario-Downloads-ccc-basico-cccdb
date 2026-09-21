@@ -30,36 +30,117 @@ const schema =
 /* =========================================================
    CONFIGURACIÓN DEL POOL
 
-   Se deja configurable desde .env para poder comparar
-   pruebas de carga sin modificar el código.
+   IMPORTANTE:
+
+   1000 usuarios virtuales NO significan
+   1000 conexiones PostgreSQL.
+
+   Node.js recibe las solicitudes y el pool administra
+   cuántas consultas llegan simultáneamente a PostgreSQL.
+
+   Para la prueba local dejamos 40 conexiones como
+   valor predeterminado.
+
+   Se puede modificar desde .env sin cambiar este archivo.
 ========================================================= */
 
-function numeroPositivo(valor, valorPorDefecto) {
-  const numero = Number(valor);
+function numeroPositivo(
+  valor,
+  valorPorDefecto
+) {
 
-  if (!Number.isFinite(numero) || numero <= 0) {
+  const numero =
+    Number(valor);
+
+
+  if (
+    !Number.isFinite(numero) ||
+    numero <= 0
+  ) {
+
     return valorPorDefecto;
+
   }
 
-  return Math.trunc(numero);
+
+  return Math.trunc(
+    numero
+  );
+
 }
+
+
+/*
+   Máximo de conexiones simultáneas PostgreSQL.
+
+   NO colocar:
+
+   1000
+
+   porque eso puede saturar PostgreSQL.
+
+   Los usuarios adicionales esperan brevemente
+   una conexión libre del pool.
+*/
 
 const poolMax =
   numeroPositivo(
     process.env.DB_POOL_MAX,
-    30
+    40
   );
+
+
+/*
+   Tiempo máximo para establecer
+   una nueva conexión PostgreSQL.
+*/
 
 const connectionTimeoutMillis =
   numeroPositivo(
     process.env.DB_CONNECTION_TIMEOUT_MS,
-    5000
+    10000
   );
+
+
+/*
+   Una conexión sin utilizar se libera
+   después de este tiempo.
+*/
 
 const idleTimeoutMillis =
   numeroPositivo(
     process.env.DB_IDLE_TIMEOUT_MS,
     30000
+  );
+
+
+/*
+   Si una consulta demora demasiado,
+   Node deja de esperarla.
+
+   Esto evita que una consulta trabada
+   ocupe recursos indefinidamente.
+*/
+
+const queryTimeoutMillis =
+  numeroPositivo(
+    process.env.DB_QUERY_TIMEOUT_MS,
+    15000
+  );
+
+
+/*
+   PostgreSQL también cancela consultas
+   excesivamente largas.
+
+   Este valor protege la base de datos
+   durante cargas grandes.
+*/
+
+const statementTimeoutMillis =
+  numeroPositivo(
+    process.env.DB_STATEMENT_TIMEOUT_MS,
+    15000
   );
 
 
@@ -73,21 +154,25 @@ let connectionString;
 /*
    LOCAL
 
-   CCC y CCC-BÁSICO deben trabajar sobre:
+   CCC y CCC-BÁSICO trabajan sobre:
 
    ccc_db
 
-   Se toma DATABASE_URL pero se fuerza exclusivamente
-   el nombre de la base de datos a ccc_db.
+   Se toma DATABASE_URL pero se fuerza
+   exclusivamente el nombre de la base de datos.
 */
 
-if (dbMode === 'local') {
+if (
+  dbMode === 'local'
+) {
 
   const databaseUrl =
     process.env.DATABASE_URL;
 
 
-  if (!databaseUrl) {
+  if (
+    !databaseUrl
+  ) {
 
     throw new Error(
       'Falta DATABASE_URL en el archivo .env'
@@ -97,17 +182,19 @@ if (dbMode === 'local') {
 
 
   const urlLocal =
-    new URL(databaseUrl);
+    new URL(
+      databaseUrl
+    );
 
 
   /*
      IMPORTANTE:
 
-     No importa si accidentalmente DATABASE_URL termina en:
+     Aunque DATABASE_URL termine accidentalmente en:
 
      /postgres
 
-     CCC-BÁSICO siempre utilizará:
+     CCC-BÁSICO utilizará:
 
      /ccc_db
   */
@@ -127,11 +214,14 @@ if (dbMode === 'local') {
 
    Utilizamos una variable separada.
 
-   Esto permite mantener la contraseña y conexión
-   de Supabase sin tocar la conexión local.
+   Esto permite mantener completamente
+   independiente PostgreSQL local
+   de PostgreSQL Supabase.
 */
 
-else if (dbMode === 'supabase') {
+else if (
+  dbMode === 'supabase'
+) {
 
   connectionString =
     process.env.SUPABASE_DATABASE_URL;
@@ -140,14 +230,17 @@ else if (dbMode === 'supabase') {
 
 
 /*
-   Evitamos levantar CCC con un modo escrito incorrectamente.
+   Evitamos levantar CCC con
+   un modo incorrecto.
 */
 
 else {
 
   throw new Error(
+
     `DB_MODE inválido: "${dbMode}". ` +
     `Usa "local" o "supabase".`
+
   );
 
 }
@@ -157,9 +250,13 @@ else {
    VALIDAR CONNECTION STRING
 ========================================================= */
 
-if (!connectionString) {
+if (
+  !connectionString
+) {
 
-  if (dbMode === 'local') {
+  if (
+    dbMode === 'local'
+  ) {
 
     throw new Error(
       'Falta DATABASE_URL en el archivo .env'
@@ -190,10 +287,14 @@ if (!connectionString) {
 */
 
 const usarSSL =
+
   dbMode === 'supabase' ||
+
   String(
     process.env.DB_SSL || ''
-  ).toLowerCase() === 'true';
+  )
+    .trim()
+    .toLowerCase() === 'true';
 
 
 /* =========================================================
@@ -205,19 +306,22 @@ const pool =
 
     connectionString,
 
+
     /*
-       Nuestro modelo maestro trabaja en:
+       Modelo maestro:
 
        public
 
-       Se mantiene DB_SCHEMA para poder
-       configurarlo desde .env si fuera necesario.
+       DB_SCHEMA continúa configurable
+       desde .env.
     */
 
     options:
       `-c search_path=${schema},public`,
 
+
     ssl:
+
       usarSSL
 
         ? {
@@ -226,22 +330,57 @@ const pool =
 
         : false,
 
-    /*
-       Ajustes de rendimiento y control del pool.
 
-       max: máximo de conexiones PostgreSQL simultáneas.
-       connectionTimeoutMillis: cuánto esperar al abrir conexión.
-       idleTimeoutMillis: cuánto mantener una conexión ociosa.
+    /*
+       =====================================================
+       CONTROL DEL POOL
+       =====================================================
+
+       max:
+       conexiones PostgreSQL simultáneas.
+
+       1000 usuarios pueden compartir
+       estas conexiones.
     */
 
     max:
       poolMax,
 
+
+    /*
+       Cuánto esperar para abrir
+       una conexión.
+    */
+
     connectionTimeoutMillis:
       connectionTimeoutMillis,
 
+
+    /*
+       Cuánto mantener una conexión
+       sin utilizar.
+    */
+
     idleTimeoutMillis:
-      idleTimeoutMillis
+      idleTimeoutMillis,
+
+
+    /*
+       Máximo que Node espera
+       el resultado de una consulta.
+    */
+
+    query_timeout:
+      queryTimeoutMillis,
+
+
+    /*
+       Máximo que PostgreSQL permite
+       ejecutar una consulta.
+    */
+
+    statement_timeout:
+      statementTimeoutMillis
 
   });
 
@@ -264,12 +403,11 @@ pool.on(
 
 
 /* =========================================================
-   INFORMACIÓN DE CONEXIÓN
+   INFORMACIÓN DEL POOL
 
-   Estas propiedades NO crean otra conexión.
+   Estas propiedades NO crean conexiones nuevas.
 
-   Solo permiten que otros archivos puedan saber
-   qué modo y schema están activos.
+   Solo permiten consultar cómo está configurado CCC.
 ========================================================= */
 
 pool.schema =
@@ -280,6 +418,51 @@ pool.dbMode =
 
 pool.poolMax =
   poolMax;
+
+
+/* =========================================================
+   MONITOREO DEL POOL
+
+   Sirve para pruebas k6.
+
+   Podemos revisar:
+
+   totalCount:
+   conexiones creadas.
+
+   idleCount:
+   conexiones libres.
+
+   waitingCount:
+   solicitudes esperando una conexión.
+
+   NO imprime permanentemente.
+   Solo deja disponible la función.
+========================================================= */
+
+pool.estadoPool =
+  function () {
+
+    return {
+
+      modo:
+        dbMode,
+
+      maximo:
+        poolMax,
+
+      conexionesTotales:
+        pool.totalCount,
+
+      conexionesLibres:
+        pool.idleCount,
+
+      esperandoConexion:
+        pool.waitingCount
+
+    };
+
+  };
 
 
 /* =========================================================

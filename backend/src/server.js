@@ -77,18 +77,46 @@ app.use(express.json());
 ========================================================= */
 
 /*
-   Esta ruta sirve para comprobar:
+   IMPORTANTE PARA PRUEBAS DE CARGA:
 
-   - que Node está funcionando
-   - que PostgreSQL responde
-   - qué base de datos estamos usando
-   - qué schema está activo
+   /api/health comprueba SOLO Node/Express.
+   No consulta PostgreSQL.
 
-   URL:
-   http://localhost:3000/api/health
+   Esto evita que una prueba de 1000 usuarios virtuales
+   convierta cada solicitud de salud en una consulta SQL.
+
+   Para comprobar PostgreSQL usamos:
+   /api/health/db
 */
 
-app.get('/api/health', async (req, res) => {
+app.get('/api/health', (req, res) => {
+
+  return res.status(200).json({
+
+    ok: true,
+
+    message:
+      'CCC Básico funcionando',
+
+    servicio:
+      'node-express',
+
+    fecha:
+      new Date().toISOString()
+
+  });
+
+});
+
+
+/*
+   HEALTH DE BASE DE DATOS
+
+   Esta ruta sí comprueba PostgreSQL.
+   Se mantiene separada del health liviano.
+*/
+
+app.get('/api/health/db', async (req, res) => {
 
   try {
 
@@ -100,12 +128,12 @@ app.get('/api/health', async (req, res) => {
     `);
 
 
-    res.json({
+    return res.status(200).json({
 
       ok: true,
 
       message:
-        'CCC Básico funcionando',
+        'PostgreSQL funcionando',
 
       database:
         db.rows[0].database,
@@ -127,12 +155,12 @@ app.get('/api/health', async (req, res) => {
     );
 
 
-    res.status(500).json({
+    return res.status(503).json({
 
       ok: false,
 
       message:
-        'Error conectando con PostgreSQL',
+        'PostgreSQL no disponible',
 
       detalle:
         error.message
@@ -776,7 +804,7 @@ async function iniciarServidor() {
        Finalmente levantamos el servidor.
     */
 
-    app.listen(
+    const servidor = app.listen(
       PORT,
       () => {
 
@@ -802,8 +830,28 @@ async function iniciarServidor() {
           `Registro: POST http://localhost:${PORT}/api/auth/register`
         );
 
+        console.log(
+          `Health Node: GET http://localhost:${PORT}/api/health`
+        );
+
+        console.log(
+          `Health PostgreSQL: GET http://localhost:${PORT}/api/health/db`
+        );
+
       }
     );
+
+
+    /*
+       Ajustes HTTP conservadores para conexiones persistentes.
+       NO crean 1000 conexiones a PostgreSQL.
+    */
+
+    servidor.keepAliveTimeout = 65 * 1000;
+
+    servidor.headersTimeout = 66 * 1000;
+
+    servidor.requestTimeout = 30 * 1000;
 
 
   } catch (error) {
