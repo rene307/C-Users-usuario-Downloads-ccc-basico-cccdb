@@ -58,6 +58,206 @@ function extraerGramos(valor) {
 }
 
 
+/*
+   CCC-Básico también permite materias primas
+   manejadas por unidad.
+
+   No se modifica la estructura de la base de datos:
+   tipo_porcion.gramos y porciones.gramos siguen
+   guardando el valor numérico de la medida.
+
+   La diferencia visual se obtiene desde
+   materias_primas.unidad:
+
+   - kg / g     -> "300 g"
+   - unidad     -> "1 unidad", "6 unidades", etc.
+*/
+function esUnidadPorPieza(valor) {
+
+  const unidad =
+    String(valor || '')
+      .trim()
+      .toLowerCase();
+
+  return [
+    'unidad',
+    'unidades',
+    'u',
+    'und',
+    'uds',
+    'unid'
+  ].includes(unidad);
+
+}
+
+
+/*
+   =========================================================
+   BEBESTIBLES DE VENTA DIRECTA
+   =========================================================
+
+   IMPORTANTE:
+
+   No basta con que el producto se mida por "unidad".
+
+   Por ejemplo:
+
+   - Coca Cola -> venta directa
+   - Sprite -> venta directa
+   - Agua -> venta directa
+
+   Pero también podrían existir:
+
+   - Pan -> unidad
+   - Huevo -> unidad
+   - Empanada -> unidad
+
+   y estos NO necesariamente son bebestibles.
+
+   Como actualmente materias_primas no tiene una columna
+   específica llamada categoria o tipo_producto,
+   identificamos los bebestibles utilizando:
+
+   1. Unidad por pieza.
+   2. Nombre del producto.
+*/
+function esBebestibleDirecto(
+  nombre,
+  unidad
+) {
+
+  /*
+     Primero debe ser producto manejado por unidad.
+  */
+  if (!esUnidadPorPieza(unidad)) {
+    return false;
+  }
+
+
+  /*
+     Normalizamos el texto:
+
+     "Coca-Cola"
+     "COCA COLA"
+     "coca cola"
+
+     para poder compararlos.
+  */
+  const texto =
+    String(nombre || '')
+      .trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+
+
+  /*
+     Palabras utilizadas para reconocer
+     bebestibles de venta directa.
+  */
+  const palabrasBebestible = [
+
+    'bebida',
+
+    'coca cola',
+    'coca-cola',
+    'cocacola',
+
+    'sprite',
+
+    'fanta',
+
+    'pepsi',
+
+    '7up',
+    'seven up',
+
+    'schweppes',
+
+    'kem',
+
+    'bilz',
+
+    'pap',
+
+    'limon soda',
+
+    'ginger ale',
+
+    'agua',
+
+    'jugo',
+
+    'nectar',
+
+    'energetica',
+
+    'red bull',
+
+    'monster',
+
+    'powerade',
+
+    'gatorade',
+
+    'cerveza',
+
+    'vino'
+
+  ];
+
+
+  return palabrasBebestible.some(
+    palabra =>
+      texto.includes(palabra)
+  );
+
+}
+
+
+/*
+   Devuelve la unidad que debe mostrarse
+   en Cocina.
+
+   Ejemplos:
+
+   Carne:
+   300 -> "300 g"
+
+   Coca Cola:
+   1 -> "1 unidad"
+
+   Bebida pack:
+   6 -> "6 unidades"
+*/
+function formatearUnidadCocina(
+  medida,
+  unidadBodega
+) {
+
+  const numeroMedida =
+    Number(medida);
+
+
+  if (
+    esUnidadPorPieza(
+      unidadBodega
+    )
+  ) {
+
+    return numeroMedida === 1
+      ? '1 unidad'
+      : `${numeroMedida} unidades`;
+
+  }
+
+
+  return `${numeroMedida} g`;
+
+}
+
+
+
 
 /* =========================================================
    BODEGA
@@ -75,13 +275,15 @@ async function listarBodega(req, res) {
 
   try {
 
-    const empresaId = obtenerEmpresaId(req);
+    const empresaId =
+      obtenerEmpresaId(req);
 
 
     if (!empresaId) {
 
       return res.status(403).json({
-        message: 'Usuario sin empresa asignada'
+        message:
+          'Usuario sin empresa asignada'
       });
 
     }
@@ -101,37 +303,42 @@ async function listarBodega(req, res) {
        Por eso usamos AS.
     */
 
-    const result = await pool.query(
-      `
-      SELECT
+    const result =
+      await pool.query(
+        `
+        SELECT
 
-        id,
+          id,
 
-        nombre
-          AS nombre_producto,
+          nombre
+            AS nombre_producto,
 
-        unidad,
+          unidad,
 
-        cantidad_total
-          AS cantidad,
+          cantidad_total
+            AS cantidad,
 
-        costo_total,
+          costo_total,
 
-        creado_en,
+          creado_en,
 
-        empresa_id
+          empresa_id
 
-      FROM public.materias_primas
+        FROM public.materias_primas
 
-      WHERE empresa_id = $1
+        WHERE empresa_id = $1
 
-      ORDER BY id DESC
-      `,
-      [empresaId]
+        ORDER BY id DESC
+        `,
+        [
+          empresaId
+        ]
+      );
+
+
+    return res.json(
+      result.rows
     );
-
-
-    return res.json(result.rows);
 
 
   } catch (error) {
@@ -143,13 +350,19 @@ async function listarBodega(req, res) {
 
 
     return res.status(500).json({
-      message: 'Error al listar bodega',
-      detalle: error.message
+
+      message:
+        'Error al listar bodega',
+
+      detalle:
+        error.message
+
     });
 
   }
 
 }
+
 
 
 
@@ -162,23 +375,30 @@ async function crearBodega(req, res) {
 
   try {
 
-    const empresaId = obtenerEmpresaId(req);
+    const empresaId =
+      obtenerEmpresaId(req);
 
 
     if (!empresaId) {
 
       return res.status(403).json({
-        message: 'Usuario sin empresa asignada'
+        message:
+          'Usuario sin empresa asignada'
       });
 
     }
 
 
     const {
+
       nombre_producto,
+
       unidad,
+
       cantidad,
+
       costo_total
+
     } = req.body;
 
 
@@ -188,86 +408,111 @@ async function crearBodega(req, res) {
     ) {
 
       return res.status(400).json({
+
         message:
           'Nombre y unidad son obligatorios'
+
       });
 
     }
 
 
     const cantidadNumero =
-      convertirNumero(cantidad ?? 0);
+      convertirNumero(
+        cantidad ?? 0
+      );
+
 
     const costoNumero =
-      convertirNumero(costo_total ?? 0);
+      convertirNumero(
+        costo_total ?? 0
+      );
 
 
     if (
-      !Number.isFinite(cantidadNumero) ||
-      !Number.isFinite(costoNumero) ||
+      !Number.isFinite(
+        cantidadNumero
+      ) ||
+
+      !Number.isFinite(
+        costoNumero
+      ) ||
+
       cantidadNumero < 0 ||
+
       costoNumero < 0
     ) {
 
       return res.status(400).json({
+
         message:
           'Cantidad y costo deben ser números válidos'
+
       });
 
     }
 
 
-    const result = await pool.query(
-      `
-      INSERT INTO public.materias_primas
-      (
-        nombre,
-        unidad,
-        cantidad_total,
-        costo_total,
-        empresa_id
-      )
+    const result =
+      await pool.query(
+        `
+        INSERT INTO public.materias_primas
+        (
+          nombre,
+          unidad,
+          cantidad_total,
+          costo_total,
+          empresa_id
+        )
 
-      VALUES
-      (
-        $1,
-        $2,
-        $3,
-        $4,
-        $5
-      )
+        VALUES
+        (
+          $1,
+          $2,
+          $3,
+          $4,
+          $5
+        )
 
-      RETURNING
+        RETURNING
 
-        id,
+          id,
 
-        nombre
-          AS nombre_producto,
+          nombre
+            AS nombre_producto,
 
-        unidad,
+          unidad,
 
-        cantidad_total
-          AS cantidad,
+          cantidad_total
+            AS cantidad,
 
-        costo_total,
+          costo_total,
 
-        creado_en,
+          creado_en,
 
-        empresa_id
-      `,
-      [
-        nombre_producto.trim(),
-        unidad.trim(),
-        cantidadNumero,
-        costoNumero,
-        empresaId
-      ]
-    );
+          empresa_id
+        `,
+        [
+
+          nombre_producto.trim(),
+
+          unidad.trim(),
+
+          cantidadNumero,
+
+          costoNumero,
+
+          empresaId
+
+        ]
+      );
 
 
     return res
       .status(201)
-      .json(result.rows[0]);
+      .json(
+        result.rows[0]
+      );
 
 
   } catch (error) {
@@ -279,16 +524,19 @@ async function crearBodega(req, res) {
 
 
     return res.status(500).json({
+
       message:
         'Error al crear producto de bodega',
 
       detalle:
         error.message
+
     });
 
   }
 
 }
+
 
 
 
@@ -301,24 +549,36 @@ async function actualizarBodega(req, res) {
 
   try {
 
-    const empresaId = obtenerEmpresaId(req);
+    const empresaId =
+      obtenerEmpresaId(req);
+
 
     const id =
-      Number(req.params.id);
+      Number(
+        req.params.id
+      );
 
 
     const {
+
       nombre_producto,
+
       unidad,
+
       cantidad,
+
       costo_total
+
     } = req.body;
 
 
     if (!empresaId) {
 
       return res.status(403).json({
-        message: 'Usuario sin empresa asignada'
+
+        message:
+          'Usuario sin empresa asignada'
+
       });
 
     }
@@ -330,82 +590,115 @@ async function actualizarBodega(req, res) {
     ) {
 
       return res.status(400).json({
+
         message:
           'Nombre y unidad son obligatorios'
+
       });
 
     }
 
 
     const cantidadNumero =
-      convertirNumero(cantidad ?? 0);
+      convertirNumero(
+        cantidad ?? 0
+      );
+
 
     const costoNumero =
-      convertirNumero(costo_total ?? 0);
+      convertirNumero(
+        costo_total ?? 0
+      );
 
 
     if (
-      !Number.isFinite(cantidadNumero) ||
-      !Number.isFinite(costoNumero) ||
+      !Number.isFinite(
+        cantidadNumero
+      ) ||
+
+      !Number.isFinite(
+        costoNumero
+      ) ||
+
       cantidadNumero < 0 ||
+
       costoNumero < 0
     ) {
 
       return res.status(400).json({
+
         message:
           'Cantidad y costo deben ser números válidos'
+
       });
 
     }
 
 
-    const result = await pool.query(
-      `
-      UPDATE public.materias_primas
+    const result =
+      await pool.query(
+        `
+        UPDATE public.materias_primas
 
-      SET
-        nombre = $1,
-        unidad = $2,
-        cantidad_total = $3,
-        costo_total = $4
+        SET
 
-      WHERE id = $5
-        AND empresa_id = $6
+          nombre = $1,
 
-      RETURNING
+          unidad = $2,
 
-        id,
+          cantidad_total = $3,
 
-        nombre
-          AS nombre_producto,
+          costo_total = $4
 
-        unidad,
+        WHERE id = $5
 
-        cantidad_total
-          AS cantidad,
+          AND empresa_id = $6
 
-        costo_total,
+        RETURNING
 
-        creado_en,
+          id,
 
-        empresa_id
-      `,
-      [
-        nombre_producto.trim(),
-        unidad.trim(),
-        cantidadNumero,
-        costoNumero,
-        id,
-        empresaId
-      ]
-    );
+          nombre
+            AS nombre_producto,
+
+          unidad,
+
+          cantidad_total
+            AS cantidad,
+
+          costo_total,
+
+          creado_en,
+
+          empresa_id
+        `,
+        [
+
+          nombre_producto.trim(),
+
+          unidad.trim(),
+
+          cantidadNumero,
+
+          costoNumero,
+
+          id,
+
+          empresaId
+
+        ]
+      );
 
 
-    if (result.rows.length === 0) {
+    if (
+      result.rows.length === 0
+    ) {
 
       return res.status(404).json({
+
         message:
           'Producto de bodega no encontrado'
+
       });
 
     }
@@ -425,16 +718,19 @@ async function actualizarBodega(req, res) {
 
 
     return res.status(500).json({
+
       message:
         'Error al actualizar bodega',
 
       detalle:
         error.message
+
     });
 
   }
 
 }
+
 
 
 
@@ -450,52 +746,67 @@ async function eliminarBodega(req, res) {
     const empresaId =
       obtenerEmpresaId(req);
 
+
     const id =
-      Number(req.params.id);
+      Number(
+        req.params.id
+      );
 
 
     if (!empresaId) {
 
       return res.status(403).json({
-        message: 'Usuario sin empresa asignada'
+
+        message:
+          'Usuario sin empresa asignada'
+
       });
 
     }
 
 
-    const result = await pool.query(
-      `
-      DELETE FROM public.materias_primas
+    const result =
+      await pool.query(
+        `
+        DELETE FROM public.materias_primas
 
-      WHERE id = $1
-        AND empresa_id = $2
+        WHERE id = $1
 
-      RETURNING
+          AND empresa_id = $2
 
-        id,
+        RETURNING
 
-        nombre
-          AS nombre_producto,
+          id,
 
-        unidad,
+          nombre
+            AS nombre_producto,
 
-        cantidad_total
-          AS cantidad,
+          unidad,
 
-        costo_total
-      `,
-      [
-        id,
-        empresaId
-      ]
-    );
+          cantidad_total
+            AS cantidad,
+
+          costo_total
+        `,
+        [
+
+          id,
+
+          empresaId
+
+        ]
+      );
 
 
-    if (result.rows.length === 0) {
+    if (
+      result.rows.length === 0
+    ) {
 
       return res.status(404).json({
+
         message:
           'Producto de bodega no encontrado'
+
       });
 
     }
@@ -522,11 +833,15 @@ async function eliminarBodega(req, res) {
        siendo utilizada por otra tabla.
     */
 
-    if (error.code === '23503') {
+    if (
+      error.code === '23503'
+    ) {
 
       return res.status(409).json({
+
         message:
           'No se puede eliminar porque esta materia prima está siendo utilizada.'
+
       });
 
     }
@@ -539,16 +854,19 @@ async function eliminarBodega(req, res) {
 
 
     return res.status(500).json({
+
       message:
         'Error al eliminar bodega',
 
       detalle:
         error.message
+
     });
 
   }
 
 }
+
 
 
 
@@ -583,8 +901,10 @@ async function listarCocina(req, res) {
     if (!empresaId) {
 
       return res.status(403).json({
+
         message:
           'Usuario sin empresa asignada'
+
       });
 
     }
@@ -601,140 +921,160 @@ async function listarCocina(req, res) {
        porque receta_detalle utiliza tipo_porcion_id.
     */
 
-    const result = await pool.query(
-      `
-      SELECT
+    const result =
+      await pool.query(
+        `
+        SELECT
 
-        tp.id,
+          tp.id,
 
-        tp.id_materia_prima,
+          tp.id_materia_prima,
 
-        mp.nombre
-          AS nombre_producto,
+          mp.nombre
+            AS nombre_producto,
 
-        tp.gramos,
+          mp.unidad
+            AS unidad_bodega,
 
-        COALESCE(
-          p.unidades_disponibles,
-          0
-        ) AS cantidad,
+          tp.gramos,
 
-        COALESCE(
-          p.costo_unidad,
-          tp.costo_unitario,
-          0
-        ) AS costo_unitario,
-
-        ROUND(
           COALESCE(
             p.unidades_disponibles,
             0
-          )
-          *
+          ) AS cantidad,
+
           COALESCE(
             p.costo_unidad,
             tp.costo_unitario,
             0
-          ),
-          2
-        ) AS costo_total,
+          ) AS costo_unitario,
 
-        COALESCE(
-          p.stock_minimo,
-          10
-        ) AS stock_minimo
+          ROUND(
+            COALESCE(
+              p.unidades_disponibles,
+              0
+            )
+            *
+            COALESCE(
+              p.costo_unidad,
+              tp.costo_unitario,
+              0
+            ),
+            2
+          ) AS costo_total,
 
-      FROM public.tipo_porcion tp
+          COALESCE(
+            p.stock_minimo,
+            10
+          ) AS stock_minimo
 
-      INNER JOIN public.materias_primas mp
+        FROM public.tipo_porcion tp
 
-        ON mp.id =
-           tp.id_materia_prima
+        INNER JOIN public.materias_primas mp
 
-      LEFT JOIN LATERAL
-      (
-        SELECT
-          p2.*
+          ON mp.id =
+             tp.id_materia_prima
 
-        FROM public.porciones p2
-
-        WHERE p2.empresa_id = $1
-
-          AND LOWER(
-                TRIM(p2.proteina)
-              )
-              =
-              LOWER(
-                TRIM(mp.nombre)
-              )
-
-          AND p2.gramos =
-              tp.gramos
-
-        ORDER BY p2.id
-
-        LIMIT 1
-
-      ) p ON TRUE
-
-
-      WHERE mp.empresa_id = $1
-
-        AND
+        LEFT JOIN LATERAL
         (
-          tp.empresa_id = $1
-          OR tp.empresa_id IS NULL
-        )
+          SELECT
+            p2.*
 
-      ORDER BY tp.id DESC
-      `,
-      [empresaId]
-    );
+          FROM public.porciones p2
+
+          WHERE p2.empresa_id = $1
+
+            AND LOWER(
+                  TRIM(p2.proteina)
+                )
+                =
+                LOWER(
+                  TRIM(mp.nombre)
+                )
+
+            AND p2.gramos =
+                tp.gramos
+
+          ORDER BY p2.id
+
+          LIMIT 1
+
+        ) p ON TRUE
+
+
+        WHERE mp.empresa_id = $1
+
+          AND
+          (
+            tp.empresa_id = $1
+            OR tp.empresa_id IS NULL
+          )
+
+        ORDER BY tp.id DESC
+        `,
+        [
+          empresaId
+        ]
+      );
 
 
     /*
        Adaptamos el resultado al formato
-       que el frontend ya conoce:
-
-       nombre_producto
-       unidad
-       cantidad
-       costo_unitario
-       costo_total
+       que el frontend ya conoce.
     */
 
-    const datos = result.rows.map(
-      item => ({
+    const datos =
+      result.rows.map(
+        item => ({
 
-        id:
-          Number(item.id),
+          id:
+            Number(
+              item.id
+            ),
 
-        id_materia_prima:
-          Number(item.id_materia_prima),
+          id_materia_prima:
+            Number(
+              item.id_materia_prima
+            ),
 
-        nombre_producto:
-          item.nombre_producto,
+          nombre_producto:
+            item.nombre_producto,
 
-        unidad:
-          `${Number(item.gramos)} g`,
+          unidad:
+            formatearUnidadCocina(
+              Number(
+                item.gramos
+              ),
+              item.unidad_bodega
+            ),
 
-        cantidad:
-          Number(item.cantidad || 0),
+          cantidad:
+            Number(
+              item.cantidad || 0
+            ),
 
-        costo_unitario:
-          Number(item.costo_unitario || 0),
+          costo_unitario:
+            Number(
+              item.costo_unitario || 0
+            ),
 
-        costo_total:
-          Number(item.costo_total || 0),
+          costo_total:
+            Number(
+              item.costo_total || 0
+            ),
 
-        stock_minimo:
-          Number(item.stock_minimo || 0)
+          stock_minimo:
+            Number(
+              item.stock_minimo || 0
+            )
 
-      })
+        })
+      );
+
+
+    return res.json(
+      datos
     );
-
-
-    return res.json(datos);
 
 
   } catch (error) {
@@ -761,6 +1101,7 @@ async function listarCocina(req, res) {
 
 
 
+
 /* =========================================================
    CREAR COCINA
    POST /api/cocina
@@ -783,20 +1124,29 @@ async function crearCocina(req, res) {
 
 
     const {
+
       nombre_producto,
+
       unidad,
+
       cantidad,
+
       costo_total,
+
       costo_unitario,
+
       stock_minimo
+
     } = req.body;
 
 
     if (!empresaId) {
 
       return res.status(403).json({
+
         message:
           'Usuario sin empresa asignada'
+
       });
 
     }
@@ -804,15 +1154,22 @@ async function crearCocina(req, res) {
 
     const gramos =
       Math.round(
-        extraerGramos(unidad)
+        extraerGramos(
+          unidad
+        )
       );
 
 
     const cantidadNumero =
-      convertirNumero(cantidad ?? 0);
+      convertirNumero(
+        cantidad ?? 0
+      );
+
 
     const costoTotalNumero =
-      convertirNumero(costo_total ?? 0);
+      convertirNumero(
+        costo_total ?? 0
+      );
 
 
     if (
@@ -821,29 +1178,42 @@ async function crearCocina(req, res) {
     ) {
 
       return res.status(400).json({
+
         message:
-          'Producto y gramos son obligatorios'
+          'Producto y medida son obligatorios'
+
       });
 
     }
 
 
     if (
-      !Number.isFinite(cantidadNumero) ||
+      !Number.isFinite(
+        cantidadNumero
+      ) ||
+
       cantidadNumero < 0 ||
-      !Number.isFinite(costoTotalNumero) ||
+
+      !Number.isFinite(
+        costoTotalNumero
+      ) ||
+
       costoTotalNumero < 0
     ) {
 
       return res.status(400).json({
+
         message:
           'Cantidad o costo inválido'
+
       });
 
     }
 
 
-    await client.query('BEGIN');
+    await client.query(
+      'BEGIN'
+    );
 
 
     /*
@@ -860,15 +1230,22 @@ async function crearCocina(req, res) {
 
         WHERE empresa_id = $1
 
-          AND LOWER(TRIM(nombre))
+          AND LOWER(
+                TRIM(nombre)
+              )
               =
-              LOWER(TRIM($2))
+              LOWER(
+                TRIM($2)
+              )
 
         LIMIT 1
         `,
         [
+
           empresaId,
+
           nombre_producto.trim()
+
         ]
       );
 
@@ -877,12 +1254,16 @@ async function crearCocina(req, res) {
       materiaResult.rows.length === 0
     ) {
 
-      await client.query('ROLLBACK');
+      await client.query(
+        'ROLLBACK'
+      );
 
 
       return res.status(400).json({
+
         message:
           'El producto debe existir primero en Bodega'
+
       });
 
     }
@@ -892,12 +1273,25 @@ async function crearCocina(req, res) {
       materiaResult.rows[0];
 
 
+    const unidadCocina =
+      formatearUnidadCocina(
+        gramos,
+        materia.unidad
+      );
+
+
     const costoUnitarioNumero =
       costo_unitario !== undefined
-        ? Number(costo_unitario || 0)
+
+        ? Number(
+            costo_unitario || 0
+          )
+
         : cantidadNumero > 0
+
           ? costoTotalNumero /
             cantidadNumero
+
           : 0;
 
 
@@ -927,9 +1321,13 @@ async function crearCocina(req, res) {
         LIMIT 1
         `,
         [
+
           materia.id,
+
           gramos,
+
           empresaId
+
         ]
       );
 
@@ -965,11 +1363,17 @@ async function crearCocina(req, res) {
           RETURNING *
           `,
           [
+
             materia.id,
-            `${gramos} g`,
+
+            unidadCocina,
+
             gramos,
+
             costoUnitarioNumero,
+
             empresaId
+
           ]
         );
 
@@ -988,15 +1392,21 @@ async function crearCocina(req, res) {
         UPDATE public.tipo_porcion
 
         SET
+
           costo_unitario = $1,
+
           empresa_id = $2
 
         WHERE id = $3
         `,
         [
+
           costoUnitarioNumero,
+
           empresaId,
+
           tipoPorcion.id
+
         ]
       );
 
@@ -1016,9 +1426,13 @@ async function crearCocina(req, res) {
 
         WHERE empresa_id = $1
 
-          AND LOWER(TRIM(proteina))
+          AND LOWER(
+                TRIM(proteina)
+              )
               =
-              LOWER(TRIM($2))
+              LOWER(
+                TRIM($2)
+              )
 
           AND gramos = $3
 
@@ -1027,9 +1441,13 @@ async function crearCocina(req, res) {
         LIMIT 1
         `,
         [
+
           empresaId,
+
           materia.nombre,
+
           gramos
+
         ]
       );
 
@@ -1063,13 +1481,25 @@ async function crearCocina(req, res) {
         )
         `,
         [
-          `${materia.nombre} ${gramos} g`,
+
+          `${materia.nombre} ${unidadCocina}`,
+
           materia.nombre,
+
           gramos,
+
           costoUnitarioNumero,
+
           empresaId,
-          Math.floor(cantidadNumero),
-          Number(stock_minimo || 10)
+
+          Math.floor(
+            cantidadNumero
+          ),
+
+          Number(
+            stock_minimo || 10
+          )
+
         ]
       );
 
@@ -1080,56 +1510,82 @@ async function crearCocina(req, res) {
         UPDATE public.porciones
 
         SET
+
           costo_unidad = $1,
+
           unidades_disponibles = $2,
+
           stock_minimo = $3
 
         WHERE id = $4
         `,
         [
+
           costoUnitarioNumero,
-          Math.floor(cantidadNumero),
-          Number(stock_minimo || 10),
+
+          Math.floor(
+            cantidadNumero
+          ),
+
+          Number(
+            stock_minimo || 10
+          ),
+
           stockResult.rows[0].id
+
         ]
       );
 
     }
 
 
-    await client.query('COMMIT');
+    await client.query(
+      'COMMIT'
+    );
 
 
-    return res.status(201).json({
+    return res
+      .status(201)
+      .json({
 
-      id:
-        Number(tipoPorcion.id),
+        id:
+          Number(
+            tipoPorcion.id
+          ),
 
-      nombre_producto:
-        materia.nombre,
+        nombre_producto:
+          materia.nombre,
 
-      unidad:
-        `${gramos} g`,
+        unidad:
+          unidadCocina,
 
-      cantidad:
-        Math.floor(cantidadNumero),
+        cantidad:
+          Math.floor(
+            cantidadNumero
+          ),
 
-      costo_unitario:
-        costoUnitarioNumero,
+        costo_unitario:
+          costoUnitarioNumero,
 
-      costo_total:
-        costoUnitarioNumero *
-        Math.floor(cantidadNumero),
+        costo_total:
+          costoUnitarioNumero *
+          Math.floor(
+            cantidadNumero
+          ),
 
-      stock_minimo:
-        Number(stock_minimo || 10)
+        stock_minimo:
+          Number(
+            stock_minimo || 10
+          )
 
-    });
+      });
 
 
   } catch (error) {
 
-    await client.query('ROLLBACK');
+    await client.query(
+      'ROLLBACK'
+    );
 
 
     console.error(
@@ -1159,6 +1615,7 @@ async function crearCocina(req, res) {
 
 
 
+
 /* =========================================================
    ACTUALIZAR COCINA
    PUT /api/cocina/:id
@@ -1177,34 +1634,50 @@ async function actualizarCocina(req, res) {
     const empresaId =
       obtenerEmpresaId(req);
 
+
     const id =
-      Number(req.params.id);
+      Number(
+        req.params.id
+      );
 
 
     const {
+
       nombre_producto,
+
       unidad,
+
       cantidad,
+
       costo_total,
+
       stock_minimo
+
     } = req.body;
 
 
     if (!empresaId) {
 
       return res.status(403).json({
+
         message:
           'Usuario sin empresa asignada'
+
       });
 
     }
 
 
     const cantidadNumero =
-      convertirNumero(cantidad ?? 0);
+      convertirNumero(
+        cantidad ?? 0
+      );
+
 
     const costoTotalNumero =
-      convertirNumero(costo_total ?? 0);
+      convertirNumero(
+        costo_total ?? 0
+      );
 
 
     if (
@@ -1213,8 +1686,10 @@ async function actualizarCocina(req, res) {
     ) {
 
       return res.status(400).json({
+
         message:
           'Nombre y unidad son obligatorios'
+
       });
 
     }
@@ -1222,36 +1697,53 @@ async function actualizarCocina(req, res) {
 
     const gramos =
       Math.round(
-        extraerGramos(unidad)
+        extraerGramos(
+          unidad
+        )
       );
 
 
-    if (gramos <= 0) {
+    if (
+      gramos <= 0
+    ) {
 
       return res.status(400).json({
+
         message:
-          'La unidad debe indicar los gramos de la porción'
+          'La unidad o medida de la porción debe ser válida'
+
       });
 
     }
 
 
     if (
-      !Number.isFinite(cantidadNumero) ||
+      !Number.isFinite(
+        cantidadNumero
+      ) ||
+
       cantidadNumero < 0 ||
-      !Number.isFinite(costoTotalNumero) ||
+
+      !Number.isFinite(
+        costoTotalNumero
+      ) ||
+
       costoTotalNumero < 0
     ) {
 
       return res.status(400).json({
+
         message:
           'Cantidad o costo inválido'
+
       });
 
     }
 
 
-    await client.query('BEGIN');
+    await client.query(
+      'BEGIN'
+    );
 
 
     /*
@@ -1285,8 +1777,11 @@ async function actualizarCocina(req, res) {
         LIMIT 1
         `,
         [
+
           id,
+
           empresaId
+
         ]
       );
 
@@ -1295,12 +1790,16 @@ async function actualizarCocina(req, res) {
       actualResult.rows.length === 0
     ) {
 
-      await client.query('ROLLBACK');
+      await client.query(
+        'ROLLBACK'
+      );
 
 
       return res.status(404).json({
+
         message:
           'Producto de cocina no encontrado'
+
       });
 
     }
@@ -1323,15 +1822,22 @@ async function actualizarCocina(req, res) {
 
         WHERE empresa_id = $1
 
-          AND LOWER(TRIM(nombre))
+          AND LOWER(
+                TRIM(nombre)
+              )
               =
-              LOWER(TRIM($2))
+              LOWER(
+                TRIM($2)
+              )
 
         LIMIT 1
         `,
         [
+
           empresaId,
+
           nombre_producto.trim()
+
         ]
       );
 
@@ -1340,12 +1846,16 @@ async function actualizarCocina(req, res) {
       materiaResult.rows.length === 0
     ) {
 
-      await client.query('ROLLBACK');
+      await client.query(
+        'ROLLBACK'
+      );
 
 
       return res.status(400).json({
+
         message:
           'El producto debe existir en Bodega'
+
       });
 
     }
@@ -1355,10 +1865,19 @@ async function actualizarCocina(req, res) {
       materiaResult.rows[0];
 
 
+    const unidadCocina =
+      formatearUnidadCocina(
+        gramos,
+        materia.unidad
+      );
+
+
     const costoUnitarioNumero =
       cantidadNumero > 0
+
         ? costoTotalNumero /
           cantidadNumero
+
         : 0;
 
 
@@ -1371,21 +1890,33 @@ async function actualizarCocina(req, res) {
       UPDATE public.tipo_porcion
 
       SET
+
         id_materia_prima = $1,
+
         nombre = $2,
+
         gramos = $3,
+
         costo_unitario = $4,
+
         empresa_id = $5
 
       WHERE id = $6
       `,
       [
+
         materia.id,
-        `${gramos} g`,
+
+        unidadCocina,
+
         gramos,
+
         costoUnitarioNumero,
+
         empresaId,
+
         id
+
       ]
     );
 
@@ -1404,9 +1935,13 @@ async function actualizarCocina(req, res) {
 
         WHERE empresa_id = $1
 
-          AND LOWER(TRIM(proteina))
+          AND LOWER(
+                TRIM(proteina)
+              )
               =
-              LOWER(TRIM($2))
+              LOWER(
+                TRIM($2)
+              )
 
           AND gramos = $3
 
@@ -1415,9 +1950,13 @@ async function actualizarCocina(req, res) {
         LIMIT 1
         `,
         [
+
           empresaId,
+
           actual.materia_nombre,
+
           actual.gramos
+
         ]
       );
 
@@ -1451,13 +1990,25 @@ async function actualizarCocina(req, res) {
         )
         `,
         [
-          `${materia.nombre} ${gramos} g`,
+
+          `${materia.nombre} ${unidadCocina}`,
+
           materia.nombre,
+
           gramos,
+
           costoUnitarioNumero,
+
           empresaId,
-          Math.floor(cantidadNumero),
-          Number(stock_minimo || 10)
+
+          Math.floor(
+            cantidadNumero
+          ),
+
+          Number(
+            stock_minimo || 10
+          )
+
         ]
       );
 
@@ -1468,30 +2019,50 @@ async function actualizarCocina(req, res) {
         UPDATE public.porciones
 
         SET
+
           nombre = $1,
+
           proteina = $2,
+
           gramos = $3,
+
           costo_unidad = $4,
+
           unidades_disponibles = $5,
+
           stock_minimo = $6
 
         WHERE id = $7
         `,
         [
-          `${materia.nombre} ${gramos} g`,
+
+          `${materia.nombre} ${unidadCocina}`,
+
           materia.nombre,
+
           gramos,
+
           costoUnitarioNumero,
-          Math.floor(cantidadNumero),
-          Number(stock_minimo || 10),
+
+          Math.floor(
+            cantidadNumero
+          ),
+
+          Number(
+            stock_minimo || 10
+          ),
+
           stockResult.rows[0].id
+
         ]
       );
 
     }
 
 
-    await client.query('COMMIT');
+    await client.query(
+      'COMMIT'
+    );
 
 
     return res.json({
@@ -1502,10 +2073,12 @@ async function actualizarCocina(req, res) {
         materia.nombre,
 
       unidad:
-        `${gramos} g`,
+        unidadCocina,
 
       cantidad:
-        Math.floor(cantidadNumero),
+        Math.floor(
+          cantidadNumero
+        ),
 
       costo_unitario:
         costoUnitarioNumero,
@@ -1514,14 +2087,18 @@ async function actualizarCocina(req, res) {
         costoTotalNumero,
 
       stock_minimo:
-        Number(stock_minimo || 10)
+        Number(
+          stock_minimo || 10
+        )
 
     });
 
 
   } catch (error) {
 
-    await client.query('ROLLBACK');
+    await client.query(
+      'ROLLBACK'
+    );
 
 
     console.error(
@@ -1551,6 +2128,7 @@ async function actualizarCocina(req, res) {
 
 
 
+
 /* =========================================================
    ELIMINAR COCINA
    DELETE /api/cocina/:id
@@ -1567,21 +2145,28 @@ async function eliminarCocina(req, res) {
     const empresaId =
       obtenerEmpresaId(req);
 
+
     const id =
-      Number(req.params.id);
+      Number(
+        req.params.id
+      );
 
 
     if (!empresaId) {
 
       return res.status(403).json({
+
         message:
           'Usuario sin empresa asignada'
+
       });
 
     }
 
 
-    await client.query('BEGIN');
+    await client.query(
+      'BEGIN'
+    );
 
 
     /*
@@ -1613,8 +2198,11 @@ async function eliminarCocina(req, res) {
         LIMIT 1
         `,
         [
+
           id,
+
           empresaId
+
         ]
       );
 
@@ -1623,12 +2211,16 @@ async function eliminarCocina(req, res) {
       tipoResult.rows.length === 0
     ) {
 
-      await client.query('ROLLBACK');
+      await client.query(
+        'ROLLBACK'
+      );
 
 
       return res.status(404).json({
+
         message:
           'Producto de cocina no encontrado'
+
       });
 
     }
@@ -1648,16 +2240,24 @@ async function eliminarCocina(req, res) {
 
       WHERE empresa_id = $1
 
-        AND LOWER(TRIM(proteina))
+        AND LOWER(
+              TRIM(proteina)
+            )
             =
-            LOWER(TRIM($2))
+            LOWER(
+              TRIM($2)
+            )
 
         AND gramos = $3
       `,
       [
+
         empresaId,
+
         tipo.materia_nombre,
+
         tipo.gramos
+
       ]
     );
 
@@ -1675,33 +2275,45 @@ async function eliminarCocina(req, res) {
 
       WHERE id = $1
       `,
-      [id]
+      [
+        id
+      ]
     );
 
 
-    await client.query('COMMIT');
+    await client.query(
+      'COMMIT'
+    );
 
 
     return res.json({
+
       message:
         'Producto eliminado'
+
     });
 
 
   } catch (error) {
 
-    await client.query('ROLLBACK');
+    await client.query(
+      'ROLLBACK'
+    );
 
 
     /*
        Está siendo utilizado por una receta.
     */
 
-    if (error.code === '23503') {
+    if (
+      error.code === '23503'
+    ) {
 
       return res.status(409).json({
+
         message:
           'No se puede eliminar. Esta porción está siendo utilizada en una receta.'
+
       });
 
     }
@@ -1734,6 +2346,7 @@ async function eliminarCocina(req, res) {
 
 
 
+
 /* =========================================================
    TRASPASO BODEGA → COCINA
 
@@ -1746,6 +2359,10 @@ async function eliminarCocina(req, res) {
    tipo_porcion
           ↓
    porciones
+
+   Y SOLO PARA BEBESTIBLES POR UNIDAD:
+
+   public.menu
 ========================================================= */
 
 async function traspasarBodegaACocina(req, res) {
@@ -1761,22 +2378,33 @@ async function traspasarBodegaACocina(req, res) {
 
 
     const {
+
       bodega_id,
+
       cocina_id,
+
       nombre_cocina,
+
       unidad_cocina,
+
       cantidad_bodega,
+
       cantidad_cocina
+
     } = req.body;
 
 
     const bodegaId =
-      Number(bodega_id);
+      Number(
+        bodega_id
+      );
 
 
     const cocinaId =
       cocina_id
-        ? Number(cocina_id)
+        ? Number(
+            cocina_id
+          )
         : null;
 
 
@@ -1792,6 +2420,20 @@ async function traspasarBodegaACocina(req, res) {
       );
 
 
+    /*
+       El nombre del campo sigue siendo "gramos"
+       por compatibilidad con la base de datos.
+
+       Pero si el producto es por unidad:
+
+       "1 unidad"
+
+       extraerGramos() devuelve:
+
+       1
+
+       Ese 1 funciona como medida de presentación.
+    */
     const gramos =
       Math.round(
         extraerGramos(
@@ -1803,8 +2445,10 @@ async function traspasarBodegaACocina(req, res) {
     if (!empresaId) {
 
       return res.status(403).json({
+
         message:
           'Usuario sin empresa asignada'
+
       });
 
     }
@@ -1812,26 +2456,35 @@ async function traspasarBodegaACocina(req, res) {
 
     if (
       !bodegaId ||
+
       !Number.isFinite(
         cantidadBodegaNumero
       ) ||
+
       cantidadBodegaNumero <= 0 ||
+
       !Number.isFinite(
         cantidadCocinaNumero
       ) ||
+
       cantidadCocinaNumero <= 0 ||
+
       gramos <= 0
     ) {
 
       return res.status(400).json({
+
         message:
           'Faltan datos para el traspaso'
+
       });
 
     }
 
 
-    await client.query('BEGIN');
+    await client.query(
+      'BEGIN'
+    );
 
 
     /* =====================================================
@@ -1846,13 +2499,17 @@ async function traspasarBodegaACocina(req, res) {
         FROM public.materias_primas
 
         WHERE id = $1
+
           AND empresa_id = $2
 
         FOR UPDATE
         `,
         [
+
           bodegaId,
+
           empresaId
+
         ]
       );
 
@@ -1861,12 +2518,16 @@ async function traspasarBodegaACocina(req, res) {
       bodegaResult.rows.length === 0
     ) {
 
-      await client.query('ROLLBACK');
+      await client.query(
+        'ROLLBACK'
+      );
 
 
       return res.status(404).json({
+
         message:
           'Producto de bodega no encontrado'
+
       });
 
     }
@@ -1874,6 +2535,13 @@ async function traspasarBodegaACocina(req, res) {
 
     const bodega =
       bodegaResult.rows[0];
+
+
+    const unidadCocina =
+      formatearUnidadCocina(
+        gramos,
+        bodega.unidad
+      );
 
 
     const stockBodega =
@@ -1893,12 +2561,16 @@ async function traspasarBodegaACocina(req, res) {
       cantidadBodegaNumero
     ) {
 
-      await client.query('ROLLBACK');
+      await client.query(
+        'ROLLBACK'
+      );
 
 
       return res.status(400).json({
+
         message:
           'Stock insuficiente en bodega'
+
       });
 
     }
@@ -1910,8 +2582,10 @@ async function traspasarBodegaACocina(req, res) {
 
     const porcentajeUsado =
       stockBodega > 0
+
         ? cantidadBodegaNumero /
           stockBodega
+
         : 0;
 
 
@@ -1926,8 +2600,10 @@ async function traspasarBodegaACocina(req, res) {
 
     const costoNuevaPorcion =
       cantidadCocinaNumero > 0
+
         ? costoTraspasado /
           cantidadCocinaNumero
+
         : 0;
 
 
@@ -1954,13 +2630,19 @@ async function traspasarBodegaACocina(req, res) {
           )
 
       WHERE id = $3
+
         AND empresa_id = $4
       `,
       [
+
         cantidadBodegaNumero,
+
         costoTraspasado,
+
         bodegaId,
+
         empresaId
+
       ]
     );
 
@@ -1969,7 +2651,8 @@ async function traspasarBodegaACocina(req, res) {
        4. BUSCAR TIPO DE PORCIÓN
     ===================================================== */
 
-    let tipoPorcion = null;
+    let tipoPorcion =
+      null;
 
 
     /*
@@ -1977,12 +2660,15 @@ async function traspasarBodegaACocina(req, res) {
        cocina_id corresponde a tipo_porcion.id.
     */
 
-    if (cocinaId) {
+    if (
+      cocinaId
+    ) {
 
       const tipoExistente =
         await client.query(
           `
-          SELECT tp.*
+          SELECT
+            tp.*
 
           FROM public.tipo_porcion tp
 
@@ -2000,9 +2686,13 @@ async function traspasarBodegaACocina(req, res) {
           LIMIT 1
           `,
           [
+
             cocinaId,
+
             bodegaId,
+
             empresaId
+
           ]
         );
 
@@ -2021,10 +2711,12 @@ async function traspasarBodegaACocina(req, res) {
 
     /*
        Si no vino cocina_id o no se encontró,
-       buscamos por materia prima + gramos.
+       buscamos por materia prima + medida.
     */
 
-    if (!tipoPorcion) {
+    if (
+      !tipoPorcion
+    ) {
 
       const tipoExistente =
         await client.query(
@@ -2048,9 +2740,13 @@ async function traspasarBodegaACocina(req, res) {
           LIMIT 1
           `,
           [
+
             bodegaId,
+
             gramos,
+
             empresaId
+
           ]
         );
 
@@ -2080,9 +2776,13 @@ async function traspasarBodegaACocina(req, res) {
 
         WHERE empresa_id = $1
 
-          AND LOWER(TRIM(proteina))
+          AND LOWER(
+                TRIM(proteina)
+              )
               =
-              LOWER(TRIM($2))
+              LOWER(
+                TRIM($2)
+              )
 
           AND gramos = $3
 
@@ -2093,28 +2793,36 @@ async function traspasarBodegaACocina(req, res) {
         FOR UPDATE
         `,
         [
+
           empresaId,
+
           bodega.nombre,
+
           gramos
+
         ]
       );
 
 
     const stockAnterior =
       stockResult.rows.length > 0
+
         ? Number(
             stockResult.rows[0]
               .unidades_disponibles || 0
           )
+
         : 0;
 
 
     const costoAnterior =
       stockResult.rows.length > 0
+
         ? Number(
             stockResult.rows[0]
               .costo_unidad || 0
           )
+
         : 0;
 
 
@@ -2130,17 +2838,20 @@ async function traspasarBodegaACocina(req, res) {
 
 
     /*
-       Costo promedio ponderado.
+       COSTO PROMEDIO PONDERADO.
 
        Ejemplo:
 
-       había:
-       10 porciones a $1.000
+       Había:
+       10 unidades a $500
 
-       llegan:
-       5 porciones a $1.200
+       Llegan:
+       5 unidades a $600
 
-       se calcula el nuevo costo promedio.
+       Se calcula un nuevo costo promedio.
+
+       Esto funciona tanto para porciones
+       como para bebestibles.
     */
 
     const nuevoCostoUnitario =
@@ -2164,7 +2875,9 @@ async function traspasarBodegaACocina(req, res) {
        6. CREAR / ACTUALIZAR TIPO_PORCION
     ===================================================== */
 
-    if (!tipoPorcion) {
+    if (
+      !tipoPorcion
+    ) {
 
       const nuevoTipo =
         await client.query(
@@ -2190,11 +2903,17 @@ async function traspasarBodegaACocina(req, res) {
           RETURNING *
           `,
           [
+
             bodegaId,
-            `${gramos} g`,
+
+            unidadCocina,
+
             gramos,
+
             nuevoCostoUnitario,
+
             empresaId
+
           ]
         );
 
@@ -2224,11 +2943,17 @@ async function traspasarBodegaACocina(req, res) {
           RETURNING *
           `,
           [
-            `${gramos} g`,
+
+            unidadCocina,
+
             gramos,
+
             nuevoCostoUnitario,
+
             empresaId,
+
             tipoPorcion.id
+
           ]
         );
 
@@ -2243,7 +2968,8 @@ async function traspasarBodegaACocina(req, res) {
        7. CREAR / ACTUALIZAR STOCK EN PORCIONES
     ===================================================== */
 
-    let stockMinimo = 10;
+    let stockMinimo =
+      10;
 
 
     if (
@@ -2276,12 +3002,19 @@ async function traspasarBodegaACocina(req, res) {
         WHERE id = $6
         `,
         [
-          `${bodega.nombre} ${gramos} g`,
+
+          `${bodega.nombre} ${unidadCocina}`,
+
           bodega.nombre,
+
           gramos,
+
           nuevoCostoUnitario,
+
           unidadesTotales,
+
           stockResult.rows[0].id
+
         ]
       );
 
@@ -2312,13 +3045,21 @@ async function traspasarBodegaACocina(req, res) {
         )
         `,
         [
-          `${bodega.nombre} ${gramos} g`,
+
+          `${bodega.nombre} ${unidadCocina}`,
+
           bodega.nombre,
+
           gramos,
+
           nuevoCostoUnitario,
+
           empresaId,
+
           nuevasUnidades,
+
           stockMinimo
+
         ]
       );
 
@@ -2326,15 +3067,157 @@ async function traspasarBodegaACocina(req, res) {
 
 
     /* =====================================================
-       8. CONFIRMAR TRANSACCIÓN
+       8. BEBESTIBLE POR UNIDAD
+          PRODUCTO DE VENTA DIRECTA
+
+       SOLO SE EJECUTA SI:
+
+       1. El producto viene por unidad.
+
+       Y
+
+       2. Su nombre corresponde a un bebestible.
+
+       EJEMPLO:
+
+       Coca Cola
+       48 unidades
+
+              ↓
+
+       Cocina
+
+       Coca Cola
+       48 x 1 unidad
+
+              ↓
+
+       public.menu
+
+       Coca Cola
+
+              ↓
+
+       aparece automáticamente en:
+
+       "Seleccionar producto"
+
+
+       IMPORTANTE:
+
+       NO crea receta.
+
+       NO afecta carne.
+
+       NO afecta pan.
+
+       NO afecta verduras.
+
+       NO afecta otros productos por unidad
+       que no sean bebestibles.
+
+       NO duplica el producto si ya existe.
     ===================================================== */
 
-    await client.query('COMMIT');
+    if (
+      esBebestibleDirecto(
+        bodega.nombre,
+        bodega.unidad
+      )
+    ) {
+
+      /*
+         Revisamos si el bebestible ya existe
+         como producto de venta.
+      */
+
+      const productoVentaExistente =
+        await client.query(
+          `
+          SELECT
+            id
+
+          FROM public.menu
+
+          WHERE empresa_id = $1
+
+            AND LOWER(
+                  TRIM(nombre)
+                )
+                =
+                LOWER(
+                  TRIM($2)
+                )
+
+          LIMIT 1
+          `,
+          [
+
+            empresaId,
+
+            bodega.nombre
+
+          ]
+        );
+
+
+      /*
+         Si NO existe todavía,
+         lo registramos automáticamente.
+      */
+
+      if (
+        productoVentaExistente.rows.length === 0
+      ) {
+
+        await client.query(
+          `
+          INSERT INTO public.menu
+          (
+            nombre,
+            precio,
+            tipo,
+            cantidad,
+            activo,
+            empresa_id
+          )
+
+          VALUES
+          (
+            $1,
+            0,
+            'bebestible',
+            1,
+            TRUE,
+            $2
+          )
+          `,
+          [
+
+            bodega.nombre,
+
+            empresaId
+
+          ]
+        );
+
+      }
+
+    }
+
+
+    /* =====================================================
+       9. CONFIRMAR TRANSACCIÓN
+    ===================================================== */
+
+    await client.query(
+      'COMMIT'
+    );
 
 
     /*
-       Respondemos usando exactamente la forma
-       que CCC-Básico espera.
+       Respondemos usando exactamente
+       la estructura que espera CCC-Básico.
     */
 
     return res.json({
@@ -2345,14 +3228,16 @@ async function traspasarBodegaACocina(req, res) {
       cocina: {
 
         id:
-          Number(tipoPorcion.id),
+          Number(
+            tipoPorcion.id
+          ),
 
         nombre_producto:
           nombre_cocina ||
           bodega.nombre,
 
         unidad:
-          `${gramos} g`,
+          unidadCocina,
 
         cantidad:
           unidadesTotales,
@@ -2374,7 +3259,9 @@ async function traspasarBodegaACocina(req, res) {
 
   } catch (error) {
 
-    await client.query('ROLLBACK');
+    await client.query(
+      'ROLLBACK'
+    );
 
 
     console.error(
@@ -2404,6 +3291,7 @@ async function traspasarBodegaACocina(req, res) {
 
 
 
+
 /* =========================================================
    EXPORTAR CONTROLADORES
 ========================================================= */
@@ -2411,13 +3299,19 @@ async function traspasarBodegaACocina(req, res) {
 module.exports = {
 
   listarBodega,
+
   crearBodega,
+
   actualizarBodega,
+
   eliminarBodega,
 
   listarCocina,
+
   crearCocina,
+
   actualizarCocina,
+
   eliminarCocina,
 
   traspasarBodegaACocina

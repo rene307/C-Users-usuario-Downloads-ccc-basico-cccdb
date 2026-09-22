@@ -4403,16 +4403,16 @@ async function agregarCocina() {
     );
 
 
-  const textoGramos =
+  const textoUnidad =
     $("cocinaUnidad")
       .value
       .trim();
 
 
-  const gramosPorPorcion =
+  const cantidadPorUnidad =
     Number(
 
-      textoGramos
+      textoUnidad
 
         .replace(
           /[^0-9.,]/g,
@@ -4443,151 +4443,194 @@ async function agregarCocina() {
       "Selecciona un producto de bodega"
     );
 
-
     return;
 
   }
-
 
 
   if (
-    gramosPorPorcion <= 0
+    !Number.isFinite(cantidadPorUnidad) ||
+    cantidadPorUnidad <= 0
   ) {
 
     alert(
-      "Ingresa los gramos por porción"
+      "Ingresa una cantidad válida. Ejemplo: 300 g o 1 unidad"
     );
-
 
     return;
 
   }
 
 
-
   const unidad =
-    bodega.unidad
+    String(bodega.unidad || "")
       .toLowerCase()
       .trim();
 
 
-  let gramosDisponibles = 0;
-
-
-
-  if (
-
-    unidad === "kg" ||
-
-    unidad === "kilo" ||
-
-    unidad === "kilos" ||
-
-    unidad === "kilogramo" ||
-
-    unidad === "kilogramos"
-
-  ) {
-
-    gramosDisponibles =
-      bodega.cantidad * 1000;
-
-
-  } else if (
-
-    unidad === "g" ||
-
-    unidad === "gr" ||
-
-    unidad === "gramo" ||
-
-    unidad === "gramos"
-
-  ) {
-
-    gramosDisponibles =
-      bodega.cantidad;
-
-
-  } else {
-
-    alert(
-      "La unidad de bodega debe ser kg o g"
-    );
-
-
-    return;
-
-  }
-
-
-
-  const cantidadPorciones =
-    Math.floor(
-
-      gramosDisponibles /
-
-      gramosPorPorcion
-
-    );
-
-
-
-  if (
-    cantidadPorciones <= 0
-  ) {
-
-    alert(
-      "No alcanza para una porción"
-    );
-
-
-    return;
-
-  }
-
-
-
-  const gramosUtilizados =
-
-    cantidadPorciones *
-
-    gramosPorPorcion;
-
-
-
   const usaKilogramos =
-
     unidad === "kg" ||
-
     unidad === "kilo" ||
-
     unidad === "kilos" ||
-
     unidad === "kilogramo" ||
-
     unidad === "kilogramos";
 
 
+  const usaGramos =
+    unidad === "g" ||
+    unidad === "gr" ||
+    unidad === "gramo" ||
+    unidad === "gramos";
 
-  const cantidadBodegaUtilizada =
 
-    usaKilogramos
+  const usaUnidades =
+    unidad === "u" ||
+    unidad === "un" ||
+    unidad === "und" ||
+    unidad === "uds" ||
+    unidad === "unidad" ||
+    unidad === "unidades";
 
-      ? gramosUtilizados / 1000
 
-      : gramosUtilizados;
+  let cantidadBodegaUtilizada = 0;
+  let cantidadCocina = 0;
+  let unidadCocina = "";
 
+
+  /* =====================================================
+     PRODUCTOS MEDIDOS EN KG / G
+     Ejemplo:
+     20 kg de carne -> porciones de 300 g
+  ===================================================== */
+  if (
+    usaKilogramos ||
+    usaGramos
+  ) {
+
+    const gramosPorPorcion =
+      cantidadPorUnidad;
+
+
+    const gramosDisponibles =
+      usaKilogramos
+        ? Number(bodega.cantidad) * 1000
+        : Number(bodega.cantidad);
+
+
+    cantidadCocina =
+      Math.floor(
+        gramosDisponibles /
+        gramosPorPorcion
+      );
+
+
+    if (
+      cantidadCocina <= 0
+    ) {
+
+      alert(
+        "No alcanza para una porción"
+      );
+
+      return;
+
+    }
+
+
+    const gramosUtilizados =
+      cantidadCocina *
+      gramosPorPorcion;
+
+
+    cantidadBodegaUtilizada =
+      usaKilogramos
+        ? gramosUtilizados / 1000
+        : gramosUtilizados;
+
+
+    unidadCocina =
+      `${gramosPorPorcion} g`;
+
+  }
+
+
+  /* =====================================================
+     PRODUCTOS MEDIDOS EN UNIDADES
+     Ejemplo:
+     48 Coca-Cola -> presentaciones de 1 unidad
+  ===================================================== */
+  else if (usaUnidades) {
+
+    const unidadesPorPresentacion =
+      Math.floor(cantidadPorUnidad);
+
+
+    if (
+      unidadesPorPresentacion <= 0 ||
+      cantidadPorUnidad !== unidadesPorPresentacion
+    ) {
+
+      alert(
+        "Para productos por unidad debes ingresar un número entero. Ejemplo: 1 unidad"
+      );
+
+      return;
+
+    }
+
+
+    const unidadesDisponibles =
+      Math.floor(
+        Number(bodega.cantidad)
+      );
+
+
+    cantidadCocina =
+      Math.floor(
+        unidadesDisponibles /
+        unidadesPorPresentacion
+      );
+
+
+    if (
+      cantidadCocina <= 0
+    ) {
+
+      alert(
+        "No hay unidades suficientes en bodega"
+      );
+
+      return;
+
+    }
+
+
+    cantidadBodegaUtilizada =
+      cantidadCocina *
+      unidadesPorPresentacion;
+
+
+    unidadCocina =
+      unidadesPorPresentacion === 1
+        ? "1 unidad"
+        : `${unidadesPorPresentacion} unidades`;
+
+  }
+
+
+  else {
+
+    alert(
+      "La unidad de bodega debe ser kg, g o unidad"
+    );
+
+    return;
+
+  }
 
 
   const nombreCocina =
     bodega.producto;
-
-
-
-  const unidadCocina =
-    `${gramosPorPorcion} g`;
-
 
 
   const existente =
@@ -4608,7 +4651,6 @@ async function agregarCocina() {
           .toLowerCase()
 
     );
-
 
 
   try {
@@ -4641,14 +4683,13 @@ async function agregarCocina() {
               cantidadBodegaUtilizada,
 
             cantidad_cocina:
-              cantidadPorciones
+              cantidadCocina
 
           })
 
       }
 
     );
-
 
 
     $("selectBodegaCocina")
@@ -4662,15 +4703,9 @@ async function agregarCocina() {
     await cargarTodoDesdeBD();
 
 
-
     alert(
-
       `${nombreCocina}: se guardaron ` +
-
-      `${cantidadPorciones} porciones de ` +
-
-      `${unidadCocina}`
-
+      `${cantidadCocina} de ${unidadCocina}`
     );
 
 
