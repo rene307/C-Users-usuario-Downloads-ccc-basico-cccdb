@@ -4403,16 +4403,25 @@ async function agregarCocina() {
     );
 
 
-  const textoUnidad =
+  /*
+    Este campo sirve tanto para porciones por peso
+    como para productos que se manejan por unidad.
+
+    Ejemplos:
+    - 300       -> 300 g si Bodega está en kg/g
+    - 1         -> 1 unidad si Bodega está en unidad
+    - 6         -> paquete/porción de 6 unidades
+  */
+  const textoMedida =
     $("cocinaUnidad")
       .value
       .trim();
 
 
-  const cantidadPorUnidad =
+  const medidaPorPorcion =
     Number(
 
-      textoUnidad
+      textoMedida
 
         .replace(
           /[^0-9.,]/g,
@@ -4443,19 +4452,21 @@ async function agregarCocina() {
       "Selecciona un producto de bodega"
     );
 
+
     return;
 
   }
 
 
   if (
-    !Number.isFinite(cantidadPorUnidad) ||
-    cantidadPorUnidad <= 0
+    !Number.isFinite(medidaPorPorcion) ||
+    medidaPorPorcion <= 0
   ) {
 
     alert(
-      "Ingresa una cantidad válida. Ejemplo: 300 g o 1 unidad"
+      "Ingresa una cantidad válida por porción"
     );
+
 
     return;
 
@@ -4463,12 +4474,14 @@ async function agregarCocina() {
 
 
   const unidad =
-    String(bodega.unidad || "")
+    String(
+      bodega.unidad || ""
+    )
       .toLowerCase()
       .trim();
 
 
-  const usaKilogramos =
+  const esKilogramos =
     unidad === "kg" ||
     unidad === "kilo" ||
     unidad === "kilos" ||
@@ -4476,157 +4489,125 @@ async function agregarCocina() {
     unidad === "kilogramos";
 
 
-  const usaGramos =
+  const esGramos =
     unidad === "g" ||
     unidad === "gr" ||
     unidad === "gramo" ||
     unidad === "gramos";
 
 
-  const usaUnidades =
+  const esUnidades =
+    unidad === "unidad" ||
+    unidad === "unidades" ||
     unidad === "u" ||
-    unidad === "un" ||
     unidad === "und" ||
     unidad === "uds" ||
-    unidad === "unidad" ||
-    unidad === "unidades";
+    unidad === "unid";
 
 
-  let cantidadBodegaUtilizada = 0;
-  let cantidadCocina = 0;
+  let cantidadDisponibleBase = 0;
+
   let unidadCocina = "";
 
-
-  /* =====================================================
-     PRODUCTOS MEDIDOS EN KG / G
-     Ejemplo:
-     20 kg de carne -> porciones de 300 g
-  ===================================================== */
-  if (
-    usaKilogramos ||
-    usaGramos
-  ) {
-
-    const gramosPorPorcion =
-      cantidadPorUnidad;
+  let convertirCantidadUsadaABodega =
+    cantidadUsada => cantidadUsada;
 
 
-    const gramosDisponibles =
-      usaKilogramos
-        ? Number(bodega.cantidad) * 1000
-        : Number(bodega.cantidad);
+  if (esKilogramos) {
 
+    /*
+      Bodega:
+      20 kg
 
-    cantidadCocina =
-      Math.floor(
-        gramosDisponibles /
-        gramosPorPorcion
-      );
-
-
-    if (
-      cantidadCocina <= 0
-    ) {
-
-      alert(
-        "No alcanza para una porción"
-      );
-
-      return;
-
-    }
-
-
-    const gramosUtilizados =
-      cantidadCocina *
-      gramosPorPorcion;
-
-
-    cantidadBodegaUtilizada =
-      usaKilogramos
-        ? gramosUtilizados / 1000
-        : gramosUtilizados;
-
+      Cocina:
+      200 g, 300 g, etc.
+    */
+    cantidadDisponibleBase =
+      bodega.cantidad * 1000;
 
     unidadCocina =
-      `${gramosPorPorcion} g`;
+      `${medidaPorPorcion} g`;
 
-  }
-
-
-  /* =====================================================
-     PRODUCTOS MEDIDOS EN UNIDADES
-     Ejemplo:
-     48 Coca-Cola -> presentaciones de 1 unidad
-  ===================================================== */
-  else if (usaUnidades) {
-
-    const unidadesPorPresentacion =
-      Math.floor(cantidadPorUnidad);
+    convertirCantidadUsadaABodega =
+      cantidadUsada =>
+        cantidadUsada / 1000;
 
 
-    if (
-      unidadesPorPresentacion <= 0 ||
-      cantidadPorUnidad !== unidadesPorPresentacion
-    ) {
+  } else if (esGramos) {
 
-      alert(
-        "Para productos por unidad debes ingresar un número entero. Ejemplo: 1 unidad"
-      );
-
-      return;
-
-    }
-
-
-    const unidadesDisponibles =
-      Math.floor(
-        Number(bodega.cantidad)
-      );
-
-
-    cantidadCocina =
-      Math.floor(
-        unidadesDisponibles /
-        unidadesPorPresentacion
-      );
-
-
-    if (
-      cantidadCocina <= 0
-    ) {
-
-      alert(
-        "No hay unidades suficientes en bodega"
-      );
-
-      return;
-
-    }
-
-
-    cantidadBodegaUtilizada =
-      cantidadCocina *
-      unidadesPorPresentacion;
-
+    cantidadDisponibleBase =
+      bodega.cantidad;
 
     unidadCocina =
-      unidadesPorPresentacion === 1
+      `${medidaPorPorcion} g`;
+
+
+  } else if (esUnidades) {
+
+    /*
+      Bodega:
+      48 unidades
+
+      Cocina:
+      1 unidad -> genera 48 unidades disponibles
+      6 unidades -> genera 8 grupos/porciones de 6
+    */
+    cantidadDisponibleBase =
+      bodega.cantidad;
+
+    unidadCocina =
+      medidaPorPorcion === 1
         ? "1 unidad"
-        : `${unidadesPorPresentacion} unidades`;
-
-  }
+        : `${medidaPorPorcion} unidades`;
 
 
-  else {
+  } else {
 
     alert(
       "La unidad de bodega debe ser kg, g o unidad"
     );
 
+
     return;
 
   }
+
+
+  const cantidadPorciones =
+    Math.floor(
+
+      cantidadDisponibleBase /
+
+      medidaPorPorcion
+
+    );
+
+
+  if (
+    cantidadPorciones <= 0
+  ) {
+
+    alert(
+      "No alcanza para una porción"
+    );
+
+
+    return;
+
+  }
+
+
+  const cantidadBaseUtilizada =
+
+    cantidadPorciones *
+
+    medidaPorPorcion;
+
+
+  const cantidadBodegaUtilizada =
+    convertirCantidadUsadaABodega(
+      cantidadBaseUtilizada
+    );
 
 
   const nombreCocina =
@@ -4683,7 +4664,7 @@ async function agregarCocina() {
               cantidadBodegaUtilizada,
 
             cantidad_cocina:
-              cantidadCocina
+              cantidadPorciones
 
           })
 
@@ -4704,8 +4685,13 @@ async function agregarCocina() {
 
 
     alert(
+
       `${nombreCocina}: se guardaron ` +
-      `${cantidadCocina} de ${unidadCocina}`
+
+      `${cantidadPorciones} porciones de ` +
+
+      `${unidadCocina}`
+
     );
 
 
@@ -5130,9 +5116,79 @@ function calcularPrecioPorGanancia(
 }
 
 
+function normalizarNombreProductoComparacion(valor = "") {
+
+  return String(valor)
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ");
+
+}
+
+
+/*
+  Palabra clave para venta directa.
+
+  La forma oficial es:
+
+  bebestible Fanta
+  bebestible Sprite
+  bebestible agua sin gas
+
+  También reconoce "bebestibles" para evitar duplicados
+  si se escribió accidentalmente en plural.
+*/
+function esNombreBebestible(nombre = "") {
+
+  const texto =
+    normalizarNombreProductoComparacion(
+      nombre
+    );
+
+  return /^bebestibles?(?:\s|$)/.test(
+    texto
+  );
+
+}
+
+
+function claveBebestible(nombre = "") {
+
+  return normalizarNombreProductoComparacion(
+    nombre
+  )
+    .replace(
+      /^bebestibles?(?:\s+|$)/,
+      ""
+    )
+    .trim();
+
+}
+
+
+function nombreBebestibleCanonico(nombre = "") {
+
+  const resto =
+    String(nombre)
+      .trim()
+      .replace(
+        /^bebestibles?(?:\s+|$)/i,
+        ""
+      )
+      .trim();
+
+  return resto
+    ? `bebestible ${resto}`
+    : "bebestible";
+
+}
+
+
 async function crearProductoVenta() {
 
-  const nombre =
+  const nombreIngresado =
     $("nombreProductoVenta")
       .value
       .trim();
@@ -5145,7 +5201,7 @@ async function crearProductoVenta() {
     );
 
 
-  if (!nombre) {
+  if (!nombreIngresado) {
 
     alert(
       "Ingresa el nombre del producto"
@@ -5168,6 +5224,313 @@ async function crearProductoVenta() {
     return;
 
   }
+
+
+  const esBebestible =
+    esNombreBebestible(
+      nombreIngresado
+    );
+
+
+  /* =====================================================
+     BEBESTIBLE
+
+     Se guarda TODO con un solo clic:
+
+     1. Producto de venta
+     2. Asociación automática con 1 unidad de Cocina
+     3. Costo unitario
+     4. Precio calculado según el porcentaje de ganancia
+
+     El usuario NO tiene que presionar Guardar receta.
+  ===================================================== */
+
+  if (esBebestible) {
+
+    try {
+
+      const nombre =
+        nombreBebestibleCanonico(
+          nombreIngresado
+        );
+
+
+      const clave =
+        claveBebestible(
+          nombre
+        );
+
+
+      if (!clave) {
+
+        alert(
+          "Después de la palabra bebestible debes indicar el nombre. Ej: bebestible Sprite"
+        );
+
+        return;
+
+      }
+
+
+      /*
+        El bebestible debe existir primero en Cocina.
+        Buscamos por el nombre ignorando singular/plural
+        de la palabra clave.
+      */
+      const itemCocina =
+        data.cocina.find(
+          item =>
+            esNombreBebestible(
+              item.producto
+            ) &&
+            claveBebestible(
+              item.producto
+            ) === clave
+        );
+
+
+      if (!itemCocina) {
+
+        alert(
+          "Este bebestible todavía no está en Cocina. Pásalo desde Bodega antes de crearlo como producto de venta."
+        );
+
+        return;
+
+      }
+
+
+      /*
+        Si el traspaso Bodega -> Cocina ya creó el producto
+        en menu, lo reutilizamos para NO duplicarlo.
+      */
+      let producto =
+        data.productos.find(
+          item =>
+            esNombreBebestible(
+              item.nombre
+            ) &&
+            claveBebestible(
+              item.nombre
+            ) === clave
+        );
+
+
+      let productoId =
+        Number(
+          producto?.id || 0
+        );
+
+
+      if (!productoId) {
+
+        const resultado =
+          await api(
+            "/productos",
+            {
+              method:
+                "POST",
+
+              body:
+                JSON.stringify({
+                  nombre,
+                  precio: 0,
+                  activo: true
+                })
+            }
+          );
+
+
+        productoId =
+          Number(
+            resultado?.id ||
+            resultado?.producto?.id ||
+            0
+          );
+
+
+        await cargarTodoDesdeBD();
+
+
+        if (!productoId) {
+
+          producto =
+            data.productos.find(
+              item =>
+                esNombreBebestible(
+                  item.nombre
+                ) &&
+                claveBebestible(
+                  item.nombre
+                ) === clave
+            );
+
+          productoId =
+            Number(
+              producto?.id || 0
+            );
+
+        }
+
+      }
+
+
+      if (!productoId) {
+
+        throw new Error(
+          "No se pudo identificar el producto de venta creado"
+        );
+
+      }
+
+
+      /*
+        Revisamos si ya tiene la asociación automática.
+        Si no existe, guardamos 1 unidad del bebestible.
+      */
+      const recetaExistente =
+        data.recetas.find(
+          item =>
+            item.producto_venta_id ===
+              productoId &&
+            item.inventario_cocina_id ===
+              itemCocina.id
+        );
+
+
+      if (!recetaExistente) {
+
+        await api(
+          "/recetas",
+          {
+            method:
+              "POST",
+
+            body:
+              JSON.stringify({
+                producto_venta_id:
+                  productoId,
+
+                inventario_cocina_id:
+                  itemCocina.id,
+
+                cantidad_necesaria:
+                  1
+              })
+          }
+        );
+
+      }
+
+
+      const costoUnidad =
+        obtenerCostoUnitarioCocina(
+          itemCocina
+        );
+
+
+      const precioVenta =
+        calcularPrecioPorGanancia(
+          costoUnidad,
+          porcentajeGanancia
+        );
+
+
+      if (precioVenta <= 0) {
+
+        throw new Error(
+          "No se pudo calcular el precio del bebestible porque su costo unitario es inválido"
+        );
+
+      }
+
+
+      producto =
+        data.productos.find(
+          item =>
+            item.id === productoId
+        );
+
+
+      await api(
+        `/productos/${productoId}`,
+        {
+          method:
+            "PUT",
+
+          body:
+            JSON.stringify({
+              nombre,
+              precio:
+                precioVenta,
+              activo:
+                producto?.activo !== false
+            })
+        }
+      );
+
+
+      guardarPorcentajeGanancia(
+        productoId,
+        porcentajeGanancia
+      );
+
+
+      $("nombreProductoVenta")
+        .value = "";
+
+
+      $("precioProductoVenta")
+        .value = "";
+
+
+      await cargarTodoDesdeBD();
+
+
+      renderSelects();
+
+
+      if ($("selectProductoVenta")) {
+        $("selectProductoVenta")
+          .value =
+            String(productoId);
+      }
+
+
+      actualizarCostoConstructorReceta();
+
+
+      alert(
+        `Bebestible guardado completo. Costo: ${moneda(costoUnidad)} | Precio: ${moneda(precioVenta)}. No necesitas guardar receta manualmente.`
+      );
+
+
+    } catch (error) {
+
+      console.error(error);
+
+      alert(
+        error.message
+      );
+
+    }
+
+
+    return;
+
+  }
+
+
+  /* =====================================================
+     PRODUCTOS NORMALES
+
+     Conservan el flujo anterior:
+
+     Crear producto -> seleccionar ingredientes -> guardar receta
+  ===================================================== */
+
+  const nombre =
+    nombreIngresado;
 
 
   try {
