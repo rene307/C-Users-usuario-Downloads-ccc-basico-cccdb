@@ -1,1761 +1,3947 @@
 /* =========================================================
+
    CONFIGURACIÓN GENERAL
+
    ========================================================= */
 
-/*
-  El selector * afecta a TODOS los elementos de la página.
-  box-sizing: border-box hace que el padding y el borde
-  se incluyan dentro del ancho y alto del elemento.
-*/
-* {
-  box-sizing: border-box;
-}
+
 
 /*
-  Estilos generales del cuerpo completo de la página.
+
+  El selector * afecta a TODOS los elementos de la página.
+
+  box-sizing: border-box hace que el padding y el borde
+
+  se incluyan dentro del ancho y alto del elemento.
+
 */
+
+* {
+
+  box-sizing: border-box;
+
+}
+
+
+
+/*
+
+  Estilos generales del cuerpo completo de la página.
+
+*/
+
 body {
+
   /* Elimina el margen automático que agrega el navegador. */
+
   margin: 0;
+
+
 
   /* Define la fuente principal de la aplicación. */
+
   font-family: Arial, Helvetica, sans-serif;
+
   font-size: 15px;
+
+
 
   /* Color gris claro del fondo general. */
+
   background: #f4f5f7;
 
+
+
   /* Color principal del texto. */
+
   color: #020617;
+
 }
 
+
+
 /*
+
   Hace que botones, inputs y selects usen
+
   la misma fuente definida en body.
+
 */
+
 button,
+
 input,
+
 select {
+
   font-family: inherit;
+
 }
 
+
+
 /*
+
   Cambia el cursor a una mano cuando se pasa
+
   por encima de cualquier botón.
+
 */
+
 button {
+
   cursor: pointer;
+
 }
+
+
+
 
 
 /* =========================================================
+
    PÁGINA DE LOGIN
+
    ========================================================= */
 
+
+
 /*
+
   Contenedor principal de toda la pantalla de login.
+
 */
+
 .login-page {
+
   /* Ocupa como mínimo toda la altura de la pantalla. */
+
   min-height: 100vh;
+
+
 
   /* Activa Flexbox para ordenar el contenido. */
+
   display: flex;
+
+
 
   /* Centra verticalmente la tarjeta de login. */
+
   align-items: center;
+
+
 
   /* Centra horizontalmente la tarjeta de login. */
+
   justify-content: center;
 
+
+
   /* Fondo oscuro de la página de inicio de sesión. */
+
   background: #111827;
+
+
 
   /* Espacio interior para evitar que la tarjeta toque los bordes. */
+
   padding: 20px;
+
 }
 
+
+
 /*
+
   Tarjeta blanca donde se encuentra el formulario de login.
+
 */
+
 .login-card {
+
   /* La tarjeta puede ocupar todo el ancho disponible. */
+
   width: 100%;
+
+
 
   /* Pero nunca será más ancha que 420 píxeles. */
+
   max-width: 420px;
 
+
+
   /* Fondo blanco. */
+
   background: #ffffff;
+
+
 
   /* Espacio interior entre el contenido y los bordes. */
+
   padding: 32px;
 
+
+
   /* Redondea las esquinas. */
+
   border-radius: 18px;
+
+
 
   /* Agrega una sombra alrededor de la tarjeta. */
+
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+
 }
 
+
+
 /*
+
   Título principal dentro del login.
+
 */
+
 .login-card h1 {
+
   /*
+
     Elimina los márgenes superior, izquierdo y derecho.
+
     Deja 8px debajo del título.
+
   */
+
   margin: 0 0 8px;
 
+
+
   /* Tamaño del título. */
+
   font-size: 32px;
+
 }
 
+
+
 /*
+
   Texto descriptivo debajo del título del login.
+
 */
+
 .login-card p {
+
   /* Deja 24px debajo del párrafo. */
+
   margin: 0 0 24px;
 
+
+
   /* Color gris del texto secundario. */
+
   color: #475569;
+
 }
 
+
+
 /*
+
   Etiquetas de los campos, por ejemplo:
+
   Correo electrónico y Contraseña.
+
 */
+
 .login-card label {
+
   /* Hace que cada label ocupe su propia línea. */
+
   display: block;
 
+
+
   /*
+
     14px arriba, 0 a los lados y 6px abajo.
+
   */
+
   margin: 14px 0 6px;
 
+
+
   /* Texto en negrita. */
+
   font-weight: 700;
+
 }
 
+
+
 /*
+
   Campos de entrada del formulario de login.
+
 */
+
 .login-card input {
+
   /* Ocupa todo el ancho de la tarjeta. */
+
   width: 100%;
+
+
 
   /* Altura del campo. */
+
   height: 44px;
 
+
+
   /* Espacio interior horizontal. */
+
   padding: 0 12px;
 
+
+
   /* Borde gris claro. */
+
   border: 1px solid #cbd5e1;
 
+
+
   /* Esquinas redondeadas. */
+
   border-radius: 10px;
+
+
 
   /* Tamaño del texto escrito en el campo. */
+
   font-size: 15px;
+
 }
 
+
+
 /*
+
   Botón principal para iniciar sesión.
+
 */
+
 .login-card button {
+
   /* Ocupa todo el ancho de la tarjeta. */
+
   width: 100%;
 
+
+
   /* Altura del botón. */
+
   height: 46px;
 
+
+
   /* Deja espacio entre los campos y el botón. */
+
   margin-top: 22px;
 
+
+
   /* Elimina el borde predeterminado. */
+
   border: none;
 
+
+
   /* Redondea las esquinas. */
+
   border-radius: 10px;
 
+
+
   /* Fondo oscuro. */
+
   background: #111827;
 
+
+
   /* Texto blanco. */
+
   color: #ffffff;
 
+
+
   /* Texto en negrita. */
+
   font-weight: 700;
+
+
 
   /* Tamaño del texto del botón. */
+
   font-size: 15px;
+
 }
 
 
+
+
+
 /* =========================================================
+
    DISTRIBUCIÓN GENERAL DE LA APLICACIÓN
+
    ========================================================= */
 
+
+
 /*
+
   Contenedor principal que incluye:
+
   - Barra lateral
+
   - Contenido de la aplicación
+
 */
+
 .app {
+
   /* Coloca la barra lateral y el contenido uno al lado del otro. */
+
   display: flex;
+
+
 
   /* Hace que la aplicación ocupe toda la pantalla vertical. */
+
   min-height: 100vh;
+
 }
 
+
+
 /*
+
   Barra lateral izquierda de navegación.
+
 */
+
 .sidebar {
+
   /* Ancho fijo del menú lateral. */
+
   width: 260px;
 
+
+
   /* Ocupa como mínimo toda la altura de la pantalla. */
+
   min-height: 100vh;
 
+
+
   /* Fondo oscuro. */
+
   background: #111827;
 
+
+
   /* Texto blanco. */
+
   color: #ffffff;
 
+
+
   /* Espacio interior. */
+
   padding: 24px;
 
+
+
   /*
+
     Mantiene la barra fija aunque el usuario
+
     se desplace hacia abajo.
+
   */
+
   position: fixed;
 
+
+
   /* La ubica pegada al borde izquierdo. */
+
   left: 0;
 
+
+
   /* La ubica pegada a la parte superior. */
+
   top: 0;
+
 }
 
+
+
 /*
+
   Títulos principales dentro de la barra lateral.
+
 */
+
 .sidebar h1,
+
 .sidebar h2 {
+
   /* Elimina márgenes y deja 16px debajo. */
+
   margin: 0 0 16px;
 
+
+
   /* Tamaño de los títulos. */
+
   font-size: 30px;
+
 }
 
+
+
 /*
+
   Texto o descripción dentro de la barra lateral.
+
 */
+
 .sidebar p {
+
   /* Deja 22px debajo del párrafo. */
+
   margin: 0 0 22px;
 
+
+
   /* Tamaño de texto más pequeño. */
+
   font-size: 14px;
+
 }
 
+
+
 /*
+
   Contenedor de los botones de navegación.
+
 */
+
 .sidebar nav {
+
   /* Activa Flexbox. */
+
   display: flex;
+
+
 
   /* Ordena los elementos uno debajo del otro. */
+
   flex-direction: column;
+
+
 
   /* Espacio entre cada botón del menú. */
+
   gap: 10px;
+
 }
 
+
+
 /*
+
   Estilos compartidos por botones y enlaces
+
   dentro de la barra lateral.
+
 */
+
 .sidebar button,
+
 .sidebar a {
+
   /* Ocupan todo el ancho disponible. */
+
   width: 100%;
+
+
 
   /* Altura mínima de cada opción. */
+
   min-height: 42px;
 
+
+
   /* Elimina el borde predeterminado. */
+
   border: none;
 
+
+
   /* Redondea las esquinas. */
+
   border-radius: 9px;
 
+
+
   /* Espacio interior horizontal. */
+
   padding: 0 12px;
+
+
 
   /* Fondo gris oscuro. */
+
   background: #1f2937;
 
+
+
   /* Texto blanco. */
+
   color: #ffffff;
+
+
 
   /* Alinea el texto hacia la izquierda. */
+
   text-align: left;
 
+
+
   /* Texto en negrita. */
+
   font-weight: 700;
 
+
+
   /* Tamaño del texto. */
+
   font-size: 15px;
+
+
 
   /* Elimina el subrayado de los enlaces. */
+
   text-decoration: none;
+
 }
 
+
+
 /*
+
   Estilo de la opción actualmente seleccionada
+
   en el menú lateral.
+
 */
+
 .sidebar button.active,
+
 .sidebar a.active {
+
   /* Fondo claro para destacar la opción activa. */
+
   background: #f1f5f9;
 
+
+
   /* Texto oscuro. */
+
   color: #020617;
+
 }
 
+
+
 /*
+
   Botones para cerrar sesión.
+
   Se aplicará a cualquiera de estas clases o ID:
+
   .salir
+
   .logout
+
   #btnSalir
+
 */
+
 .sidebar .salir,
+
 .sidebar .logout,
+
 #btnSalir {
+
   /* Separa el botón de salir de las demás opciones. */
+
   margin-top: 24px;
+
+
 
   /* Fondo rojo oscuro. */
+
   background: #940a0a;
 
+
+
   /* Texto blanco. */
+
   color: #ffffff;
+
+
 
   /* Alineación hacia la izquierda. */
+
   text-align: left;
+
 }
 
+
+
 /*
+
   Área principal donde aparece el contenido.
+
   Se permiten tres nombres de clase diferentes:
+
   .main, .content o .contenido.
+
 */
+
 .main,
+
 .content,
+
 .contenido {
+
   /*
+
     Ocupa todo el ancho de la pantalla menos
+
     los 260px de la barra lateral.
+
   */
+
   width: calc(100% - 260px);
 
+
+
   /*
+
     Desplaza el contenido 260px hacia la derecha
+
     para que no quede debajo del sidebar.
+
   */
+
   margin-left: 260px;
 
+
+
   /* Espacio interior del contenido. */
+
   padding: 28px;
+
 }
 
 
+
+
+
 /* =========================================================
+
    TARJETAS DE ENCABEZADO
+
    ========================================================= */
 
+
+
 /*
+
   Tarjetas superiores utilizadas para mostrar
+
   título, descripción y posiblemente un botón.
+
 */
+
 .top-card,
+
 .header-card,
+
 .card-header {
+
   /* Fondo blanco. */
+
   background: #ffffff;
 
+
+
   /* Esquinas redondeadas. */
+
   border-radius: 18px;
 
+
+
   /* Espacio interior. */
+
   padding: 22px;
 
+
+
   /* Separación con el contenido siguiente. */
+
   margin-bottom: 20px;
+
+
 
   /* Activa Flexbox. */
+
   display: flex;
 
+
+
   /*
+
     Coloca un elemento a la izquierda
+
     y otro a la derecha.
+
   */
+
   justify-content: space-between;
 
+
+
   /* Centra verticalmente los elementos. */
+
   align-items: center;
+
+
 
   /* Espacio mínimo entre los elementos. */
+
   gap: 18px;
+
 }
 
+
+
 /*
+
   Títulos de las tarjetas superiores.
+
 */
+
 .top-card h1,
+
 .header-card h1,
+
 .card-header h1 {
+
   /* Elimina márgenes y deja 6px debajo. */
+
   margin: 0 0 6px;
+
+
 
   /* Tamaño del título principal. */
+
   font-size: 32px;
+
 }
 
+
+
 /*
+
   Textos descriptivos de las tarjetas superiores.
+
 */
+
 .top-card p,
+
 .header-card p,
+
 .card-header p {
+
   /* Elimina los márgenes predeterminados. */
+
   margin: 0;
 
+
+
   /* Color gris para texto secundario. */
+
   color: #475569;
+
 }
 
 
+
+
+
 /* =========================================================
+
    TARJETAS DE CONTENIDO
+
    ========================================================= */
 
+
+
 /*
+
   Tarjetas generales utilizadas en cada sección.
+
 */
+
 .card,
+
 .section-card,
+
 .panel {
+
   /* Fondo blanco. */
+
   background: #ffffff;
 
+
+
   /* Esquinas redondeadas. */
+
   border-radius: 18px;
 
+
+
   /* Espacio interior. */
+
   padding: 24px;
 
+
+
   /* Separación con la siguiente tarjeta. */
+
   margin-bottom: 20px;
+
 }
 
+
+
 /*
+
   Títulos de segundo nivel dentro de las tarjetas.
+
 */
+
 .card h2,
+
 .section-card h2,
+
 .panel h2 {
+
   /* Elimina márgenes y deja 18px debajo. */
+
   margin: 0 0 18px;
 
+
+
   /* Tamaño del título. */
+
   font-size: 25px;
+
 }
 
+
+
 /*
+
   Títulos de tercer nivel dentro de las tarjetas.
+
 */
+
 .card h3,
+
 .section-card h3,
+
 .panel h3 {
+
   /* 22px arriba y 14px abajo. */
+
   margin: 22px 0 14px;
 
+
+
   /* Tamaño del subtítulo. */
+
   font-size: 20px;
+
 }
 
 
+
+
+
 /* =========================================================
+
    BOTONES GENERALES
+
    ========================================================= */
 
+
+
 /*
+
   Estilos para elementos con clase .btn
+
   y para todos los botones de la aplicación.
+
 */
+
 .btn,
+
 button {
+
   /* Altura mínima de los botones. */
+
   min-height: 42px;
 
+
+
   /* Elimina el borde predeterminado. */
+
   border: none;
 
+
+
   /* Redondea las esquinas. */
+
   border-radius: 10px;
 
+
+
   /* Espacio interior horizontal. */
+
   padding: 0 18px;
 
+
+
   /* Fondo oscuro principal. */
+
   background: #111827;
 
+
+
   /* Texto blanco. */
+
   color: #ffffff;
 
+
+
   /* Texto en negrita. */
+
   font-weight: 700;
 
+
+
   /* Tamaño del texto. */
+
   font-size: 15px;
+
 }
 
 
+
+
+
 /* =========================================================
+
    BOTÓN ELIMINAR EN ROJO
+
    ========================================================= */
 
+
+
 /*
+
   Aplica fondo rojo a botones que tengan:
+
   - clase eliminar
+
   - atributo data-action="eliminar"
 
+
+
   !important obliga a que este color tenga prioridad
+
   sobre otras reglas CSS.
+
 */
+
 .eliminar,
+
 button.eliminar,
+
 button[data-action="eliminar"] {
+
   /* Fondo rojo. */
+
   background: #c31a0b !important;
+
+
 
   /* Texto blanco. */
+
   color: #ffffff !important;
+
 }
 
+
+
 /*
+
   Mantiene el mismo color rojo cuando
+
   el usuario pasa el mouse sobre el botón.
+
 */
+
 .eliminar:hover,
+
 button.eliminar:hover,
+
 button[data-action="eliminar"]:hover {
+
   /* Mantiene el fondo rojo. */
+
   background: #c31a0b !important;
+
+
 
   /* Mantiene el texto blanco. */
+
   color: #ffffff !important;
+
 }
 
 
+
+
+
 /* =========================================================
+
    BOTÓN EDITAR
+
    ========================================================= */
 
+
+
 /*
+
   Aplica estilo oscuro a cualquier botón que tenga:
+
   data-action="editar"
+
 */
+
 button[data-action="editar"] {
+
   /* Fondo oscuro. */
+
   background: #111827;
 
+
+
   /* Texto blanco. */
+
   color: #ffffff;
+
 }
 
+
+
 /*
+
   Estilos alternativos para botones peligrosos.
+
 */
+
 .btn-danger,
+
 button.danger {
+
   /* Fondo rojo. */
+
   background: #c31a0b;
+
 }
 
+
+
 /*
+
   Botón claro para acciones secundarias.
+
 */
+
 .btn-light {
+
   /* Fondo gris muy claro. */
+
   background: #f1f5f9;
+
+
 
   /* Texto oscuro. */
+
   color: #111827;
+
 }
 
 
+
+
+
 /* =========================================================
+
    CAMPOS DE FORMULARIO
+
    ========================================================= */
 
+
+
 /*
+
   Estilos generales para inputs y selects.
+
 */
+
 input,
+
 select {
+
   /* Altura de los campos. */
+
   height: 43px;
 
+
+
   /* Borde gris claro. */
+
   border: 1px solid #cbd5e1;
 
+
+
   /* Esquinas redondeadas. */
+
   border-radius: 10px;
+
+
 
   /* Espacio interior horizontal. */
+
   padding: 0 12px;
+
+
 
   /* Tamaño del texto. */
+
   font-size: 15px;
 
+
+
   /* Fondo blanco. */
+
   background: #ffffff;
+
+
 
   /* Color del texto escrito. */
+
   color: #020617;
 
+
+
   /*
+
     Permite que los campos se reduzcan dentro
+
     de una cuadrícula sin desbordarse.
+
   */
+
   min-width: 0;
+
 }
 
+
+
 /*
+
   Estilo del texto de ayuda que aparece
+
   dentro de un input antes de escribir.
+
 */
+
 input::placeholder {
+
   /* Color gris del placeholder. */
+
   color: #64748b;
+
 }
+
+
+
 
 
 /* =========================================================
+
    FILAS Y CUADRÍCULAS DE FORMULARIOS
+
    ========================================================= */
 
+
+
 /*
+
   Contenedores generales para formularios.
 
+
+
   Se crean cinco columnas del mismo ancho.
+
 */
+
 .form-row,
+
 .form-grid,
+
 .inputs-row {
+
   /* Activa CSS Grid. */
+
   display: grid;
 
+
+
   /*
+
     Crea 5 columnas iguales.
 
+
+
     minmax(0, 1fr) permite que cada columna
+
     pueda reducirse sin provocar desbordamientos.
+
   */
+
   grid-template-columns: repeat(5, minmax(0, 1fr));
 
+
+
   /* Espacio entre campos. */
+
   gap: 10px;
 
+
+
   /* Ocupa todo el ancho disponible. */
+
   width: 100%;
+
+
 
   /* Separación debajo del formulario. */
+
   margin-bottom: 18px;
+
 }
 
 
+
+
+
 /* =========================================================
+
    FORMULARIO DE COCINA
+
    ========================================================= */
 
+
+
 /*
+
   Distribución especial para el formulario de Cocina.
 
+
+
   Tiene cuatro columnas:
+
   1. Producto: más ancha.
+
   2. Cantidad.
+
   3. Unidad.
+
   4. Botón: también más ancho.
+
 */
+
 .cocina-form {
+
   grid-template-columns: 1.5fr 1fr 1fr 1.25fr;
+
 }
 
+
+
 /*
+
   Primer select del formulario de cocina.
+
   Normalmente corresponde al producto.
+
 */
+
 .cocina-form select:first-child {
+
   /* Evita que el selector de productos quede muy pequeño. */
+
   min-width: 240px;
+
 }
 
+
+
 /*
+
   Botón del formulario de cocina.
+
 */
+
 .cocina-form button {
+
   /* Ancho mínimo para mostrar correctamente el texto. */
+
   min-width: 170px;
 
+
+
   /*
+
     Impide que el texto del botón se divida
+
     en dos líneas.
+
   */
+
   white-space: nowrap;
+
 }
 
 
+
+
+
 /* =========================================================
+
    FILAS DE TRASPASO
+
    ========================================================= */
 
+
+
 /*
+
   Formulario utilizado para traspasar productos
+
   desde Bodega hacia Cocina.
+
 */
+
 .transfer-row,
+
 .traspaso-row {
+
   /* Activa CSS Grid. */
+
   display: grid;
+
+
 
   /* Crea cinco columnas del mismo ancho. */
+
   grid-template-columns: repeat(5, minmax(0, 1fr));
 
+
+
   /* Espacio entre campos. */
+
   gap: 10px;
 
+
+
   /* Ocupa todo el ancho disponible. */
+
   width: 100%;
+
+
 
   /* Espacio debajo de la fila. */
+
   margin-bottom: 10px;
+
 }
 
 
+
+
+
 /* =========================================================
+
    ANCHO DE CAMPOS Y BOTONES DE FORMULARIOS
+
    ========================================================= */
 
+
+
 /*
+
   Hace que todos los inputs, selects y botones
+
   ocupen completamente su columna de la cuadrícula.
+
 */
+
 .form-row input,
+
 .form-row select,
+
 .form-row button,
+
 .form-grid input,
+
 .form-grid select,
+
 .form-grid button,
+
 .inputs-row input,
+
 .inputs-row select,
+
 .inputs-row button,
+
 .transfer-row input,
+
 .transfer-row select,
+
 .transfer-row button,
+
 .traspaso-row input,
+
 .traspaso-row select,
+
 .traspaso-row button {
+
   width: 100%;
+
 }
+
+
+
 
 
 /* =========================================================
+
    TABLAS
+
    ========================================================= */
 
+
+
 /*
+
   Contenedor externo de la tabla.
+
 */
+
 .table-wrap {
+
   /* Ocupa todo el ancho disponible. */
+
   width: 100%;
 
+
+
   /*
+
     Agrega desplazamiento horizontal cuando
+
     la tabla es más ancha que la pantalla.
+
   */
+
   overflow-x: auto;
+
 }
 
+
+
 /*
+
   Estilo general de todas las tablas.
+
 */
+
 table {
+
   /* La tabla ocupa todo el ancho disponible. */
+
   width: 100%;
 
+
+
   /*
+
     Permite manejar por separado los bordes
+
     de cada celda.
+
   */
+
   border-collapse: separate;
 
+
+
   /* Elimina espacios entre las celdas. */
+
   border-spacing: 0;
 
+
+
   /* Fondo blanco. */
+
   background: #ffffff;
+
+
 
   /* Borde exterior de la tabla. */
+
   border: 1px solid #e2e8f0;
 
+
+
   /* Esquinas redondeadas. */
+
   border-radius: 14px;
 
+
+
   /*
+
     Oculta cualquier contenido que sobresalga
+
     de las esquinas redondeadas.
+
   */
+
   overflow: hidden;
 
+
+
   /* Espacio sobre la tabla. */
+
   margin-top: 24px;
+
 }
 
+
+
 /*
+
   Cabecera de la tabla.
+
 */
+
 thead {
+
   /* Fondo gris muy claro. */
+
   background: #f8fafc;
+
 }
 
+
+
 /*
+
   Estilos compartidos entre:
+
   th = encabezados
+
   td = celdas normales
+
 */
+
 th,
+
 td {
+
   /* Espacio interior de las celdas. */
+
   padding: 12px;
 
+
+
   /* Alinea el contenido hacia la izquierda. */
+
   text-align: left;
 
+
+
   /* Línea divisoria debajo de cada fila. */
+
   border-bottom: 1px solid #e2e8f0;
 
+
+
   /* Tamaño del texto de la tabla. */
+
   font-size: 14px;
+
+
 
   /* Centra verticalmente el contenido de la celda. */
+
   vertical-align: middle;
+
 }
 
+
+
 /*
+
   Encabezados de las columnas.
+
 */
+
 th {
+
   /* Texto en negrita. */
+
   font-weight: 700;
+
+
 
   /* Color gris oscuro. */
+
   color: #334155;
+
 }
 
+
+
 /*
+
   Elimina la línea inferior de la última fila.
+
 */
+
 tr:last-child td {
+
   border-bottom: none;
+
 }
 
+
+
 /*
+
   Última columna de cada fila.
+
   Normalmente contiene los botones Editar y Eliminar.
+
 */
+
 td:last-child {
+
   /* Ancho fijo para la columna de acciones. */
+
   width: 190px;
+
 }
 
+
+
 /*
+
   Botones ubicados en la última columna.
+
 */
+
 td:last-child button {
+
   /* Ocupan todo el ancho de la celda. */
+
   width: 100%;
+
+
 
   /* Altura del botón. */
+
   height: 40px;
 
+
+
   /* Separación vertical entre botones. */
+
   margin: 4px 0;
 
+
+
   /* Esquinas redondeadas. */
+
   border-radius: 9px;
+
 }
 
 
+
+
+
 /* =========================================================
+
    TARJETAS DE RESUMEN Y ESTADÍSTICAS
+
    ========================================================= */
 
+
+
 /*
+
   Contenedor de tarjetas de resumen.
 
+
+
   Muestra cuatro tarjetas por fila
+
   en pantallas grandes.
+
 */
+
 .resumen-grid,
+
 .stats-grid {
+
   /* Activa CSS Grid. */
+
   display: grid;
+
+
 
   /* Crea cuatro columnas iguales. */
+
   grid-template-columns: repeat(4, minmax(0, 1fr));
 
+
+
   /* Espacio entre tarjetas. */
+
   gap: 16px;
+
 }
 
+
+
 /*
+
   Cada tarjeta individual del resumen.
+
 */
+
 .resumen-card,
+
 .stat-card {
+
   /* Fondo blanco. */
+
   background: #ffffff;
 
+
+
   /* Esquinas redondeadas. */
+
   border-radius: 16px;
 
+
+
   /* Espacio interior. */
+
   padding: 20px;
 
+
+
   /* Borde gris claro. */
+
   border: 1px solid #e2e8f0;
+
 }
 
+
+
 /*
+
   Títulos de las tarjetas de resumen.
+
 */
+
 .resumen-card h3,
+
 .stat-card h3 {
+
   /* Elimina márgenes y deja 10px debajo. */
+
   margin: 0 0 10px;
+
+
 
   /* Color gris para el nombre del indicador. */
+
   color: #475569;
+
+
 
   /* Tamaño del título. */
+
   font-size: 16px;
+
 }
 
+
+
 /*
+
   Número o valor principal de cada tarjeta.
+
 */
+
 .resumen-card strong,
+
 .stat-card strong {
+
   /* Hace más grande el número del resumen. */
+
   font-size: 28px;
+
 }
 
 
+
+
+
 /* =========================================================
+
    RESPONSIVE: PANTALLAS MEDIANAS
+
    ========================================================= */
 
+
+
 /*
+
   Estas reglas se aplican cuando la pantalla
+
   mide 1100px o menos.
+
 */
+
 @media (max-width: 1100px) {
-  /*
-    Los formularios pasan de cinco columnas
-    a tres columnas.
-  */
-  .form-row,
-  .form-grid,
-  .inputs-row,
-  .transfer-row,
-  .traspaso-row,
-  .cocina-form {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
 
   /*
-    Las tarjetas de resumen pasan
-    de cuatro columnas a dos.
+
+    Los formularios pasan de cinco columnas
+
+    a tres columnas.
+
   */
-  .resumen-grid,
-  .stats-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  .form-row,
+
+  .form-grid,
+
+  .inputs-row,
+
+  .transfer-row,
+
+  .traspaso-row,
+
+  .cocina-form {
+
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+
   }
+
+
+
+  /*
+
+    Las tarjetas de resumen pasan
+
+    de cuatro columnas a dos.
+
+  */
+
+  .resumen-grid,
+
+  .stats-grid {
+
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  }
+
 }
 
 
+
+
+
 /* =========================================================
+
    RESPONSIVE: CELULARES Y TABLETS PEQUEÑAS
+
    ========================================================= */
 
+
+
 /*
+
   Estas reglas se aplican cuando la pantalla
+
   mide 800px o menos.
+
 */
+
 @media (max-width: 800px) {
-  /*
-    La aplicación deja de mostrar sidebar y contenido
-    uno al lado del otro.
-  */
-  .app {
-    display: block;
-  }
 
   /*
-    La barra lateral deja de estar fija
-    y ocupa todo el ancho de la pantalla.
+
+    La aplicación deja de mostrar sidebar y contenido
+
+    uno al lado del otro.
+
   */
+
+  .app {
+
+    display: block;
+
+  }
+
+
+
+  /*
+
+    La barra lateral deja de estar fija
+
+    y ocupa todo el ancho de la pantalla.
+
+  */
+
   .sidebar {
+
     /* Deja de estar fija en la pantalla. */
+
     position: relative;
 
+
+
     /* Ocupa todo el ancho. */
+
     width: 100%;
+
+
 
     /* Ya no necesita ocupar toda la altura. */
+
     min-height: 0;
+
   }
 
+
+
   /*
+
     El contenido principal ocupa toda la pantalla.
+
   */
+
   .main,
+
   .content,
+
   .contenido {
+
     /* Ocupa el ancho completo. */
+
     width: 100%;
+
+
 
     /* Elimina el desplazamiento del sidebar. */
+
     margin-left: 0;
 
+
+
     /* Reduce el espacio interior. */
+
     padding: 16px;
+
   }
 
+
+
   /*
+
     Las tarjetas superiores dejan de usar Flexbox.
+
     Sus elementos se muestran uno debajo del otro.
+
   */
+
   .top-card,
+
   .header-card,
+
   .card-header {
+
     display: block;
+
   }
 
+
+
   /*
+
     Los botones de las tarjetas superiores
+
     ocupan todo el ancho en celulares.
+
   */
+
   .top-card button,
+
   .header-card button,
+
   .card-header button {
+
     /* Ocupa todo el ancho. */
+
     width: 100%;
+
+
 
     /* Espacio sobre el botón. */
+
     margin-top: 16px;
+
   }
 
+
+
   /*
+
     Todos los formularios pasan a una sola columna.
+
     Cada campo aparece debajo del anterior.
+
   */
+
   .form-row,
+
   .form-grid,
+
   .inputs-row,
+
   .transfer-row,
+
   .traspaso-row,
+
   .cocina-form {
+
     grid-template-columns: 1fr;
+
   }
 
+
+
   /*
+
     Las tarjetas de resumen también pasan
+
     a una sola columna.
+
   */
+
   .resumen-grid,
+
   .stats-grid {
+
     grid-template-columns: 1fr;
+
   }
+
 }
+
+
 
 /* =========================================================
+
    PRODUCTOS / RECETAS - ORDEN SOLICITADO
+
    ========================================================= */
 
+
+
 /*
+
   Fila de Crear receta:
+
   [Seleccionar producto] [Precio / $0]
+
 */
+
 .receta-producto-precio {
+
   display: grid;
+
   grid-template-columns: 205px 205px;
+
   gap: 12px;
+
   align-items: end;
+
   width: 100%;
+
   margin-bottom: 18px;
+
 }
+
+
 
 .receta-producto-precio > select {
+
   width: 100%;
+
 }
+
+
 
 .receta-precio-campo {
+
   display: flex;
+
   flex-direction: column;
+
   gap: 6px;
+
 }
+
+
 
 .receta-precio-campo label,
+
 .receta-ingredientes-titulo {
+
   font-weight: 700;
+
   font-size: 14px;
+
   color: #020617;
+
 }
+
+
 
 .receta-precio-campo input {
+
   width: 100%;
+
 }
+
+
 
 /* Título que aparece sobre la fila de ingredientes. */
+
 .receta-ingredientes-titulo {
+
   margin: 0 0 8px 6px;
+
 }
+
+
 
 /*
+
   Área de ingredientes:
+
   [insumo | cantidad | costo] [Agregar ingrediente]
+
 */
+
 .receta-ingredientes-area {
+
   display: grid;
+
   grid-template-columns: minmax(0, 1fr) 205px;
+
   gap: 10px;
+
   align-items: start;
+
   width: 100%;
+
   margin-bottom: 12px;
+
 }
+
+
 
 #ingredientesReceta {
+
   min-width: 0;
+
 }
+
+
 
 /* Cada fila dinámica creada por app.js. */
+
 .receta-ingrediente {
+
   display: grid;
+
   grid-template-columns: 1.35fr 1fr 1fr auto;
+
   gap: 10px;
+
   width: 100%;
+
   margin: 0 0 10px;
+
   align-items: center;
+
 }
+
+
 
 .receta-ingrediente input,
+
 .receta-ingrediente select {
+
   width: 100%;
+
 }
+
+
 
 .receta-insumo {
+
   min-width: 0;
+
 }
+
+
 
 /* Quitar solo aparece cuando hay más de un ingrediente. */
+
 .receta-ingrediente .quitar-ingrediente {
+
   width: auto;
+
   min-width: 82px;
+
   padding: 0 12px;
+
   white-space: nowrap;
+
 }
+
+
 
 #btnAgregarIngrediente {
+
   width: 205px;
+
   min-height: 43px;
+
   white-space: nowrap;
+
 }
+
+
 
 /* Guardar receta debajo y alineado a la izquierda. */
+
 .receta-guardar-row {
+
   display: flex;
+
   justify-content: flex-start;
+
   width: 100%;
+
   margin: 0 0 6px;
+
 }
+
+
 
 .receta-guardar-row #btnAgregarReceta {
+
   width: 205px;
+
   min-height: 43px;
+
 }
+
+
 
 /* La tabla queda más cerca del botón Guardar receta. */
+
 #vistaProductos .table-wrap table {
+
   margin-top: 0;
+
 }
+
+
 
 @media (max-width: 1100px) {
+
   .receta-ingredientes-area {
+
     grid-template-columns: minmax(0, 1fr) 190px;
+
   }
+
+
 
   #btnAgregarIngrediente {
+
     width: 190px;
+
   }
+
 }
+
+
 
 @media (max-width: 800px) {
+
   .receta-producto-precio {
+
     grid-template-columns: 1fr;
+
   }
+
+
 
   .receta-ingredientes-area {
+
     grid-template-columns: 1fr;
+
   }
+
+
 
   .receta-ingrediente {
+
     grid-template-columns: 1fr;
+
   }
 
+
+
   #btnAgregarIngrediente,
+
   .receta-guardar-row #btnAgregarReceta {
+
     width: 100%;
+
   }
+
 }
+
+
+
 
 
 /* =========================================================
+
    CCC - INDICADORES DE PRECIO Y MARGEN
+
    Solo agrega color/estado; no cambia el layout existente.
+
    ========================================================= */
+
 .ccc-comparacion-precio {
+
   width: 100%;
+
   border: 1px solid #e2e8f0;
+
   border-radius: 10px;
+
   padding: 10px 12px;
+
   margin: 10px 0 16px;
+
   font-size: 14px;
+
   line-height: 1.4;
+
   background: #f8fafc;
+
   color: #475569;
+
 }
+
+
 
 .ccc-comparacion-precio.barato {
+
   background: #ecfdf3;
+
   border-color: #86efac;
+
   color: #166534;
+
 }
+
+
 
 .ccc-comparacion-precio.caro {
+
   background: #fef2f2;
+
   border-color: #fecaca;
+
   color: #b91c1c;
+
 }
+
+
 
 .ccc-precio-indicador {
+
   display: inline-block;
+
   padding: 5px 8px;
+
   border-radius: 999px;
+
   font-weight: 700;
+
   white-space: nowrap;
+
 }
+
+
 
 .ccc-precio-indicador.barato {
+
   background: #ecfdf3;
+
   color: #15803d;
+
 }
+
+
 
 .ccc-precio-indicador.caro {
+
   background: #fef2f2;
+
   color: #dc2626;
+
 }
+
+
 
 .ccc-precio-indicador.neutral {
+
   background: #f1f5f9;
+
   color: #64748b;
+
 }
 
+
+
 .ccc-margen-bueno { color: #15803d; }
+
 .ccc-margen-medio { color: #a16207; }
+
 .ccc-margen-bajo { color: #dc2626; }
 
 
 
+
+
+
+
 /* =========================================================
+
    PROVEEDORES - MAQUETACIÓN RECUPERADA
+
    Corrige la vista que aparecía "desarmada".
+
    ========================================================= */
+
+
 
 .proveedores-layout {
+
   display: grid;
+
   grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+
   gap: 18px;
+
   align-items: start;
+
   margin-top: 18px;
+
 }
+
+
 
 .proveedores-panel {
+
   border: 1px solid #dfe5ec;
+
   border-radius: 14px;
+
   padding: 18px;
+
   background: #ffffff;
+
 }
+
+
 
 .proveedores-panel h3 {
+
   margin-top: 0;
+
   margin-bottom: 14px;
+
 }
+
+
 
 .proveedores-subtitulo {
+
   margin: 22px 0 10px;
+
   font-size: 13px;
+
   font-weight: 800;
+
   text-transform: uppercase;
+
   letter-spacing: 0.03em;
+
   color: #5f6b7a;
+
 }
+
+
 
 .proveedores-grid {
+
   display: grid;
+
   grid-template-columns: repeat(2, minmax(0, 1fr));
+
   gap: 12px;
+
 }
+
+
 
 .proveedores-campo {
+
   display: flex;
+
   flex-direction: column;
+
   gap: 6px;
+
 }
+
+
 
 .proveedores-campo.proveedores-full {
+
   grid-column: 1 / -1;
+
 }
+
+
 
 .proveedores-campo label {
+
   font-size: 13px;
+
   font-weight: 700;
+
 }
+
+
 
 .proveedores-campo input,
+
 .proveedores-campo select,
+
 .proveedores-alias-form input {
+
   width: 100%;
+
 }
+
+
 
 .proveedores-ayuda {
+
   font-size: 12px;
+
   color: #667085;
+
   line-height: 1.45;
+
 }
+
+
 
 .proveedores-alias-box {
+
   border: 1px solid #dfe5ec;
+
   border-radius: 12px;
+
   padding: 14px;
+
   background: #f8fafc;
+
 }
+
+
 
 .proveedores-alias-form {
+
   display: grid;
+
   grid-template-columns: 1fr auto;
+
   gap: 10px;
+
 }
+
+
 
 .proveedores-alias-lista {
+
   display: flex;
+
   flex-wrap: wrap;
+
   gap: 8px;
+
   margin-top: 12px;
+
   min-height: 32px;
+
 }
+
+
 
 .proveedores-chip {
+
   display: inline-flex;
+
   align-items: center;
+
   gap: 7px;
+
   padding: 7px 10px;
+
   border-radius: 999px;
+
   background: #eef2ff;
+
   color: #3730a3;
+
   font-size: 12px;
+
   font-weight: 700;
+
 }
+
+
 
 .proveedores-chip button {
+
   min-height: auto;
+
   border: 0;
+
   background: transparent;
+
   color: inherit;
+
   padding: 0;
+
   cursor: pointer;
+
   font-weight: 900;
+
 }
+
+
 
 .proveedores-regla {
+
   margin-top: 12px;
+
   padding: 10px 12px;
+
   border: 1px solid #fed7aa;
+
   border-radius: 10px;
+
   background: #fff7ed;
+
   color: #9a3412;
+
   font-size: 12px;
+
   line-height: 1.45;
+
 }
+
+
 
 .proveedores-origen {
+
   padding: 12px;
+
   border: 1px solid #dfe5ec;
+
   border-radius: 12px;
+
   background: #fbfcfe;
+
   margin-bottom: 12px;
+
 }
+
+
 
 .proveedores-origen small,
+
 .proveedores-destino small {
+
   display: block;
+
   color: #667085;
+
   margin-bottom: 4px;
+
 }
+
+
 
 .proveedores-origen strong,
+
 .proveedores-destino strong {
+
   display: block;
+
   word-break: break-word;
+
 }
+
+
 
 .proveedores-flecha {
+
   text-align: center;
+
   font-size: 24px;
+
   font-weight: 900;
+
   margin: 4px 0;
+
 }
+
+
 
 .proveedores-destino {
+
   padding: 12px;
+
   border: 1px solid #abefc6;
+
   border-radius: 12px;
+
   background: #ecfdf3;
+
   color: #067647;
+
 }
+
+
 
 .proveedores-estado {
+
   display: inline-block;
+
   margin-top: 10px;
+
   padding: 6px 9px;
+
   border-radius: 999px;
+
   background: #fff7ed;
+
   color: #9a3412;
+
   font-size: 12px;
+
   font-weight: 800;
+
 }
+
+
 
 .proveedores-estado.compatible {
+
   background: #ecfdf3;
+
   color: #067647;
+
 }
+
+
 
 .proveedores-aviso {
+
   display: none;
+
   margin-top: 12px;
+
   padding: 10px 12px;
+
   border-radius: 10px;
+
   border: 1px solid #abefc6;
+
   background: #ecfdf3;
+
   color: #067647;
+
   font-size: 13px;
+
   font-weight: 700;
+
 }
+
+
 
 .proveedores-botones {
+
   display: flex;
+
   gap: 10px;
+
   flex-wrap: wrap;
+
   margin-top: 16px;
+
 }
+
+
 
 .proveedores-tabla-vacia {
+
   padding: 22px 12px;
+
   color: #667085;
+
   text-align: center;
+
 }
 
+
+
 .proveedores-eliminar {
+
   background: #dc2626;
+
   color: #ffffff;
+
 }
+
+
+
 
 
 /* =========================================================
+
    PROVEEDORES AGRUPADOS POR PRODUCTO
+
    Nombre del producto ARRIBA de cada caja.
+
    ========================================================= */
 
+
+
 .proveedores-grupos {
+
   margin-top: 24px;
+
 }
+
+
 
 .proveedores-grupo {
+
   margin-bottom: 26px;
+
 }
+
+
 
 .proveedores-grupo-titulo {
+
   margin: 0 0 9px 4px;
+
   font-family: Arial, Helvetica, sans-serif;
+
   font-size: 18px;
+
   font-weight: 700;
+
   letter-spacing: 0.01em;
+
   color: #172033;
+
 }
+
+
 
 .proveedores-grupo-box {
+
   border: 1px solid #dfe5ec;
+
   border-radius: 14px;
+
   background: #ffffff;
+
   overflow-x: auto;
+
 }
+
+
 
 .proveedores-tabla-grupo {
+
   margin-top: 0;
+
   border: 0;
+
   border-radius: 0;
+
 }
+
+
 
 .proveedores-tabla-grupo th {
+
   font-size: 12px;
+
   letter-spacing: 0.01em;
+
 }
+
+
 
 .proveedores-tabla-grupo td {
+
   font-size: 14px;
+
 }
+
+
 
 .proveedores-dato-secundario {
+
   margin-top: 3px;
+
   font-size: 12px;
+
   color: #667085;
+
 }
+
+
 
 .proveedores-precio {
+
   white-space: nowrap;
+
   font-weight: 600;
+
 }
+
+
 
 .proveedores-acciones {
+
   width: 170px;
+
 }
+
+
 
 .proveedores-acciones button {
+
   font-size: 14px;
+
 }
+
+
 
 @media (max-width: 950px) {
+
   .proveedores-layout,
+
   .proveedores-grid {
+
     grid-template-columns: 1fr;
+
   }
+
+
 
   .proveedores-campo.proveedores-full {
+
     grid-column: auto;
+
   }
 
+
+
   .proveedores-grupo-titulo {
+
     font-size: 17px;
+
   }
+
 }
+
+
+
 
 
 /* Proveedores ocupa todo el ancho: evita el gran espacio vacío derecho. */
+
 .proveedores-layout {
+
   grid-template-columns: 1fr !important;
+
 }
 
+
+
 .proveedores-panel {
+
   width: 100%;
+
+}
+
+
+
+/* =========================================================
+
+   RESUMEN DE GESTIÓN
+
+   ========================================================= */
+
+
+
+.resumen-explicacion {
+
+  margin: 6px 0 18px;
+
+  color: #64748b;
+
+  line-height: 1.5;
+
+}
+
+
+
+.resumen-seccion {
+
+  margin-top: 28px;
+
+}
+
+
+
+.resumen-seccion > h3 {
+
+  margin: 0 0 12px;
+
+  font-size: 18px;
+
+}
+
+
+
+.gestion-grid {
+
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+}
+
+
+
+.resumen-card small {
+
+  display: block;
+
+  margin-top: 8px;
+
+  color: #64748b;
+
+  line-height: 1.35;
+
+}
+
+
+
+.resumen-card .resumen-texto {
+
+  display: block;
+
+  font-size: 18px;
+
+  line-height: 1.25;
+
+}
+
+
+
+.gestion-alerta {
+
+  color: #b91c1c;
+
+  font-weight: 700;
+
+}
+
+
+
+#vistaResumen .table-wrap {
+
+  margin-top: 10px;
+
+}
+
+
+
+#vistaResumen table {
+
+  min-width: 760px;
+
+}
+
+
+
+#vistaResumen th,
+
+#vistaResumen td {
+
+  vertical-align: middle;
+
+}
+
+
+
+@media (max-width: 1100px) {
+
+  .gestion-grid {
+
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  }
+
+}
+
+
+
+@media (max-width: 800px) {
+
+  .gestion-grid {
+
+    grid-template-columns: 1fr;
+
+  }
+
+}
+
+
+
+/* =========================================================
+
+   MENÚ MÓVIL RESPONSIVE
+
+   Solo afecta pantallas de 800px o menos.
+
+   En escritorio no cambia el menú lateral.
+
+   ========================================================= */
+
+
+
+.menu-movil-boton {
+
+  display: none;
+
+}
+
+
+
+@media (max-width: 800px) {
+
+
+
+  .app {
+
+    display: block;
+
+  }
+
+
+
+  .menu-movil-boton {
+
+    display: flex;
+
+    position: fixed;
+
+    top: 12px;
+
+    left: 12px;
+
+    z-index: 1300;
+
+    width: 46px;
+
+    height: 46px;
+
+    min-height: 46px;
+
+    padding: 0;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 10px;
+
+    background: #111827;
+
+    color: #ffffff;
+
+    font-size: 24px;
+
+    line-height: 1;
+
+  }
+
+
+
+  .sidebar {
+
+    position: fixed;
+
+    top: 0;
+
+    left: 0;
+
+    z-index: 1200;
+
+    width: min(82vw, 300px);
+
+    height: 100dvh;
+
+    min-height: 100vh;
+
+    padding: 70px 24px 24px;
+
+    overflow-y: auto;
+
+    transform: translateX(-105%);
+
+    transition: transform 0.22s ease;
+
+    box-shadow: 12px 0 28px rgba(0, 0, 0, 0.22);
+
+  }
+
+
+
+  .sidebar.menu-abierto {
+
+    transform: translateX(0);
+
+  }
+
+
+
+  .main,
+
+  .content,
+
+  .contenido {
+
+    width: 100%;
+
+    margin-left: 0;
+
+    padding: 72px 16px 16px;
+
+  }
+
+}
+
+
+
+
+
+
+
+/* =========================================================
+
+   PRODUCTOS / RECETAS - GANANCIA Y BOTÓN GUARDAR
+
+   ========================================================= */
+
+
+
+/* La fila superior queda como en la referencia: nombre, porcentaje y botón. */
+
+#vistaProductos > .form-row:first-of-type {
+
+  grid-template-columns: 205px 205px 205px;
+
+  justify-content: start;
+
+  align-items: end;
+
+}
+
+
+
+#vistaProductos > .form-row:first-of-type > div,
+
+#vistaProductos > .form-row:first-of-type > button {
+
+  width: 100%;
+
+}
+
+
+
+/* Guardar receta queda inmediatamente debajo de los ingredientes. */
+
+.receta-guardar-row {
+
+  margin-top: 0;
+
+  margin-bottom: 4px;
+
+}
+
+
+
+.receta-guardar-row #btnAgregarReceta {
+
+  width: 205px;
+
+}
+
+
+
+@media (max-width: 800px) {
+
+  #vistaProductos > .form-row:first-of-type {
+
+    grid-template-columns: 1fr;
+
+  }
+
 }
 
 /* =========================================================
-   RESUMEN DE GESTIÓN
+   LOGIN PROFESIONAL CCC BÁSICO
+   Solo modifica la portada de ingreso.
+   No cambia registro, app, rutas ni lógica JavaScript.
    ========================================================= */
 
-.resumen-explicacion {
-  margin: 6px 0 18px;
-  color: #64748b;
-  line-height: 1.5;
+#loginView.login-page-pro {
+  position: relative;
+  overflow: hidden;
+  min-height: 100vh;
+  padding: 42px;
+  background:
+    radial-gradient(circle at 14% 82%, rgba(16, 94, 200, 0.18), transparent 28%),
+    radial-gradient(circle at 72% 16%, rgba(24, 105, 255, 0.13), transparent 26%),
+    linear-gradient(135deg, #081321 0%, #0d1a2b 48%, #0a1524 100%);
 }
 
-.resumen-seccion {
-  margin-top: 28px;
+#loginView.login-page-pro::before,
+#loginView.login-page-pro::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
 }
 
-.resumen-seccion > h3 {
-  margin: 0 0 12px;
-  font-size: 18px;
+#loginView.login-page-pro::before {
+  width: 520px;
+  height: 520px;
+  left: -160px;
+  bottom: -240px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(20, 112, 255, 0.23) 0 2px, transparent 3px),
+    radial-gradient(circle at 45% 45%, rgba(17, 85, 180, 0.18), transparent 62%);
+  background-size: 28px 28px, auto;
+  filter: blur(.2px);
 }
 
-.gestion-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+#loginView.login-page-pro::after {
+  width: 620px;
+  height: 620px;
+  right: -260px;
+  top: -250px;
+  transform: rotate(35deg);
+  background: linear-gradient(
+    135deg,
+    transparent 0 36%,
+    rgba(20, 104, 255, 0.08) 36% 44%,
+    transparent 44% 52%,
+    rgba(20, 104, 255, 0.05) 52% 60%,
+    transparent 60%
+  );
 }
 
-.resumen-card small {
-  display: block;
-  margin-top: 8px;
-  color: #64748b;
+#loginView .login-shell {
+  position: relative;
+  z-index: 1;
+  width: min(1180px, 100%);
+  display: grid;
+  grid-template-columns: minmax(0, 1.18fr) minmax(390px, .82fr);
+  gap: 72px;
+  align-items: center;
+}
+
+#loginView .login-hero {
+  color: #ffffff;
+  padding: 30px 8px;
+}
+
+#loginView .marca-ccc {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+#loginView .marca-icono {
+  width: 112px;
+  min-width: 112px;
+  height: 112px;
+  display: grid;
+  place-items: center;
+  color: #1680ff;
+  filter: drop-shadow(0 0 20px rgba(22, 128, 255, .20));
+}
+
+#loginView .marca-icono svg {
+  width: 100%;
+  height: 100%;
+}
+
+#loginView .marca-ccc h1 {
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(46px, 5vw, 72px);
+  line-height: .95;
+  letter-spacing: -2.5px;
+}
+
+#loginView .marca-ccc h1 span {
+  color: #1680ff;
+}
+
+#loginView .marca-subtitulo {
+  margin: 14px 0 0;
+  color: #becae0;
+  font-size: clamp(17px, 1.5vw, 23px);
   line-height: 1.35;
 }
 
-.resumen-card .resumen-texto {
-  display: block;
-  font-size: 18px;
-  line-height: 1.25;
+#loginView .login-linea {
+  width: 68px;
+  height: 3px;
+  margin: 34px 0 28px;
+  border-radius: 999px;
+  background: #1680ff;
+  box-shadow: 0 0 18px rgba(22, 128, 255, .35);
 }
 
-.gestion-alerta {
-  color: #b91c1c;
+#loginView .login-descripcion {
+  max-width: 620px;
+  margin: 0 0 32px;
+  color: #c7d2e4;
+  font-size: clamp(20px, 2vw, 28px);
+  line-height: 1.35;
+}
+
+#loginView .login-modulos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  max-width: 700px;
+}
+
+#loginView .login-modulo {
+  min-height: 116px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 20px 18px;
+  border: 1px solid rgba(124, 157, 205, .18);
+  border-radius: 16px;
+  background: rgba(15, 30, 52, .56);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.03),
+    0 14px 30px rgba(0, 0, 0, .12);
+  backdrop-filter: blur(8px);
+}
+
+#loginView .login-modulo-icono {
+  width: 42px;
+  min-width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: #1680ff;
+  font-size: 28px;
+  font-weight: 800;
+  background: rgba(22, 128, 255, .08);
+  border: 1px solid rgba(22, 128, 255, .18);
+}
+
+#loginView .login-modulo strong {
+  display: block;
+  margin: 2px 0 8px;
+  color: #ffffff;
+  font-size: 16px;
+}
+
+#loginView .login-modulo span {
+  display: block;
+  color: #9dabc0;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+#loginView .login-frase {
+  margin-top: 74px;
+}
+
+#loginView .login-frase > span {
+  display: block;
+  width: 46px;
+  height: 3px;
+  margin-bottom: 14px;
+  border-radius: 999px;
+  background: #1680ff;
+}
+
+#loginView .login-frase p {
+  margin: 0;
+  color: #8ea2c1;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+}
+
+#loginView .login-card-pro {
+  width: 100%;
+  max-width: 500px;
+  margin-left: auto;
+  padding: 44px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, .985);
+  border: 1px solid rgba(255,255,255,.55);
+  box-shadow:
+    0 34px 80px rgba(0, 0, 0, .34),
+    0 3px 12px rgba(0, 0, 0, .12);
+}
+
+#loginView .login-card-encabezado h2 {
+  margin: 0 0 8px;
+  color: #081321;
+  font-size: clamp(30px, 3vw, 40px);
+  line-height: 1.05;
+  letter-spacing: -1.2px;
+}
+
+#loginView .login-card-encabezado p {
+  margin: 0 0 30px;
+  color: #63708a;
+  font-size: 16px;
+}
+
+#loginView .login-card-pro label {
+  display: block;
+  margin: 18px 0 8px;
+  color: #111827;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+#loginView .login-input-wrap {
+  position: relative;
+}
+
+#loginView .login-input-icono {
+  position: absolute;
+  z-index: 2;
+  left: 17px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #7183a3;
+  font-size: 17px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+#loginView .login-card-pro .login-input-wrap input {
+  width: 100%;
+  height: 58px;
+  padding: 0 18px 0 48px;
+  border: 1px solid #cbd5e1;
+  border-radius: 13px;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 16px;
+  outline: none;
+  transition:
+    border-color .2s ease,
+    box-shadow .2s ease,
+    transform .2s ease;
+}
+
+#loginView .login-card-pro .login-input-wrap input:focus {
+  border-color: #1680ff;
+  box-shadow: 0 0 0 4px rgba(22, 128, 255, .11);
+}
+
+#loginView .login-card-pro .login-boton-principal {
+  width: 100%;
+  height: 60px;
+  margin-top: 26px;
+  padding: 0 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  border: none;
+  border-radius: 13px;
+  background: linear-gradient(135deg, #0875ff 0%, #1264eb 100%);
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  box-shadow: 0 12px 24px rgba(17, 100, 235, .26);
+  transition:
+    transform .2s ease,
+    box-shadow .2s ease,
+    filter .2s ease;
+}
+
+#loginView .login-card-pro .login-boton-principal:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+  box-shadow: 0 16px 30px rgba(17, 100, 235, .31);
+}
+
+#loginView .login-card-pro .login-boton-principal span:last-child {
+  position: absolute;
+  right: 28px;
+  font-size: 27px;
+  font-weight: 400;
+}
+
+#loginView .login-card-pro .login-boton-principal {
+  position: relative;
+}
+
+#loginView .login-separador {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 14px;
+  margin: 28px 0 0;
+}
+
+#loginView .login-separador span {
+  height: 1px;
+  background: #d8e0ea;
+}
+
+#loginView .login-separador small {
+  color: #7b879a;
+  font-size: 13px;
   font-weight: 700;
 }
 
-#vistaResumen .table-wrap {
-  margin-top: 10px;
-}
-
-#vistaResumen table {
-  min-width: 760px;
-}
-
-#vistaResumen th,
-#vistaResumen td {
-  vertical-align: middle;
-}
-
-@media (max-width: 1100px) {
-  .gestion-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 800px) {
-  .gestion-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* =========================================================
-   MENÚ MÓVIL RESPONSIVE
-   Solo afecta pantallas de 800px o menos.
-   En escritorio no cambia el menú lateral.
-   ========================================================= */
-
-.menu-movil-boton {
-  display: none;
-}
-
-@media (max-width: 800px) {
-
-  .app {
-    display: block;
-  }
-
-  .menu-movil-boton {
-    display: flex;
-    position: fixed;
-    top: 12px;
-    left: 12px;
-    z-index: 1300;
-    width: 46px;
-    height: 46px;
-    min-height: 46px;
-    padding: 0;
-    align-items: center;
-    justify-content: center;
-    border-radius: 10px;
-    background: #111827;
-    color: #ffffff;
-    font-size: 24px;
-    line-height: 1;
-  }
-
-  .sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 1200;
-    width: min(82vw, 300px);
-    height: 100dvh;
-    min-height: 100vh;
-    padding: 70px 24px 24px;
-    overflow-y: auto;
-    transform: translateX(-105%);
-    transition: transform 0.22s ease;
-    box-shadow: 12px 0 28px rgba(0, 0, 0, 0.22);
-  }
-
-  .sidebar.menu-abierto {
-    transform: translateX(0);
-  }
-
-  .main,
-  .content,
-  .contenido {
-    width: 100%;
-    margin-left: 0;
-    padding: 72px 16px 16px;
-  }
-}
-
-
-
-/* =========================================================
-   PRODUCTOS / RECETAS - GANANCIA Y BOTÓN GUARDAR
-   ========================================================= */
-
-/* La fila superior queda como en la referencia: nombre, porcentaje y botón. */
-#vistaProductos > .form-row:first-of-type {
-  grid-template-columns: 205px 205px 205px;
-  justify-content: start;
-  align-items: end;
-}
-
-#vistaProductos > .form-row:first-of-type > div,
-#vistaProductos > .form-row:first-of-type > button {
+#loginView .login-card-pro .login-registro-pro {
   width: 100%;
+  height: 58px;
+  margin-top: 22px;
+  border: 2px solid #1680ff;
+  border-radius: 13px;
+  background: #ffffff;
+  color: #0d6ff1;
+  font-size: 15px;
+  font-weight: 800;
+  transition:
+    background .2s ease,
+    color .2s ease,
+    transform .2s ease;
 }
 
-/* Guardar receta queda inmediatamente debajo de los ingredientes. */
-.receta-guardar-row {
-  margin-top: 0;
-  margin-bottom: 4px;
+#loginView .login-card-pro .login-registro-pro:hover {
+  transform: translateY(-1px);
+  background: #f3f8ff;
 }
 
-.receta-guardar-row #btnAgregarReceta {
-  width: 205px;
-}
+@media (max-width: 980px) {
+  #loginView.login-page-pro {
+    padding: 28px 20px;
+  }
 
-@media (max-width: 800px) {
-  #vistaProductos > .form-row:first-of-type {
+  #loginView .login-shell {
     grid-template-columns: 1fr;
+    gap: 34px;
+    max-width: 720px;
+  }
+
+  #loginView .login-hero {
+    padding: 12px 0 0;
+  }
+
+  #loginView .login-card-pro {
+    max-width: 100%;
+    margin: 0;
+  }
+
+  #loginView .login-frase {
+    display: none;
   }
 }
+
+@media (max-width: 620px) {
+  #loginView.login-page-pro {
+    padding: 20px 14px;
+  }
+
+  #loginView .marca-ccc {
+    gap: 14px;
+  }
+
+  #loginView .marca-icono {
+    width: 72px;
+    min-width: 72px;
+    height: 72px;
+  }
+
+  #loginView .marca-ccc h1 {
+    font-size: 40px;
+    letter-spacing: -1.5px;
+  }
+
+  #loginView .marca-subtitulo {
+    font-size: 15px;
+  }
+
+  #loginView .login-linea {
+    margin: 24px 0 20px;
+  }
+
+  #loginView .login-descripcion {
+    font-size: 19px;
+    margin-bottom: 24px;
+  }
+
+  #loginView .login-modulos {
+    grid-template-columns: 1fr;
+  }
+
+  #loginView .login-modulo {
+    min-height: 0;
+  }
+
+  #loginView .login-card-pro {
+    padding: 28px 20px;
+    border-radius: 20px;
+  }
+
+  #loginView .login-card-encabezado h2 {
+    font-size: 30px;
+  }
+}
+
